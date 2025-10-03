@@ -1,10 +1,3 @@
-//
-//  BulletJournalApp.swift
-//  BulletJournal
-//
-//  Created by David Sanders on 10/1/25.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -12,12 +5,22 @@ import SwiftData
 struct BulletJournalApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            DayLog.self,
+            TaskItem.self,
+            AppSettings.self
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .automatic // This enables iCloud sync
+        )
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            return try ModelContainer(
+                for: schema,
+                configurations: [modelConfiguration]
+            )
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
