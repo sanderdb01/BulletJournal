@@ -9,5 +9,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(DeepLinkManager())
         .modelContainer(for: [DayLog.self, TaskItem.self, AppSettings.self], inMemory: true)
 }

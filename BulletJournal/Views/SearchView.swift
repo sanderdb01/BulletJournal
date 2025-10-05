@@ -37,28 +37,32 @@ struct SearchView: View {
    
    var body: some View {
       NavigationStack {
-         VStack(spacing: 0) {
-            // Search bar
-            searchBar
-            
-            Divider()
-            
-            // Results list
-            resultsList
-         }
-         .navigationTitle("Search")
-         .navigationBarTitleDisplayMode(.inline)
-         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-               Button(action: {
-                  showingSettings = true
-               }) {
-                  Image(systemName: "gearshape")
+         ZStack {
+            AppTheme.primaryBackground
+               .ignoresSafeArea()
+            VStack(spacing: 0) {
+               // Search bar
+               searchBar
+               
+               Divider()
+               
+               // Results list
+               resultsList
+            }
+            .navigationTitle("Search")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+               ToolbarItem(placement: .navigationBarTrailing) {
+                  Button(action: {
+                     showingSettings = true
+                  }) {
+                     Image(systemName: "gearshape")
+                  }
                }
             }
-         }
-         .sheet(isPresented: $showingSettings) {
-            SettingsView()
+            .sheet(isPresented: $showingSettings) {
+               SettingsView()
+            }
          }
       }
    }

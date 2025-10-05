@@ -2,6 +2,9 @@ import SwiftUI
 import SwiftData
 
 struct MainTabView: View {
+    @EnvironmentObject var deepLinkManager: DeepLinkManager
+    @Environment(\.colorScheme) var colorScheme
+    
     @State private var selectedTab = 0
     @State private var currentDate = Date()
     
@@ -25,10 +28,31 @@ struct MainTabView: View {
                 }
                 .tag(2)
         }
+        .background(AppTheme.primaryBackground.ignoresSafeArea())
+        .onChange(of: deepLinkManager.activeLink) { oldValue, newValue in
+            handleDeepLink(newValue)
+        }
     }
-}
-
-#Preview {
-    MainTabView()
-        .modelContainer(for: [DayLog.self, TaskItem.self, AppSettings.self], inMemory: true)
+    
+    private func handleDeepLink(_ link: DeepLink?) {
+        guard let link = link else { return }
+        
+        switch link {
+        case .today:
+            currentDate = Date()
+            selectedTab = 0
+        case .date(let date):
+            currentDate = date
+            selectedTab = 0
+        case .search:
+            selectedTab = 2
+        case .settings:
+            selectedTab = 2
+        }
+        
+        // Clear the link after handling
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            deepLinkManager.activeLink = nil
+        }
+    }
 }

@@ -69,11 +69,32 @@
 			);
 			target = E17783BF2E900B1800E047F4 /* HarborDotWidgetExtension */;
 		};
+		E17783E32E900E7C00E047F4 /* Exceptions for "BulletJournal" folder in "HarborDotWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Helpers/AppTheme.swift,
+				Helpers/ColorExtensions.swift,
+				Helpers/DateExtensions.swift,
+				Helpers/DeepLinkHandler.swift,
+				Helpers/HapticManager.swift,
+				Helpers/NotificationManager.swift,
+				Helpers/RecurrenceManager.swift,
+				Helpers/SharedModelContainer.swift,
+				Models/AppSettings.swift,
+				Models/DayLog.swift,
+				Models/RecurrenceRule.swift,
+				Models/TaskItem.swift,
+			);
+			target = E17783BF2E900B1800E047F4 /* HarborDotWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E17783642E8DB0FA00E047F4 /* BulletJournal */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E17783E32E900E7C00E047F4 /* Exceptions for "BulletJournal" folder in "HarborDotWidgetExtension" target */,
+			);
 			path = BulletJournal;
 			sourceTree = "<group>";
 		};

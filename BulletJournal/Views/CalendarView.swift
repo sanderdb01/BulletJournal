@@ -13,59 +13,65 @@ struct CalendarView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Month/Year Header
-                monthHeader
-                
-                Divider()
-                
-                // Calendar Grid
-                calendarGrid
-                
-                Divider()
+           ZStack {
+              AppTheme.primaryBackground
+                 .ignoresSafeArea()
+              VStack(spacing: 0) {
+                 // Month/Year Header
+                 monthHeader
+                 
+                 Divider()
+                 
+                 // Calendar Grid
+                 calendarGrid
+                 
+                 Divider()
                     .padding(.vertical, 8)
-                
-                // Task Details Section
-                taskDetailsSection
-            }
-            .navigationTitle("Calendar")
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                // Initialize selected date to current date when view appears
-                if selectedDate == nil {
+                 
+                 // Task Details Section
+                 taskDetailsSection
+              }
+              .navigationTitle("Calendar")
+              .navigationBarTitleDisplayMode(.inline)
+              .onAppear {
+                 // Initialize selected date to current date when view appears
+                 if selectedDate == nil {
                     selectedDate = Date()
-                }
-            }
+                 }
+              }
+           }
         }
     }
     
     // MARK: - Month Header
     
-    private var monthHeader: some View {
-        HStack {
-            Button(action: { changeMonth(by: -1) }) {
-                Image(systemName: "chevron.left")
-                    .font(.title3)
-                    .frame(width: 44, height: 44)
-            }
-            
-            Spacer()
-            
-            Text(displayedMonth.monthAndYear)
-                .font(.headline)
-            
-            Spacer()
-            
-            Button(action: { changeMonth(by: 1) }) {
-                Image(systemName: "chevron.right")
-                    .font(.title3)
-                    .frame(width: 44, height: 44)
-            }
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 12)
-        .background(Color(uiColor: .systemGroupedBackground))
-    }
+   private var monthHeader: some View {
+       HStack {
+           Button(action: { changeMonth(by: -1) }) {
+               Image(systemName: "chevron.left")
+                   .font(.title3)
+                   .frame(width: 44, height: 44)
+           }
+           
+           Spacer()
+           
+           Text(displayedMonth.monthAndYear)
+               .font(.title3)
+               .fontWeight(.semibold)
+           
+           Spacer()
+           
+           Button(action: { changeMonth(by: 1) }) {
+               Image(systemName: "chevron.right")
+                   .font(.title3)
+                   .frame(width: 44, height: 44)
+           }
+       }
+       .padding(.horizontal)
+       .padding(.vertical, 16)
+       .background(AppTheme.secondaryBackground)
+       .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
+   }
     
     // MARK: - Calendar Grid
     

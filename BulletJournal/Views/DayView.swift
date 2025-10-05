@@ -3,6 +3,7 @@ import SwiftData
 
 struct DayView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) var colorScheme
     @Query private var dayLogs: [DayLog]
     @Query private var settings: [AppSettings]
     
@@ -34,126 +35,161 @@ struct DayView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Date Navigation Header
-                dateNavigationHeader
+            ZStack {
+                // Background
+                AppTheme.primaryBackground
+                    .ignoresSafeArea()
                 
-                Divider()
-                
-                // Tasks List
-                List {
-                   if let dayLog = currentDayLog, let tasks = dayLog.tasks, !tasks.isEmpty {
-                        // Task rows
-                        ForEach(dayLog.tasks ?? []) { task in
-                            TaskRowView(task: task, dayLog: dayLog)
-                                .listRowInsets(EdgeInsets())
-                                .listRowSeparator(.hidden)
+                VStack(spacing: 0) {
+                    // Date Navigation Header
+                    dateNavigationHeader
+                    
+                    // Tasks List
+                    List {
+                        if let dayLog = currentDayLog, let tasks = dayLog.tasks, !tasks.isEmpty {
+                            // Task rows
+                            ForEach(dayLog.tasks ?? []) { task in
+                                TaskRowView(task: task, dayLog: dayLog)
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                                    .padding(.horizontal)
+                                    .padding(.vertical, 4)
+                            }
+                        } else {
+                            // Empty state
+                            VStack(spacing: 16) {
+                                Image(systemName: "checkmark.circle")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.secondary.opacity(0.5))
+                                Text("No tasks for today")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                Text("Tap below to add your first task")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 60)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                         }
-                    } else {
-                        // Empty state
-                        VStack(spacing: 16) {
-                            Image(systemName: "checkmark.circle")
-                                .font(.system(size: 60))
-                                .foregroundColor(.secondary.opacity(0.5))
-                            Text("No tasks for today")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                            Text("Tap below to add your first task")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+                        
+                        // Add Task Button
+                        Button(action: {
+                            showingAddTask = true
+                        }) {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundColor(.blue)
+                                    .font(.title3)
+                                Text("Add New Task")
+                                    .foregroundColor(.blue)
+                                    .font(.headline)
+                                Spacer()
+                            }
+                            .padding()
+                            .background(AppTheme.tertiaryBackground)
+                            .cornerRadius(12)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 40)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        
+                        // Notes Section
+                        Section {
+                            notesSection
+                        }
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
                     }
-                    
-                    // Add Task Button
-                    Button(action: {
-                        showingAddTask = true
-                    }) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.blue)
-                                .font(.title3)
-                            Text("Add New Task")
-                                .foregroundColor(.blue)
-                                .font(.headline)
-                            Spacer()
-                        }
-                    }
-                    .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-                    .listRowSeparator(.hidden)
-                    
-                    // Notes Section
-                    Section {
-                        notesSection
-                    }
-                    .listRowInsets(EdgeInsets())
-                    .listRowSeparator(.hidden)
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
-                .listStyle(.plain)
             }
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarHidden(true)
             .sheet(isPresented: $showingAddTask) {
                 AddEditTaskView(dayLog: getOrCreateDayLog(), isPresented: $showingAddTask)
             }
         }
     }
     
-    // MARK: - Date Navigation Header
-    
-    private var dateNavigationHeader: some View {
-        VStack(spacing: 8) {
-            // Day of week
-            Text(currentDate.dayOfWeek)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            // Date with navigation arrows
-            HStack {
-                Button(action: {
-                    withAnimation {
-                        currentDate = currentDate.adding(days: -1)
-                    }
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.title3)
-                        .foregroundColor(.blue)
-                        .frame(width: 44, height: 44)
-                }
-                
-                Spacer()
-                
-                Text(currentDate.formatted(style: dateFormat))
-                    .font(.headline)
-                
-                Spacer()
-                
-                Button(action: {
-                    withAnimation {
-                        currentDate = currentDate.adding(days: 1)
-                    }
-                }) {
-                    Image(systemName: "chevron.right")
-                        .font(.title3)
-                        .foregroundColor(.blue)
-                        .frame(width: 44, height: 44)
-                }
-            }
-            .padding(.horizontal)
-        }
-        .padding(.vertical, 12)
-        .background(Color(uiColor: .systemGroupedBackground))
-    }
+   // MARK: - Date Navigation Header
+
+   private var dateNavigationHeader: some View {
+       VStack(spacing: 4) {
+           // Date with navigation arrows (combined with day of week)
+           HStack(spacing: 0) {
+               Button(action: {
+                   withAnimation(.easeInOut(duration: 0.2)) {
+                       currentDate = currentDate.adding(days: -1)
+                   }
+               }) {
+                   Image(systemName: "chevron.left.circle.fill")
+                       .font(.title2)
+                       .foregroundColor(.blue)
+               }
+               
+               Spacer()
+               
+               VStack(spacing: 2) {
+                   Text(currentDate.dayOfWeek)
+                       .font(.caption)
+                       .foregroundColor(.secondary)
+                   
+                   Text(currentDate.formatted(style: dateFormat))
+                       .font(.title3)
+                       .fontWeight(.semibold)
+               }
+               
+               Spacer()
+               
+               Button(action: {
+                   withAnimation(.easeInOut(duration: 0.2)) {
+                       currentDate = currentDate.adding(days: 1)
+                   }
+               }) {
+                   Image(systemName: "chevron.right.circle.fill")
+                       .font(.title2)
+                       .foregroundColor(.blue)
+               }
+               
+               Spacer()
+                   .frame(width: 40)
+               
+               // Today button
+               Button(action: {
+                   withAnimation {
+                       currentDate = Date()
+                   }
+               }) {
+                   Text("Today")
+                       .font(.subheadline)
+                       .fontWeight(.medium)
+                       .foregroundColor(.white)
+                       .padding(.horizontal, 12)
+                       .padding(.vertical, 6)
+                       .background(currentDate.isSameDay(as: Date()) ? Color.gray.opacity(0.3) : Color.blue)
+                       .cornerRadius(8)
+               }
+               .disabled(currentDate.isSameDay(as: Date()))
+           }
+           .padding(.horizontal, 16)
+       }
+       .padding(.vertical, 12)
+       .background(AppTheme.secondaryBackground)
+       .shadow(color: Color.black.opacity(colorScheme == .dark ? 0 : 0.05), radius: 2, x: 0, y: 2)
+   }
     
     // MARK: - Notes Section
     
     private var notesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 0) {
             Button(action: {
-                withAnimation {
+                withAnimation(.easeInOut(duration: 0.2)) {
                     isNotesExpanded.toggle()
                 }
             }) {
@@ -168,17 +204,23 @@ struct DayView: View {
                         .foregroundColor(.secondary)
                 }
                 .padding()
+                .background(AppTheme.tertiaryBackground)
+                .cornerRadius(12)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
             
             if isNotesExpanded {
                 NotesEditorView(dayLog: getOrCreateDayLog())
-                    .padding(.horizontal)
-            } else if let dayLog = currentDayLog, !dayLog.notes!.isEmpty {
-                Text(dayLog.notes!)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+            } else if let dayLog = currentDayLog, let notes = dayLog.notes, !notes.isEmpty {
+                Text(notes)
                     .lineLimit(2)
                     .foregroundColor(.secondary)
-                    .padding(.horizontal)
-                    .padding(.bottom)
+                    .padding(.horizontal, 32)
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
             }
         }
     }
@@ -186,5 +228,6 @@ struct DayView: View {
 
 #Preview {
     MainTabView()
+        .environmentObject(DeepLinkManager())
         .modelContainer(for: [DayLog.self, TaskItem.self, AppSettings.self], inMemory: true)
 }
