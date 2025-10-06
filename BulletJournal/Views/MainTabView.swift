@@ -4,11 +4,33 @@ import SwiftData
 struct MainTabView: View {
     @EnvironmentObject var deepLinkManager: DeepLinkManager
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     
     @State private var selectedTab = 0
     @State private var currentDate = Date()
+    @State private var displayedMonth = Date()  // Add this line
     
     var body: some View {
+        Group {
+            if horizontalSizeClass == .regular {
+                // iPad layout
+                iPadMainView()
+                    .environmentObject(deepLinkManager)
+            } else {
+                // iPhone layout
+                iPhoneTabView
+            }
+        }
+        .onChange(of: deepLinkManager.activeLink) { oldValue, newValue in
+            if horizontalSizeClass != .regular {
+                handleDeepLink(newValue)
+            }
+        }
+    }
+    
+    // MARK: - iPhone Tab View
+    
+    private var iPhoneTabView: some View {
         TabView(selection: $selectedTab) {
             DayView(currentDate: $currentDate)
                 .tabItem {
@@ -16,7 +38,11 @@ struct MainTabView: View {
                 }
                 .tag(0)
             
-            CalendarView(currentDate: $currentDate, selectedTab: $selectedTab)
+            CalendarView(
+                currentDate: $currentDate,
+                selectedTab: $selectedTab,
+                displayedMonth: $displayedMonth  // Add this parameter
+            )
                 .tabItem {
                     Label("Calendar", systemImage: "calendar")
                 }
@@ -29,9 +55,6 @@ struct MainTabView: View {
                 .tag(2)
         }
         .background(AppTheme.primaryBackground.ignoresSafeArea())
-        .onChange(of: deepLinkManager.activeLink) { oldValue, newValue in
-            handleDeepLink(newValue)
-        }
     }
     
     private func handleDeepLink(_ link: DeepLink?) {
@@ -40,9 +63,11 @@ struct MainTabView: View {
         switch link {
         case .today:
             currentDate = Date()
+            displayedMonth = Date()  // Also update this
             selectedTab = 0
         case .date(let date):
             currentDate = date
+            displayedMonth = date  // And this
             selectedTab = 0
         case .search:
             selectedTab = 2

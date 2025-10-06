@@ -77,6 +77,7 @@
 				Helpers/DateExtensions.swift,
 				Helpers/DeepLinkHandler.swift,
 				Helpers/HapticManager.swift,
+				Helpers/KeyboardShortcuts.swift,
 				Helpers/NotificationManager.swift,
 				Helpers/RecurrenceManager.swift,
 				Helpers/SharedModelContainer.swift,
@@ -84,6 +85,15 @@
 				Models/DayLog.swift,
 				Models/RecurrenceRule.swift,
 				Models/TaskItem.swift,
+				Views/AddEditTaskView.swift,
+				Views/CalendarView.swift,
+				Views/DayView.swift,
+				Views/iPadMainView.swift,
+				Views/MainTabView.swift,
+				Views/NotesEditorView.swift,
+				Views/SearchView.swift,
+				Views/SettingsView.swift,
+				Views/TaskRowView.swift,
 			);
 			target = E17783BF2E900B1800E047F4 /* HarborDotWidgetExtension */;
 		};
