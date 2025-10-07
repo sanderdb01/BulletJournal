@@ -29,6 +29,30 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
+      <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "E177837A2E8DB0FE00E047F4"
+               BuildableName = "HarborDotUITests.xctest"
+               BlueprintName = "HarborDotUITests"
+               ReferencedContainer = "container:HarborDot.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "E17783702E8DB0FE00E047F4"
+               BuildableName = "HarborDotTests.xctest"
+               BlueprintName = "HarborDotTests"
+               ReferencedContainer = "container:HarborDot.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
