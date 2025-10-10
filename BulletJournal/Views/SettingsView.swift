@@ -19,6 +19,7 @@ struct SettingsView: View {
     @State private var exportFileURL: URL?
     @State private var isExporting = false
     @State private var isImporting = false
+   @State private var showingResetTagsAlert = false
     
     private var currentSettings: AppSettings {
         if let existing = settings.first {
@@ -31,13 +32,17 @@ struct SettingsView: View {
         }
     }
     
+    private var totalTasksCount: Int {
+        dayLogs.reduce(0) { $0 + ($1.tasks?.count ?? 0) }
+    }
+    
     var body: some View {
         NavigationStack {
             Form {
                 // Date Format Section
                 Section {
                     Picker("Date Format", selection: Binding(
-                     get: { currentSettings.dateFormat ?? .numeric},
+                        get: { currentSettings.dateFormat ?? .numeric },
                         set: { newValue in
                             currentSettings.dateFormat = newValue
                             try? modelContext.save()
@@ -50,6 +55,20 @@ struct SettingsView: View {
                     Text("Display")
                 } footer: {
                     Text("Choose how dates are displayed throughout the app")
+                }
+                
+                // NEW: Tags Section
+                Section {
+                    NavigationLink(destination: TagSettingsView()) {
+                        HStack {
+                            Label("Manage Tags", systemImage: "tag.fill")
+                            Spacer()
+                        }
+                    }
+                } header: {
+                    Text("Tags")
+                } footer: {
+                    Text("Customize color tags and manage custom tags for organizing your tasks.")
                 }
                 
                 // Data Management Section
@@ -88,6 +107,9 @@ struct SettingsView: View {
                     Button(role: .destructive, action: { showingClearDataAlert = true }) {
                         Label("Clear All Data", systemImage: "trash")
                     }
+                   Button(role: .destructive, action: { showingResetTagsAlert = true }) {
+                           Label("Reset Color Tags", systemImage: "arrow.counterclockwise")
+                       }
                 } header: {
                     Text("Danger Zone")
                 } footer: {
@@ -133,7 +155,7 @@ struct SettingsView: View {
             .alert("Export Successful", isPresented: $showingExportSuccess) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("Your data has been exported successfully. You can find it in your Files app.")
+                Text("Your data has been exported successfully.")
             }
             .alert("Export Error", isPresented: $showingExportError) {
                 Button("OK", role: .cancel) { }
@@ -145,238 +167,304 @@ struct SettingsView: View {
             } message: {
                 Text(importErrorMessage)
             }
+            .alert("Reset Color Tags", isPresented: $showingResetTagsAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Reset & Restart", role: .destructive) {
+                    resetColorTags()
+                }
+            } message: {
+                Text("This will delete all color and custom tags. The app will restart and recreate the 8 default color tags. Any custom tags will be lost.")
+            }
             .fileImporter(
                 isPresented: $showingImportPicker,
                 allowedContentTypes: [.json],
                 allowsMultipleSelection: false
             ) { result in
-                handleImport(result: result)
+                handleImportResult(result)
             }
             .fileExporter(
                 isPresented: $showingExportShare,
-                document: exportFileURL.flatMap { JSONFileDocument(fileURL: $0) },
+                document: exportFileURL.map { JSONFileDocument(fileURL: $0) },
                 contentType: .json,
-                defaultFilename: "BulletJournal_Export_\(dateFormatterForFilename.string(from: Date()))"
+                defaultFilename: "HarborDot_Export_\(dateFormatterForFilename.string(from: Date())).json"
             ) { result in
-                handleExportResult(result: result)
+                switch result {
+                case .success:
+                    showingExportSuccess = true
+                case .failure(let error):
+                    exportErrorMessage = error.localizedDescription
+                    showingExportError = true
+                }
+                isExporting = false
             }
         }
     }
     
-    // MARK: - Computed Properties
-    
-    private var totalTasksCount: Int {
-        dayLogs.reduce(0) { $0 + ($1.tasks?.count ?? 0) }
-    }
-    
-    // MARK: - Data Management Functions
-    
-    private func clearAllData() {
-        // Delete all day logs (tasks will be cascade deleted)
-        for dayLog in dayLogs {
-            modelContext.delete(dayLog)
-        }
-        
-        do {
-            try modelContext.save()
-        } catch {
-            print("Error clearing data: \(error)")
-        }
-    }
+    // MARK: - Export Data (UPDATED for Tags)
     
     private func exportData() {
         isExporting = true
         
-        Task {
-            do {
-                let exportData = createExportData()
-                let jsonData = try JSONEncoder().encode(exportData)
-                
-                // Create a temporary file
-                let tempDirectory = FileManager.default.temporaryDirectory
-                let fileName = "BulletJournal_Export_\(dateFormatterForFilename.string(from: Date())).json"
-                let fileURL = tempDirectory.appendingPathComponent(fileName)
-                
-                try jsonData.write(to: fileURL)
-                
-                await MainActor.run {
-                    exportFileURL = fileURL
-                    showingExportShare = true
-                    isExporting = false
-                }
-            } catch {
-                await MainActor.run {
-                    exportErrorMessage = "Failed to export data: \(error.localizedDescription)"
-                    showingExportError = true
-                    isExporting = false
-                }
-            }
-        }
-    }
-    
-    private func handleExportResult(result: Result<URL, Error>) {
-        switch result {
-        case .success:
-            showingExportSuccess = true
-        case .failure(let error):
-            exportErrorMessage = "Failed to save export: \(error.localizedDescription)"
+        do {
+            let exportData = createExportData()
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = .prettyPrinted
+            
+            let data = try encoder.encode(exportData)
+            
+            let tempURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("HarborDot_Export_\(dateFormatterForFilename.string(from: Date())).json")
+            
+            try data.write(to: tempURL)
+            
+            exportFileURL = tempURL
+            showingExportShare = true
+        } catch {
+            exportErrorMessage = error.localizedDescription
             showingExportError = true
+            isExporting = false
         }
     }
     
-   private func createExportData() -> ExportData {
-       var exportDayLogs: [ExportDayLog] = []
-       
-       for dayLog in dayLogs {
-           // Safely unwrap optional properties
-           guard let id = dayLog.id,
-                 let date = dayLog.date else {
-               continue // Skip if essential data is missing
-           }
-           
-           let exportTasks = (dayLog.tasks ?? []).compactMap { task -> ExportTask? in
-               // Ensure all required task properties exist
-               guard let taskId = task.id,
-                     let name = task.name,
-                     let color = task.color,
-                     let notes = task.notes,
-                     let status = task.status,
-                     let createdAt = task.createdAt,
-                     let modifiedAt = task.modifiedAt else {
-                   return nil
-               }
-               
-               return ExportTask(
-                   id: taskId,
-                   name: name,
-                   color: color,
-                   notes: notes,
-                   status: status.rawValue,
-                   createdAt: createdAt,
-                   modifiedAt: modifiedAt
-               )
-           }
-           
-           let exportDayLog = ExportDayLog(
-               id: id,
-               date: date,
-               notes: dayLog.notes ?? "",
-               tasks: exportTasks
-           )
-           
-           exportDayLogs.append(exportDayLog)
-       }
-       
-       return ExportData(
-           version: 1,
-           exportDate: Date(),
-           dayLogs: exportDayLogs
-       )
-   }
-    
-    private func handleImport(result: Result<[URL], Error>) {
-        isImporting = true
+    // UPDATED: Include tags in export
+    private func createExportData() -> ExportData {
+        var exportDayLogs: [ExportDayLog] = []
+        var exportTags: [ExportTag] = []
         
+        // Export all tags
+        let descriptor = FetchDescriptor<Tag>()
+        do {
+            let allTags = try modelContext.fetch(descriptor)
+            for tag in allTags {
+                guard let id = tag.id,
+                      let name = tag.name,
+                      let isPrimary = tag.isPrimary,
+                      let order = tag.order else { continue }
+                
+                let exportTag = ExportTag(
+                    id: id,
+                    name: name,
+                    isPrimary: isPrimary,
+                    order: order
+                )
+                exportTags.append(exportTag)
+            }
+        } catch {
+            print("Error fetching tags for export: \(error)")
+        }
+        
+        // Export day logs and tasks
+        for dayLog in dayLogs {
+            guard let dayLogId = dayLog.id,
+                  let date = dayLog.date else { continue }
+            
+            let exportTasks = (dayLog.tasks ?? []).compactMap { task -> ExportTask? in
+                guard let id = task.id,
+                      let name = task.name,
+                      let color = task.color,
+                      let notes = task.notes,
+                      let status = task.status,
+                      let createdAt = task.createdAt,
+                      let modifiedAt = task.modifiedAt else { return nil }
+                
+                return ExportTask(
+                    id: id,
+                    name: name,
+                    color: color,
+                    notes: notes,
+                    status: status.rawValue,
+                    createdAt: createdAt,
+                    modifiedAt: modifiedAt,
+                    reminderTime: task.reminderTime,
+                    notificationId: task.notificationId,
+                    isRecurring: task.isRecurring,
+                    recurrenceRule: task.recurrenceRule,
+                    recurrenceEndDate: task.recurrenceEndDate,
+                    isTemplate: task.isTemplate,
+                    sourceTemplateId: task.sourceTemplateId,
+                    isFavorite: task.isFavorite,
+                    isPinned: task.isPinned,
+                    category: task.category?.rawValue,
+                    primaryTagId: task.primaryTag?.id,
+                    customTagIds: task.customTags.compactMap { $0.id }
+                )
+            }
+            
+            let exportDayLog = ExportDayLog(
+                id: dayLogId,
+                date: date,
+                notes: dayLog.notes ?? "",
+                tasks: exportTasks
+            )
+            
+            exportDayLogs.append(exportDayLog)
+        }
+        
+        return ExportData(
+            version: 2,  // Incremented version for tags support
+            exportDate: Date(),
+            dayLogs: exportDayLogs,
+            tags: exportTags
+        )
+    }
+    
+    // MARK: - Import Data (UPDATED for Tags)
+    
+    private func handleImportResult(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
-            guard let url = urls.first else {
-                importErrorMessage = "No file selected"
-                showingImportError = true
-                isImporting = false
-                return
-            }
-            
+            guard let url = urls.first else { return }
             importData(from: url)
-            
         case .failure(let error):
-            importErrorMessage = "Failed to access file: \(error.localizedDescription)"
+            importErrorMessage = error.localizedDescription
             showingImportError = true
-            isImporting = false
         }
     }
     
     private func importData(from url: URL) {
-        Task {
-            do {
-                // Start accessing security-scoped resource
-                guard url.startAccessingSecurityScopedResource() else {
-                    throw ImportError.accessDenied
-                }
-                defer { url.stopAccessingSecurityScopedResource() }
+        isImporting = true
+        
+        defer {
+            isImporting = false
+        }
+        
+        do {
+            guard url.startAccessingSecurityScopedResource() else {
+                throw ImportError.accessDenied
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+            
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let exportData = try decoder.decode(ExportData.self, from: data)
+            
+            // UPDATED: First, import all tags
+            var tagMapping: [UUID: Tag] = [:]
+            
+            for exportTag in exportData.tags {
+                // Check if tag already exists
+                let tagId = exportTag.id
+                let descriptor = FetchDescriptor<Tag>(
+                    predicate: #Predicate { tag in
+                        tag.id == tagId
+                    }
+                )
                 
-                let jsonData = try Data(contentsOf: url)
-                let exportData = try JSONDecoder().decode(ExportData.self, from: jsonData)
+                let existingTags = try? modelContext.fetch(descriptor)
                 
-                await MainActor.run {
-                    importExportData(exportData)
-                    isImporting = false
-                    dismiss()
-                }
-                
-            } catch {
-                await MainActor.run {
-                    importErrorMessage = "Failed to import data: \(error.localizedDescription)"
-                    showingImportError = true
-                    isImporting = false
+                if let existingTag = existingTags?.first {
+                    // Tag exists, update it
+                    existingTag.name = exportTag.name
+                    existingTag.isPrimary = exportTag.isPrimary
+                    existingTag.order = exportTag.order
+                    tagMapping[exportTag.id] = existingTag
+                } else {
+                    // Create new tag
+                    let newTag = Tag(
+                        name: exportTag.name,
+                        isPrimary: exportTag.isPrimary,
+                        order: exportTag.order
+                    )
+                    newTag.id = exportTag.id
+                    modelContext.insert(newTag)
+                    tagMapping[exportTag.id] = newTag
                 }
             }
+            
+            try? modelContext.save()
+            
+            // Then import day logs and tasks
+            for exportDayLog in exportData.dayLogs {
+                if let existingDayLog = dayLogs.first(where: { $0.id == exportDayLog.id }) {
+                    // Merge tasks with existing day log
+                    let existingTaskIDs = Set((existingDayLog.tasks ?? []).compactMap { $0.id })
+                    
+                    for exportTask in exportDayLog.tasks {
+                        if !existingTaskIDs.contains(exportTask.id) {
+                            let newTask = createTaskFromExport(exportTask, tagMapping: tagMapping)
+                            existingDayLog.addTask(newTask)
+                            modelContext.insert(newTask)
+                        }
+                    }
+                    
+                    // Merge notes
+                    if !exportDayLog.notes.isEmpty && (existingDayLog.notes?.isEmpty ?? true) {
+                        existingDayLog.notes = exportDayLog.notes
+                    }
+                } else {
+                    // Create new day log
+                    let newDayLog = DayLog(date: exportDayLog.date, notes: exportDayLog.notes)
+                    newDayLog.id = exportDayLog.id
+                    
+                    for exportTask in exportDayLog.tasks {
+                        let newTask = createTaskFromExport(exportTask, tagMapping: tagMapping)
+                        newDayLog.addTask(newTask)
+                        modelContext.insert(newTask)
+                    }
+                    
+                    modelContext.insert(newDayLog)
+                }
+            }
+            
+            try? modelContext.save()
+            
+        } catch {
+            importErrorMessage = error.localizedDescription
+            showingImportError = true
         }
     }
     
-   private func importExportData(_ exportData: ExportData) {
-       for exportDayLog in exportData.dayLogs {
-           // Check if we already have a day log for this date
-           if let existingDayLog = dayLogs.first(where: { $0.date == exportDayLog.date }) {
-               // Merge: add tasks that don't exist (by ID)
-               let existingTaskIDs = Set((existingDayLog.tasks ?? []).compactMap { $0.id })
-               
-               for exportTask in exportDayLog.tasks {
-                   if !existingTaskIDs.contains(exportTask.id) {
-                       let newTask = TaskItem(
-                           name: exportTask.name,
-                           color: exportTask.color,
-                           notes: exportTask.notes,
-                           status: TaskStatus(rawValue: exportTask.status) ?? .normal
-                       )
-                       newTask.id = exportTask.id
-                       newTask.createdAt = exportTask.createdAt
-                       newTask.modifiedAt = exportTask.modifiedAt
-                       
-                       existingDayLog.addTask(newTask)
-                       modelContext.insert(newTask)
-                   }
-               }
-               
-               // Merge notes if the imported day has notes and existing doesn't
-               if !exportDayLog.notes.isEmpty && (existingDayLog.notes?.isEmpty ?? true) {
-                   existingDayLog.notes = exportDayLog.notes
-               }
-           } else {
-               // Create new day log
-               let newDayLog = DayLog(date: exportDayLog.date, notes: exportDayLog.notes)
-               newDayLog.id = exportDayLog.id
-               
-               for exportTask in exportDayLog.tasks {
-                   let newTask = TaskItem(
-                       name: exportTask.name,
-                       color: exportTask.color,
-                       notes: exportTask.notes,
-                       status: TaskStatus(rawValue: exportTask.status) ?? .normal
-                   )
-                   newTask.id = exportTask.id
-                   newTask.createdAt = exportTask.createdAt
-                   newTask.modifiedAt = exportTask.modifiedAt
-                   
-                   newDayLog.addTask(newTask)
-                   modelContext.insert(newTask)
-               }
-               
-               modelContext.insert(newDayLog)
-           }
-       }
-       
-       try? modelContext.save()
-   }
+    // Helper to create task from export with tag restoration
+    private func createTaskFromExport(_ exportTask: ExportTask, tagMapping: [UUID: Tag]) -> TaskItem {
+        let newTask = TaskItem(
+            name: exportTask.name,
+            color: exportTask.color,
+            notes: exportTask.notes,
+            status: TaskStatus(rawValue: exportTask.status) ?? .normal
+        )
+        newTask.id = exportTask.id
+        newTask.createdAt = exportTask.createdAt
+        newTask.modifiedAt = exportTask.modifiedAt
+        newTask.reminderTime = exportTask.reminderTime
+        newTask.notificationId = exportTask.notificationId
+        newTask.isRecurring = exportTask.isRecurring
+        newTask.recurrenceRule = exportTask.recurrenceRule
+        newTask.recurrenceEndDate = exportTask.recurrenceEndDate
+        newTask.isTemplate = exportTask.isTemplate
+        newTask.sourceTemplateId = exportTask.sourceTemplateId
+        newTask.isFavorite = exportTask.isFavorite
+        newTask.isPinned = exportTask.isPinned
+        if let categoryString = exportTask.category {
+            newTask.category = TaskCategory(rawValue: categoryString)
+        }
+        
+        // UPDATED: Restore tag relationships
+        if let primaryTagId = exportTask.primaryTagId,
+           let primaryTag = tagMapping[primaryTagId] {
+            newTask.setPrimaryTag(primaryTag)
+        }
+        
+        if let customTagIds = exportTask.customTagIds {
+            for tagId in customTagIds {
+                if let customTag = tagMapping[tagId] {
+                    newTask.addCustomTag(customTag)
+                }
+            }
+        }
+        
+        return newTask
+    }
+    
+    // MARK: - Clear All Data
+    
+    private func clearAllData() {
+        for dayLog in dayLogs {
+            modelContext.delete(dayLog)
+        }
+        try? modelContext.save()
+    }
     
     // Date formatter for export filename
     private var dateFormatterForFilename: DateFormatter {
@@ -384,6 +472,35 @@ struct SettingsView: View {
         formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
         return formatter
     }
+   
+   private func resetColorTags() {
+       // Delete all tags from database
+       let allTagsDescriptor = FetchDescriptor<Tag>()
+       
+       do {
+           let allTags = try modelContext.fetch(allTagsDescriptor)
+           
+           print("🗑️ Deleting all \(allTags.count) tags")
+           
+           for tag in allTags {
+               modelContext.delete(tag)
+           }
+           
+           try modelContext.save()
+           
+           // Clear the flag so defaults will be recreated
+           UserDefaults.standard.removeObject(forKey: "HasCreatedColorTags")
+           
+           print("✅ Tags deleted and flag cleared")
+           
+           // Force app restart
+           DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+               exit(0)
+           }
+       } catch {
+           print("❌ Error resetting tags: \(error)")
+       }
+   }
 }
 
 // MARK: - JSON File Document
@@ -413,12 +530,13 @@ struct JSONFileDocument: FileDocument {
     }
 }
 
-// MARK: - Export Data Structures
+// MARK: - Export Data Structures (UPDATED for Tags)
 
 struct ExportData: Codable {
     let version: Int
     let exportDate: Date
     let dayLogs: [ExportDayLog]
+    let tags: [ExportTag]  // NEW
 }
 
 struct ExportDayLog: Codable {
@@ -436,6 +554,25 @@ struct ExportTask: Codable {
     let status: String
     let createdAt: Date
     let modifiedAt: Date
+    let reminderTime: Date?
+    let notificationId: String?
+    let isRecurring: Bool?
+    let recurrenceRule: String?
+    let recurrenceEndDate: Date?
+    let isTemplate: Bool?
+    let sourceTemplateId: UUID?
+    let isFavorite: Bool?
+    let isPinned: Bool?
+    let category: String?
+    let primaryTagId: UUID?      // NEW
+    let customTagIds: [UUID]?    // NEW
+}
+
+struct ExportTag: Codable {  // NEW
+    let id: UUID
+    let name: String
+    let isPrimary: Bool
+    let order: Int
 }
 
 // MARK: - Import Error
@@ -446,5 +583,5 @@ enum ImportError: Error {
 
 #Preview {
     SettingsView()
-        .modelContainer(for: [DayLog.self, TaskItem.self, AppSettings.self], inMemory: true)
+        .modelContainer(for: [DayLog.self, TaskItem.self, AppSettings.self, Tag.self], inMemory: true)
 }

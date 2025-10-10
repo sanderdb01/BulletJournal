@@ -143,6 +143,7 @@
 				Models/AppSettings.swift,
 				Models/DayLog.swift,
 				Models/RecurrenceRule.swift,
+				Models/Tag.swift,
 				Models/TaskItem.swift,
 				Views/AddEditTaskView.swift,
 				Views/CalendarView.swift,
@@ -152,6 +153,8 @@
 				Views/NotesEditorView.swift,
 				Views/SearchView.swift,
 				Views/SettingsView.swift,
+				Views/TagPicker.swift,
+				Views/TagSettings.swift,
 				Views/TaskRowView.swift,
 			);
 			target = E17783BF2E900B1800E047F4 /* HarborDotWidgetExtension */;
@@ -172,6 +175,7 @@
 				Models/AppSettings.swift,
 				Models/DayLog.swift,
 				Models/RecurrenceRule.swift,
+				Models/Tag.swift,
 				Models/TaskItem.swift,
 			);
 			target = E19772F92E946D8B00293A38 /* HarborDot Watch App Watch App */;
@@ -185,6 +189,7 @@
 				Models/AppSettings.swift,
 				Models/DayLog.swift,
 				Models/RecurrenceRule.swift,
+				Models/Tag.swift,
 				Models/TaskItem.swift,
 			);
 			target = E19773282E946DD100293A38 /* HarborDot Watch WidgetExtension */;

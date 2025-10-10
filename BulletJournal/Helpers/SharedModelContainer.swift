@@ -3,11 +3,12 @@ import SwiftData
 
 class SharedModelContainer {
     static let shared: ModelContainer = {
-        let schema = Schema([
-            DayLog.self,
-            TaskItem.self,
-            AppSettings.self
-        ])
+       let schema = Schema([
+           DayLog.self,
+           TaskItem.self,
+           AppSettings.self,
+           Tag.self  // ADD THIS LINE
+       ])
         
         // Get shared container URL
         let appGroupID = "group.com.sanders.HarborDot"
