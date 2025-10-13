@@ -161,7 +161,11 @@
 				Views/CalendarView.swift,
 				Views/DayView.swift,
 				Views/iPadMainView.swift,
-				Views/MacMainView.swift,
+				"Views/Mac Files/GeneralNoteEditorView.swift",
+				"Views/Mac Files/MacMainView.swift",
+				"Views/Mac Files/NewNoteSheet.swift",
+				"Views/Mac Files/NoteRowView.swift",
+				"Views/Mac Files/NotesListView.swift",
 				Views/MainTabView.swift,
 				Views/NotesEditorView.swift,
 				Views/SearchView.swift,
@@ -171,6 +175,13 @@
 				Views/TaskRowView.swift,
 			);
 			target = E14AE71C2E98AAE70099EED7 /* HarborDotMacOS */;
+		};
+		E14AE7A02E9D555C0099EED7 /* Exceptions for "BulletJournal" folder in "HarborDot" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Views/Mac Files/NotesListView.swift",
+			);
+			target = E17783612E8DB0FA00E047F4 /* HarborDot */;
 		};
 		E17783D72E900B1C00E047F4 /* Exceptions for "HarborDotWidget" folder in "HarborDotWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -201,6 +212,9 @@
 				Views/CalendarView.swift,
 				Views/DayView.swift,
 				Views/iPadMainView.swift,
+				"Views/Mac Files/GeneralNoteEditorView.swift",
+				"Views/Mac Files/NewNoteSheet.swift",
+				"Views/Mac Files/NoteRowView.swift",
 				Views/MainTabView.swift,
 				Views/NotesEditorView.swift,
 				Views/SearchView.swift,
@@ -238,6 +252,9 @@
 				Views/AddEditTaskView.swift,
 				Views/CalendarView.swift,
 				Views/DayView.swift,
+				"Views/Mac Files/GeneralNoteEditorView.swift",
+				"Views/Mac Files/NewNoteSheet.swift",
+				"Views/Mac Files/NoteRowView.swift",
 				Views/MainTabView.swift,
 				Views/NotesEditorView.swift,
 				Views/SearchView.swift,
@@ -268,6 +285,9 @@
 				Views/AddEditTaskView.swift,
 				Views/CalendarView.swift,
 				Views/DayView.swift,
+				"Views/Mac Files/GeneralNoteEditorView.swift",
+				"Views/Mac Files/NewNoteSheet.swift",
+				"Views/Mac Files/NoteRowView.swift",
 				Views/MainTabView.swift,
 				Views/NotesEditorView.swift,
 				Views/SearchView.swift,
@@ -299,6 +319,7 @@
 		E17783642E8DB0FA00E047F4 /* BulletJournal */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				E14AE7A02E9D555C0099EED7 /* Exceptions for "BulletJournal" folder in "HarborDot" target */,
 				E17783E32E900E7C00E047F4 /* Exceptions for "BulletJournal" folder in "HarborDotWidgetExtension" target */,
 				E19773482E946DF800293A38 /* Exceptions for "BulletJournal" folder in "HarborDot Watch App Watch App" target */,
 				E19773492E946DF800293A38 /* Exceptions for "BulletJournal" folder in "HarborDot Watch WidgetExtension" target */,

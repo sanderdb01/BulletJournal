@@ -122,7 +122,16 @@ struct AddEditTaskView: View {
             // Set default Blue tag for new tasks
             if taskToEdit == nil && selectedPrimaryTag == nil {
                if let blueTag = TagManager.findTag(byName: "Blue", in: modelContext) {
-                  selectedPrimaryTag = blueTag
+//                  selectedPrimaryTag = blueTag
+                  // Find blue tag and select it
+                                 let descriptor = FetchDescriptor<Tag>(
+                                    predicate: #Predicate { tag in
+                                       tag.isPrimary == true && tag.name == "blue"
+                                    }
+                                 )
+                                 if let blueTag = try? modelContext.fetch(descriptor).first {
+                                    selectedPrimaryTag = blueTag
+                                 }
                }
             }
          }

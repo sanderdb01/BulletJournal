@@ -9,6 +9,7 @@ struct CalendarView: View {
    @Binding var currentDate: Date
    @Binding var selectedTab: Int
    @Binding var displayedMonth: Date
+   var onDateSelected: ((Date) -> Void)? = nil
    
    var isLandscape: Bool = false  // Add this parameter
    
@@ -117,6 +118,8 @@ struct CalendarView: View {
                   .onTapGesture {
                      withAnimation(.easeInOut(duration: 0.2)) {
                         selectedDate = date
+                        // NEW: Call callback if provided (Mac cross-pane navigation)
+                            onDateSelected?(date)
                      }
                   }
                } else {

@@ -7,6 +7,8 @@ struct SearchView: View {
    
    @Binding var currentDate: Date
    @Binding var selectedTab: Int
+   var onTaskSelected: ((Date) -> Void)? = nil
+   var onNoteSelected: ((UUID) -> Void)? = nil
    
    @State private var searchText = ""
    @State private var showingSettings = false
@@ -50,17 +52,17 @@ struct SearchView: View {
                resultsList
             }
             .navigationTitle("Search")
-            #if os(iOS)
+#if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
-            #endif
+#endif
             .toolbar {
-                ToolbarItem(placement: .automatic) {
-                    Button(action: {
-                        showingSettings = true
-                    }) {
-                        Image(systemName: "gearshape")
-                    }
-                }
+               ToolbarItem(placement: .automatic) {
+                  Button(action: {
+                     showingSettings = true
+                  }) {
+                     Image(systemName: "gearshape")
+                  }
+               }
             }            .sheet(isPresented: $showingSettings) {
                SettingsView()
             }
@@ -97,9 +99,9 @@ struct SearchView: View {
       }
       .padding()
 #if os(iOS)
-.background(Color(uiColor: .secondarySystemBackground))
+      .background(Color(uiColor: .secondarySystemBackground))
 #else
-.background(Color(nsColor: .controlBackgroundColor))
+      .background(Color(nsColor: .controlBackgroundColor))
 #endif
       .cornerRadius(10)
       .padding()
@@ -160,7 +162,12 @@ struct SearchView: View {
       // Small delay to allow keyboard to dismiss smoothly
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
          currentDate = date
-         selectedTab = 0 // Switch to Day View
+         // Call the callback if provided (Mac), otherwise switch tabs (iOS)
+             if let onTaskSelected = onTaskSelected {
+                 onTaskSelected(date)
+             } else {
+                 selectedTab = 0 //Switch to DayView
+             }
       }
    }
 }
