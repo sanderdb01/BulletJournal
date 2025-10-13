@@ -28,10 +28,15 @@ struct HarborDotApp: App {
                     cleanupDuplicateTags()  // RUN CLEANUP FIRST
                     initializeDefaultTags()
                     generateRecurringTasks()
-//                   resetCloudKitTags()  //Run this to clear out all the tags from cloudkit if needed
                 }
         }
         .modelContainer(SharedModelContainer.shared)
+        #if os(macOS)
+        .defaultSize(width: 1200, height: 800)
+        .commands {
+            HarborDotCommands()
+        }
+        #endif
     }
     
     // CLEANUP DUPLICATE TAGS (run this once, then can be removed)
@@ -78,7 +83,7 @@ struct HarborDotApp: App {
             print("❌ Error cleaning up duplicate tags: \(error)")
         }
     }
-   
+    
     private func initializeDefaultTags() {
         let context = SharedModelContainer.shared.mainContext
         TagManager.createDefaultTags(in: context)
@@ -95,28 +100,19 @@ struct HarborDotApp: App {
             modelContext: modelContext
         )
     }
-   
-   private func resetCloudKitTags() {
-       let context = SharedModelContainer.shared.mainContext
-       
-       do {
-           // Delete ALL tags from local database
-           let allTagsDescriptor = FetchDescriptor<Tag>()
-           let allTags = try context.fetch(allTagsDescriptor)
-           
-           print("🗑️ Deleting ALL \(allTags.count) tags from local database")
-           
-           for tag in allTags {
-               context.delete(tag)
-           }
-           
-           try context.save()
-           print("✅ All tags deleted locally - CloudKit will sync this deletion")
-           
-           // Wait for CloudKit sync, then restart app
-           print("⏳ Wait 30 seconds for CloudKit sync, then force-quit and restart the app")
-       } catch {
-           print("❌ Error deleting tags: \(error)")
-       }
-   }
 }
+
+// MARK: - Mac Menu Commands
+#if os(macOS)
+struct HarborDotCommands: Commands {
+    var body: some Commands {
+        // We'll add keyboard shortcuts here in the next step
+        CommandGroup(replacing: .newItem) {
+            Button("New Task...") {
+                // We'll implement this later
+            }
+            .keyboardShortcut("n", modifiers: .command)
+        }
+    }
+}
+#endif

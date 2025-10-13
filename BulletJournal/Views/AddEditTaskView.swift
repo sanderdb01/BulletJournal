@@ -70,7 +70,9 @@ struct AddEditTaskView: View {
          Form {
             Section("Task Details") {
                TextField("Task Name", text: $taskName)
+               #if os(iOS)
                   .autocorrectionDisabled()
+               #endif
             }
             
             // NEW: Tags Section
@@ -113,7 +115,9 @@ struct AddEditTaskView: View {
 //            }
          }
          .navigationTitle(taskToEdit == nil ? "New Task" : "Edit Task")
+         #if os(iOS)
          .navigationBarTitleDisplayMode(.inline)
+         #endif
          .onAppear {
             // Set default Blue tag for new tasks
             if taskToEdit == nil && selectedPrimaryTag == nil {

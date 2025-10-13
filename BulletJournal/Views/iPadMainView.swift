@@ -27,7 +27,11 @@ struct iPadMainView: View {
                 if showSidebar || isLandscape {
                     sidebarContent
                         .frame(width: 200)
-                        .background(Color(uiColor: .systemGroupedBackground))
+#if os(iOS)
+.background(Color(uiColor: .systemGroupedBackground))
+#else
+.background(Color(nsColor: .controlBackgroundColor))
+#endif
                         .transition(.move(edge: .leading))
                     
                     Divider()

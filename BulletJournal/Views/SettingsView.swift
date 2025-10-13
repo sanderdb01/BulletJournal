@@ -136,7 +136,9 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+#if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+           #endif
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
@@ -583,5 +585,5 @@ enum ImportError: Error {
 
 #Preview {
     SettingsView()
-        .modelContainer(for: [DayLog.self, TaskItem.self, AppSettings.self, Tag.self], inMemory: true)
+      .modelContainer(for: [DayLog.self, TaskItem.self, AppSettings.self, Tag.self, GeneralNote.self], inMemory: true)
 }

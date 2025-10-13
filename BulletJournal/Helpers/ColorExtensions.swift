@@ -38,12 +38,16 @@ extension Color {
         }
     }
     
-    // Get hex representation (useful for export/debugging)
-    func toHexString() -> String {
-        let components = UIColor(self).cgColor.components
-        let r = components?[0] ?? 0
-        let g = components?[1] ?? 0
-        let b = components?[2] ?? 0
-        return String(format: "#%02lX%02lX%02lX", lround(Double(r * 255)), lround(Double(g * 255)), lround(Double(b * 255)))
-    }
+   // Get hex representation (useful for export/debugging)
+   func toHexString() -> String {
+       #if os(iOS)
+       let components = UIColor(self).cgColor.components
+       #else
+       let components = NSColor(self).cgColor.components
+       #endif
+       let r = components?[0] ?? 0
+       let g = components?[1] ?? 0
+       let b = components?[2] ?? 0
+       return String(format: "#%02lX%02lX%02lX", lround(Double(r * 255)), lround(Double(g * 255)), lround(Double(b * 255)))
+   }
 }

@@ -18,7 +18,11 @@ struct NotesEditorView: View {
             TextEditor(text: $notesText)
                 .frame(minHeight: 150)
                 .padding(8)
+           #if os(iOS)
                 .background(Color(uiColor: .secondarySystemBackground))
+           #else
+                .background(Color(nsColor: .controlBackgroundColor))
+            #endif
                 .cornerRadius(8)
                 .focused($isFocused)
                 .onChange(of: notesText) { oldValue, newValue in

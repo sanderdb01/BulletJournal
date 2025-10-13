@@ -180,7 +180,9 @@ struct AddCustomTagSheet: View {
             Form {
                 Section {
                     TextField("Tag Name", text: $newTagName)
+                   #if os(iOS)
                         .autocapitalization(.words)
+                   #endif
                 }
                 
                 Section {
@@ -190,7 +192,9 @@ struct AddCustomTagSheet: View {
                 }
             }
             .navigationTitle("New Tag")
+           #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+           #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

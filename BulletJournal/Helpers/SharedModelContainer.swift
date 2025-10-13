@@ -7,7 +7,8 @@ class SharedModelContainer {
            DayLog.self,
            TaskItem.self,
            AppSettings.self,
-           Tag.self  // ADD THIS LINE
+           Tag.self,
+           GeneralNote.self
        ])
         
         // Get shared container URL

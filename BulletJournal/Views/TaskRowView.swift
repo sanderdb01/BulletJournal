@@ -98,16 +98,22 @@ struct TaskRowView: View {
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.2)) {
                 task.cycleStatus()
+               #if os(iOS)
                 HapticManager.shared.impact(style: .light)
+               #endif
                 try? modelContext.save()
             }
         }
         .onLongPressGesture(minimumDuration: 0.5) {
+#if os(iOS)
             HapticManager.shared.impact(style: .heavy)
+           #endif
             showingEditTask = true
         } onPressingChanged: { isPressing in
             if isPressing {
+#if os(iOS)
                 HapticManager.shared.impact(style: .medium)
+               #endif
             }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
@@ -257,8 +263,10 @@ struct TaskRowView: View {
                
                try modelContext.save()
                
+#if os(iOS)
                // Haptic feedback
                HapticManager.shared.notification(type: .success)
+              #endif
            } catch {
                print("Error moving task to tomorrow: \(error)")
            }

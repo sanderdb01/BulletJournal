@@ -49,7 +49,9 @@ struct CalendarView: View {
                taskDetailsSection
             }
             .navigationTitle("Calendar")
+#if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
          }
       }
    }
@@ -217,7 +219,11 @@ struct CalendarView: View {
          }
       }
       .frame(maxHeight: .infinity)
+      #if os(iOS)
       .background(Color(uiColor: .systemGroupedBackground))
+      #else
+      .background(Color(nsColor: .controlBackgroundColor))
+      #endif
    }
    
    // MARK: - Helper Views
@@ -357,7 +363,11 @@ struct DayCell: View {
       if isSelected {
          return .blue
       } else {
-         return Color(uiColor: .systemBackground)
+#if os(iOS)
+return Color(uiColor: .systemBackground)
+#else
+return Color(nsColor: .windowBackgroundColor)
+#endif
       }
    }
    

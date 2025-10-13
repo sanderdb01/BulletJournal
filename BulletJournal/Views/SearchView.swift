@@ -50,17 +50,18 @@ struct SearchView: View {
                resultsList
             }
             .navigationTitle("Search")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
-               ToolbarItem(placement: .navigationBarTrailing) {
-                  Button(action: {
-                     showingSettings = true
-                  }) {
-                     Image(systemName: "gearshape")
-                  }
-               }
-            }
-            .sheet(isPresented: $showingSettings) {
+                ToolbarItem(placement: .automatic) {
+                    Button(action: {
+                        showingSettings = true
+                    }) {
+                        Image(systemName: "gearshape")
+                    }
+                }
+            }            .sheet(isPresented: $showingSettings) {
                SettingsView()
             }
          }
@@ -95,7 +96,11 @@ struct SearchView: View {
          }
       }
       .padding()
-      .background(Color(uiColor: .secondarySystemBackground))
+#if os(iOS)
+.background(Color(uiColor: .secondarySystemBackground))
+#else
+.background(Color(nsColor: .controlBackgroundColor))
+#endif
       .cornerRadius(10)
       .padding()
       .animation(.easeInOut(duration: 0.2), value: searchText.isEmpty)

@@ -17,6 +17,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		E14AE72C2E98AAEA0099EED7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E177835A2E8DB0FA00E047F4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E14AE71C2E98AAE70099EED7;
+			remoteInfo = HarborDotMacOS;
+		};
+		E14AE7362E98AAEA0099EED7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E177835A2E8DB0FA00E047F4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E14AE71C2E98AAE70099EED7;
+			remoteInfo = HarborDotMacOS;
+		};
 		E17783722E8DB0FE00E047F4 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = E177835A2E8DB0FA00E047F4 /* Project object */;
@@ -105,6 +119,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E14AE71D2E98AAE70099EED7 /* HarborDotMacOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HarborDotMacOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E14AE72B2E98AAEA0099EED7 /* HarborDotMacOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HarborDotMacOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E14AE7352E98AAEA0099EED7 /* HarborDotMacOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HarborDotMacOSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E17783622E8DB0FA00E047F4 /* HarborDot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HarborDot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E17783712E8DB0FE00E047F4 /* HarborDotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HarborDotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E177837B2E8DB0FE00E047F4 /* HarborDotUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HarborDotUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -121,6 +138,40 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E14AE75C2E98AB600099EED7 /* Exceptions for "BulletJournal" folder in "HarborDotMacOS" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				BulletJournalApp.swift,
+				ContentView.swift,
+				Helpers/AppTheme.swift,
+				Helpers/ColorExtensions.swift,
+				Helpers/DateExtensions.swift,
+				Helpers/DeepLinkHandler.swift,
+				Helpers/KeyboardShortcuts.swift,
+				Helpers/NotificationManager.swift,
+				Helpers/RecurrenceManager.swift,
+				Helpers/SharedModelContainer.swift,
+				Models/AppSettings.swift,
+				Models/DayLog.swift,
+				Models/GeneralNote.swift,
+				Models/RecurrenceRule.swift,
+				Models/Tag.swift,
+				Models/TaskItem.swift,
+				Views/AddEditTaskView.swift,
+				Views/CalendarView.swift,
+				Views/DayView.swift,
+				Views/iPadMainView.swift,
+				Views/MacMainView.swift,
+				Views/MainTabView.swift,
+				Views/NotesEditorView.swift,
+				Views/SearchView.swift,
+				Views/SettingsView.swift,
+				Views/TagPicker.swift,
+				Views/TagSettings.swift,
+				Views/TaskRowView.swift,
+			);
+			target = E14AE71C2E98AAE70099EED7 /* HarborDotMacOS */;
+		};
 		E17783D72E900B1C00E047F4 /* Exceptions for "HarborDotWidget" folder in "HarborDotWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -142,6 +193,7 @@
 				Helpers/SharedModelContainer.swift,
 				Models/AppSettings.swift,
 				Models/DayLog.swift,
+				Models/GeneralNote.swift,
 				Models/RecurrenceRule.swift,
 				Models/Tag.swift,
 				Models/TaskItem.swift,
@@ -169,40 +221,88 @@
 		E19773482E946DF800293A38 /* Exceptions for "BulletJournal" folder in "HarborDot Watch App Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Helpers/AppTheme.swift,
 				Helpers/ColorExtensions.swift,
 				Helpers/DateExtensions.swift,
+				Helpers/DeepLinkHandler.swift,
+				Helpers/KeyboardShortcuts.swift,
+				Helpers/NotificationManager.swift,
+				Helpers/RecurrenceManager.swift,
 				Helpers/SharedModelContainer.swift,
 				Models/AppSettings.swift,
 				Models/DayLog.swift,
+				Models/GeneralNote.swift,
 				Models/RecurrenceRule.swift,
 				Models/Tag.swift,
 				Models/TaskItem.swift,
+				Views/AddEditTaskView.swift,
+				Views/CalendarView.swift,
+				Views/DayView.swift,
+				Views/MainTabView.swift,
+				Views/NotesEditorView.swift,
+				Views/SearchView.swift,
+				Views/SettingsView.swift,
+				Views/TagPicker.swift,
+				Views/TagSettings.swift,
+				Views/TaskRowView.swift,
 			);
 			target = E19772F92E946D8B00293A38 /* HarborDot Watch App Watch App */;
 		};
 		E19773492E946DF800293A38 /* Exceptions for "BulletJournal" folder in "HarborDot Watch WidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Helpers/AppTheme.swift,
 				Helpers/ColorExtensions.swift,
 				Helpers/DateExtensions.swift,
+				Helpers/DeepLinkHandler.swift,
+				Helpers/KeyboardShortcuts.swift,
+				Helpers/NotificationManager.swift,
+				Helpers/RecurrenceManager.swift,
 				Helpers/SharedModelContainer.swift,
 				Models/AppSettings.swift,
 				Models/DayLog.swift,
+				Models/GeneralNote.swift,
 				Models/RecurrenceRule.swift,
 				Models/Tag.swift,
 				Models/TaskItem.swift,
+				Views/AddEditTaskView.swift,
+				Views/CalendarView.swift,
+				Views/DayView.swift,
+				Views/MainTabView.swift,
+				Views/NotesEditorView.swift,
+				Views/SearchView.swift,
+				Views/SettingsView.swift,
+				Views/TagPicker.swift,
+				Views/TagSettings.swift,
+				Views/TaskRowView.swift,
 			);
 			target = E19773282E946DD100293A38 /* HarborDot Watch WidgetExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		E14AE71E2E98AAE70099EED7 /* HarborDotMacOS */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = HarborDotMacOS;
+			sourceTree = "<group>";
+		};
+		E14AE72E2E98AAEA0099EED7 /* HarborDotMacOSTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = HarborDotMacOSTests;
+			sourceTree = "<group>";
+		};
+		E14AE7382E98AAEA0099EED7 /* HarborDotMacOSUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = HarborDotMacOSUITests;
+			sourceTree = "<group>";
+		};
 		E17783642E8DB0FA00E047F4 /* BulletJournal */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				E17783E32E900E7C00E047F4 /* Exceptions for "BulletJournal" folder in "HarborDotWidgetExtension" target */,
 				E19773482E946DF800293A38 /* Exceptions for "BulletJournal" folder in "HarborDot Watch App Watch App" target */,
 				E19773492E946DF800293A38 /* Exceptions for "BulletJournal" folder in "HarborDot Watch WidgetExtension" target */,
+				E14AE75C2E98AB600099EED7 /* Exceptions for "BulletJournal" folder in "HarborDotMacOS" target */,
 			);
 			path = BulletJournal;
 			sourceTree = "<group>";
@@ -251,6 +351,27 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		E14AE71A2E98AAE70099EED7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E14AE7282E98AAEA0099EED7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E14AE7322E98AAEA0099EED7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E177835F2E8DB0FA00E047F4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -328,6 +449,9 @@
 				E19773092E946D8E00293A38 /* HarborDot Watch App Watch AppTests */,
 				E19773132E946D8E00293A38 /* HarborDot Watch App Watch AppUITests */,
 				E197732C2E946DD100293A38 /* HarborDot Watch Widget */,
+				E14AE71E2E98AAE70099EED7 /* HarborDotMacOS */,
+				E14AE72E2E98AAEA0099EED7 /* HarborDotMacOSTests */,
+				E14AE7382E98AAEA0099EED7 /* HarborDotMacOSUITests */,
 				E17783C12E900B1800E047F4 /* Frameworks */,
 				E17783632E8DB0FA00E047F4 /* Products */,
 			);
@@ -344,6 +468,9 @@
 				E19773062E946D8E00293A38 /* HarborDot Watch App Watch AppTests.xctest */,
 				E19773102E946D8E00293A38 /* HarborDot Watch App Watch AppUITests.xctest */,
 				E19773292E946DD100293A38 /* HarborDot Watch WidgetExtension.appex */,
+				E14AE71D2E98AAE70099EED7 /* HarborDotMacOS.app */,
+				E14AE72B2E98AAEA0099EED7 /* HarborDotMacOSTests.xctest */,
+				E14AE7352E98AAEA0099EED7 /* HarborDotMacOSUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -360,6 +487,74 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		E14AE71C2E98AAE70099EED7 /* HarborDotMacOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E14AE73D2E98AAEA0099EED7 /* Build configuration list for PBXNativeTarget "HarborDotMacOS" */;
+			buildPhases = (
+				E14AE7192E98AAE70099EED7 /* Sources */,
+				E14AE71A2E98AAE70099EED7 /* Frameworks */,
+				E14AE71B2E98AAE70099EED7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E14AE71E2E98AAE70099EED7 /* HarborDotMacOS */,
+			);
+			name = HarborDotMacOS;
+			packageProductDependencies = (
+			);
+			productName = HarborDotMacOS;
+			productReference = E14AE71D2E98AAE70099EED7 /* HarborDotMacOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E14AE72A2E98AAEA0099EED7 /* HarborDotMacOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E14AE7402E98AAEA0099EED7 /* Build configuration list for PBXNativeTarget "HarborDotMacOSTests" */;
+			buildPhases = (
+				E14AE7272E98AAEA0099EED7 /* Sources */,
+				E14AE7282E98AAEA0099EED7 /* Frameworks */,
+				E14AE7292E98AAEA0099EED7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E14AE72D2E98AAEA0099EED7 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				E14AE72E2E98AAEA0099EED7 /* HarborDotMacOSTests */,
+			);
+			name = HarborDotMacOSTests;
+			packageProductDependencies = (
+			);
+			productName = HarborDotMacOSTests;
+			productReference = E14AE72B2E98AAEA0099EED7 /* HarborDotMacOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E14AE7342E98AAEA0099EED7 /* HarborDotMacOSUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E14AE7432E98AAEA0099EED7 /* Build configuration list for PBXNativeTarget "HarborDotMacOSUITests" */;
+			buildPhases = (
+				E14AE7312E98AAEA0099EED7 /* Sources */,
+				E14AE7322E98AAEA0099EED7 /* Frameworks */,
+				E14AE7332E98AAEA0099EED7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E14AE7372E98AAEA0099EED7 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				E14AE7382E98AAEA0099EED7 /* HarborDotMacOSUITests */,
+			);
+			name = HarborDotMacOSUITests;
+			packageProductDependencies = (
+			);
+			productName = HarborDotMacOSUITests;
+			productReference = E14AE7352E98AAEA0099EED7 /* HarborDotMacOSUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		E17783612E8DB0FA00E047F4 /* HarborDot */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = E17783852E8DB0FE00E047F4 /* Build configuration list for PBXNativeTarget "HarborDot" */;
@@ -556,6 +751,17 @@
 				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
+					E14AE71C2E98AAE70099EED7 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					E14AE72A2E98AAEA0099EED7 = {
+						CreatedOnToolsVersion = 26.0.1;
+						TestTargetID = E14AE71C2E98AAE70099EED7;
+					};
+					E14AE7342E98AAEA0099EED7 = {
+						CreatedOnToolsVersion = 26.0.1;
+						TestTargetID = E14AE71C2E98AAE70099EED7;
+					};
 					E17783612E8DB0FA00E047F4 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
@@ -608,11 +814,35 @@
 				E19773052E946D8E00293A38 /* HarborDot Watch App Watch AppTests */,
 				E197730F2E946D8E00293A38 /* HarborDot Watch App Watch AppUITests */,
 				E19773282E946DD100293A38 /* HarborDot Watch WidgetExtension */,
+				E14AE71C2E98AAE70099EED7 /* HarborDotMacOS */,
+				E14AE72A2E98AAEA0099EED7 /* HarborDotMacOSTests */,
+				E14AE7342E98AAEA0099EED7 /* HarborDotMacOSUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		E14AE71B2E98AAE70099EED7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E14AE7292E98AAEA0099EED7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E14AE7332E98AAEA0099EED7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E17783602E8DB0FA00E047F4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -672,6 +902,27 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		E14AE7192E98AAE70099EED7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E14AE7272E98AAEA0099EED7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E14AE7312E98AAEA0099EED7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E177835E2E8DB0FA00E047F4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -731,6 +982,16 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		E14AE72D2E98AAEA0099EED7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E14AE71C2E98AAE70099EED7 /* HarborDotMacOS */;
+			targetProxy = E14AE72C2E98AAEA0099EED7 /* PBXContainerItemProxy */;
+		};
+		E14AE7372E98AAEA0099EED7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E14AE71C2E98AAE70099EED7 /* HarborDotMacOS */;
+			targetProxy = E14AE7362E98AAEA0099EED7 /* PBXContainerItemProxy */;
+		};
 		E17783732E8DB0FE00E047F4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = E17783612E8DB0FA00E047F4 /* HarborDot */;
@@ -769,6 +1030,162 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		E14AE73E2E98AAEA0099EED7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = HarborDotMacOS/HarborDotMacOS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HX76BH5U54;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDotMacOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E14AE73F2E98AAEA0099EED7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = HarborDotMacOS/HarborDotMacOS.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HX76BH5U54;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDotMacOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E14AE7412E98AAEA0099EED7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HX76BH5U54;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDotMacOSTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HarborDotMacOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HarborDotMacOS";
+			};
+			name = Debug;
+		};
+		E14AE7422E98AAEA0099EED7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HX76BH5U54;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDotMacOSTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HarborDotMacOS.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HarborDotMacOS";
+			};
+			name = Release;
+		};
+		E14AE7442E98AAEA0099EED7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HX76BH5U54;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDotMacOSUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = HarborDotMacOS;
+			};
+			name = Debug;
+		};
+		E14AE7452E98AAEA0099EED7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HX76BH5U54;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDotMacOSUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = HarborDotMacOS;
+			};
+			name = Release;
+		};
 		E17783832E8DB0FE00E047F4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1333,6 +1750,33 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		E14AE73D2E98AAEA0099EED7 /* Build configuration list for PBXNativeTarget "HarborDotMacOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E14AE73E2E98AAEA0099EED7 /* Debug */,
+				E14AE73F2E98AAEA0099EED7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E14AE7402E98AAEA0099EED7 /* Build configuration list for PBXNativeTarget "HarborDotMacOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E14AE7412E98AAEA0099EED7 /* Debug */,
+				E14AE7422E98AAEA0099EED7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E14AE7432E98AAEA0099EED7 /* Build configuration list for PBXNativeTarget "HarborDotMacOSUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E14AE7442E98AAEA0099EED7 /* Debug */,
+				E14AE7452E98AAEA0099EED7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		E177835D2E8DB0FA00E047F4 /* Build configuration list for PBXProject "HarborDot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
