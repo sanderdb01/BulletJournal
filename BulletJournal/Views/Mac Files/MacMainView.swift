@@ -24,6 +24,7 @@ struct MacMainView: View {
    @State private var currentDate = Date()
    @State private var selectedNote: GeneralNote?
    @State private var isCreatingNote = false
+   @State private var includeMarkdownExample = false
    
    var body: some View {
       VStack(spacing: 0) {
@@ -200,17 +201,28 @@ struct MacMainView: View {
    
    private var notesSidebar: some View {
       VStack(spacing: 0) {
-         // Header
-         HStack {
-            Text("Notes")
-               .font(.headline)
-            
-            Spacer()
-            
-            Button(action: createNewNote) {
-               Image(systemName: "plus")
+         // Header with toggle and + button
+         VStack(spacing: 8) {
+            HStack {
+               Text("Notes")
+                  .font(.headline)
+               
+               Spacer()
+               
+               Button(action: createNewNote) {
+                  Image(systemName: "plus")
+               }
+               .buttonStyle(.plain)
+               .help("Create new note")
             }
-            .buttonStyle(.plain)
+            
+            // Markdown toggle
+            HStack {
+               Toggle("Include markdown", isOn: $includeMarkdownExample)
+                  .toggleStyle(.switch)
+                  .controlSize(.small)
+                  .font(.caption)
+            }
          }
          .padding()
          
@@ -342,17 +354,52 @@ struct MacMainView: View {
    
    private func createNewNote() {
       let newNote = GeneralNote()
-      newNote.content = """
-      # Note Title
       
-      Start typing your note here...
-      
-      ## Formatting Tips
-      - Use **bold** for emphasis
-      - Use *italic* for subtle emphasis
-      - Create lists with - or 1.
-      - Add [links](https://example.com)
-      """
+      // Check toggle to determine content
+      if includeMarkdownExample {
+         newNote.content = """
+         # Welcome to Your Note
+         
+         This is an example note with **markdown formatting**.
+         
+         ## Text Formatting
+         
+         You can make text **bold** or *italic* for emphasis.
+         
+         ## Lists
+         
+         Unordered lists:
+         - Item one
+         - Item two
+         - Item three
+         
+         Ordered lists:
+         1. First item
+         2. Second item
+         3. Third item
+         
+         ## Code
+         
+         Inline code: `let x = 42`
+         
+         Code blocks:
+         ```
+         func greet() {
+             print("Hello, World!")
+         }
+         ```
+         
+         ## Links
+         
+         Check out [Apple's website](https://apple.com) for more info.
+         
+         ## Your Content
+         
+         Delete this example and start writing your own content!
+         """
+      } else {
+         newNote.content = ""
+      }
       
       modelContext.insert(newNote)
       try? modelContext.save()
