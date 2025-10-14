@@ -4,6 +4,7 @@ import SwiftData
 //NOTE: Add this code somewhere to reset the color tags
 // Add this as a temporary button somewhere, or run in console:
 // UserDefaults.standard.removeObject(forKey: "HasCreatedColorTags")
+
 // MARK: - Tag Model
 @Model
 class Tag {
@@ -13,9 +14,16 @@ class Tag {
     var order: Int? // For sorting custom tags
     var createdAt: Date?
     
-    // Relationships
+    // Relationships for TaskItem
     @Relationship(inverse: \TaskItem.tags)
     var tasks: [TaskItem]?
+    
+    // NEW: Inverse relationships for GeneralNote (CloudKit requirement)
+    @Relationship(inverse: \GeneralNote.primaryTag)
+    var notesAsPrimary: [GeneralNote]?
+    
+    @Relationship(inverse: \GeneralNote.customTags)
+    var notesAsCustom: [GeneralNote]?
     
     init(name: String, isPrimary: Bool = false, order: Int = 0) {
         self.id = UUID()
@@ -46,44 +54,45 @@ enum ColorTag: String, CaseIterable {
 class TagManager {
     static let shared = TagManager()
     
-   static func createDefaultTags(in context: ModelContext) {
-       // Check if we've ever created tags before
-       let hasCreatedTags = UserDefaults.standard.bool(forKey: "HasCreatedColorTags")
-       
-       if hasCreatedTags {
-           print("ℹ️ Tags already created in a previous run, skipping")
-           return
-       }
-       
-       do {
-           // Check if tags exist in database
-           let colorDescriptor = FetchDescriptor<Tag>(
-               predicate: #Predicate { $0.isPrimary == true }
-           )
-           let existingColorTags = try context.fetch(colorDescriptor)
-           
-           if !existingColorTags.isEmpty {
-               print("ℹ️ Found \(existingColorTags.count) existing color tags")
-               UserDefaults.standard.set(true, forKey: "HasCreatedColorTags")
-               return
-           }
-           
-           // Create tags for the first time ever
-           print("✅ Creating 8 color tags for the first time...")
-           for colorTag in ColorTag.allCases {
-               let tag = Tag(name: colorTag.rawValue, isPrimary: true, order: 0)
-               context.insert(tag)
-           }
-           
-           try context.save()
-           
-           // Mark as created
-           UserDefaults.standard.set(true, forKey: "HasCreatedColorTags")
-           print("✅ Successfully created \(ColorTag.allCases.count) color tags")
-       } catch {
-           print("❌ Error in createDefaultTags: \(error)")
-       }
-   }
+    static func createDefaultTags(in context: ModelContext) {
+        // Check if we've ever created tags before
+        let hasCreatedTags = UserDefaults.standard.bool(forKey: "HasCreatedColorTags")
+        
+        if hasCreatedTags {
+            print("ℹ️ Tags already created in a previous run, skipping")
+            return
+        }
+        
+        do {
+            // Check if tags exist in database
+            let colorDescriptor = FetchDescriptor<Tag>(
+                predicate: #Predicate { $0.isPrimary == true }
+            )
+            let existingColorTags = try context.fetch(colorDescriptor)
+            
+            if !existingColorTags.isEmpty {
+                print("ℹ️ Found \(existingColorTags.count) existing color tags")
+                UserDefaults.standard.set(true, forKey: "HasCreatedColorTags")
+                return
+            }
+            
+            // Create tags for the first time ever
+            print("✅ Creating 8 color tags for the first time...")
+            for colorTag in ColorTag.allCases {
+                let tag = Tag(name: colorTag.rawValue, isPrimary: true, order: 0)
+                context.insert(tag)
+            }
+            
+            try context.save()
+            
+            // Mark as created
+            UserDefaults.standard.set(true, forKey: "HasCreatedColorTags")
+            print("✅ Successfully created \(ColorTag.allCases.count) color tags")
+        } catch {
+            print("❌ Error in createDefaultTags: \(error)")
+        }
+    }
+    
     // Get all primary (color) tags
     static func getColorTags(from context: ModelContext) -> [Tag] {
         let descriptor = FetchDescriptor<Tag>(

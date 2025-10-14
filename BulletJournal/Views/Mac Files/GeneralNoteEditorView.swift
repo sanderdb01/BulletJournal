@@ -1,4 +1,3 @@
-#if os(macOS)
 import SwiftUI
 import SwiftData
 
@@ -16,7 +15,7 @@ struct GeneralNoteEditorView: View {
       self.note = note
       self.onBack = onBack
       _title = State(initialValue: note.title ?? "")
-      _content = State(initialValue: note.content)
+      _content = State(initialValue: note.content ?? "")
    }
    
    var body: some View {
@@ -41,16 +40,16 @@ struct GeneralNoteEditorView: View {
             HStack(spacing: 12) {
                // Pin button
                Button(action: togglePin) {
-                  Image(systemName: note.isPinned ? "pin.fill" : "pin")
-                     .foregroundColor(note.isPinned ? .blue : .secondary)
+                  Image(systemName: (note.isPinned ?? false) ? "pin.fill" : "pin")
+                     .foregroundColor((note.isPinned ?? false) ? .blue : .secondary)
                }
                .buttonStyle(.plain)
                .help("Pin note")
                
                // Favorite button
                Button(action: toggleFavorite) {
-                  Image(systemName: note.isFavorite ? "star.fill" : "star")
-                     .foregroundColor(note.isFavorite ? .yellow : .secondary)
+                  Image(systemName: (note.isFavorite ?? false) ? "star.fill" : "star")
+                     .foregroundColor((note.isFavorite ?? false) ? .yellow : .secondary)
                }
                .buttonStyle(.plain)
                .help("Favorite note")
@@ -97,7 +96,9 @@ struct GeneralNoteEditorView: View {
                HStack(spacing: 16) {
                   Label("\(wordCount) words", systemImage: "doc.text")
                   Label("\(characterCount) characters", systemImage: "textformat.abc")
-                  Label("Modified \(note.modifiedAt, style: .relative)", systemImage: "clock")
+                  if let modifiedAt = note.modifiedAt {
+                     Label("Modified \(modifiedAt, style: .relative)", systemImage: "clock")
+                  }
                }
                .font(.caption)
                .foregroundColor(.secondary)
@@ -144,7 +145,7 @@ struct GeneralNoteEditorView: View {
    // MARK: - Computed Properties
    
    private var wordCount: Int {
-      content.split(separator: " ").count
+      content.split(separator: " ").filter { !$0.isEmpty }.count
    }
    
    private var characterCount: Int {
@@ -166,13 +167,15 @@ struct GeneralNoteEditorView: View {
    }
    
    private func togglePin() {
-      note.isPinned.toggle()
+      let current = note.isPinned ?? false
+      note.isPinned = !current
       note.modifiedAt = Date()
       try? modelContext.save()
    }
    
    private func toggleFavorite() {
-      note.isFavorite.toggle()
+      let current = note.isFavorite ?? false
+      note.isFavorite = !current
       note.modifiedAt = Date()
       try? modelContext.save()
    }
@@ -200,4 +203,3 @@ struct GeneralNoteEditorView: View {
    .modelContainer(container)
    .frame(width: 600, height: 800)
 }
-#endif

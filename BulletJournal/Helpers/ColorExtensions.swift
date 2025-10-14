@@ -42,8 +42,10 @@ extension Color {
    func toHexString() -> String {
        #if os(iOS)
        let components = UIColor(self).cgColor.components
-       #else
+       #elseif os(macOS)
        let components = NSColor(self).cgColor.components
+      #else
+      let components = UIColor(self).cgColor.components
        #endif
        let r = components?[0] ?? 0
        let g = components?[1] ?? 0

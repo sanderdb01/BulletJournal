@@ -178,6 +178,7 @@ struct MacMainView: View {
                      selectedNote = nil
                   }
                )
+               .id(note.id) // Force SwiftUI to rebuild view when note changes
             } else if isCreatingNote {
                if let newNote = notes.first(where: { $0.title == nil || $0.title?.isEmpty == true }) {
                   GeneralNoteEditorView(
@@ -229,7 +230,9 @@ struct MacMainView: View {
       ScrollView {
          LazyVStack(spacing: 0) {
             // Pinned notes
-            let pinnedNotes = notes.filter { $0.isPinned }.sorted { $0.modifiedAt > $1.modifiedAt }
+            let pinnedNotes = notes.filter { $0.isPinned == true }.sorted {
+               ($0.modifiedAt ?? Date()) > ($1.modifiedAt ?? Date())
+            }
             if !pinnedNotes.isEmpty {
                Section {
                   ForEach(pinnedNotes) { note in
@@ -254,7 +257,9 @@ struct MacMainView: View {
             }
             
             // Regular notes
-            let regularNotes = notes.filter { !$0.isPinned }.sorted { $0.modifiedAt > $1.modifiedAt }
+            let regularNotes = notes.filter { $0.isPinned != true }.sorted {
+               ($0.modifiedAt ?? Date()) > ($1.modifiedAt ?? Date())
+            }
             ForEach(regularNotes) { note in
                noteRow(for: note)
             }
@@ -275,21 +280,23 @@ struct MacMainView: View {
                      .font(.headline)
                      .lineLimit(1)
                   
-                  if note.isFavorite {
+                  if note.isFavorite == true {
                      Image(systemName: "star.fill")
                         .font(.caption)
                         .foregroundColor(.yellow)
                   }
                }
                
-               Text(note.content.prefix(100))
+               Text((note.content ?? "").prefix(100))
                   .font(.caption)
                   .foregroundColor(.secondary)
                   .lineLimit(2)
                
-               Text(note.modifiedAt, style: .relative)
-                  .font(.caption2)
-                  .foregroundColor(.secondary)
+               if let modifiedAt = note.modifiedAt {
+                  Text(modifiedAt, style: .relative)
+                     .font(.caption2)
+                     .foregroundColor(.secondary)
+               }
             }
             
             Spacer()

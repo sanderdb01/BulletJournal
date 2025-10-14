@@ -20,8 +20,10 @@ struct NotesEditorView: View {
                 .padding(8)
            #if os(iOS)
                 .background(Color(uiColor: .secondarySystemBackground))
-           #else
+           #elseif os(macOS)
                 .background(Color(nsColor: .controlBackgroundColor))
+           #else
+                .background(Color(uiColor: .secondarySystemBackground))
             #endif
                 .cornerRadius(8)
                 .focused($isFocused)

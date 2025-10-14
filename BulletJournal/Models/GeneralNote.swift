@@ -3,19 +3,21 @@ import SwiftData
 
 @Model
 class GeneralNote {
-    var id: UUID
+    // CloudKit requirement: All properties must be optional or have defaults
+    var id: UUID?
     var title: String?
-    var content: String
-    var createdAt: Date
-    var modifiedAt: Date
+    var content: String? // Changed to optional
+    var createdAt: Date?
+    var modifiedAt: Date?
     
-    // Tags (same system as tasks)
+    // CloudKit requirement: Relationships must be optional
+    // Don't specify inverse here - it's specified on Tag side
     var primaryTag: Tag?
-    var customTags: [Tag]
+    var customTags: [Tag]?
     
-    // Future features
-    var isPinned: Bool
-    var isFavorite: Bool
+    // CloudKit requirement: Bool must be optional or have defaults
+    var isPinned: Bool?
+    var isFavorite: Bool?
     
     init(
         title: String? = nil,
@@ -48,6 +50,7 @@ class GeneralNote {
     
     /// Preview text - first 100 characters of content
     var previewText: String {
+        guard let content = content else { return "No content" }
         let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             return "No content"
@@ -57,6 +60,7 @@ class GeneralNote {
     
     /// Word count
     var wordCount: Int {
+        guard let content = content else { return 0 }
         let words = content.components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
         return words.count
@@ -64,7 +68,7 @@ class GeneralNote {
     
     /// Character count
     var characterCount: Int {
-        return content.count
+        return content?.count ?? 0
     }
     
     // MARK: - Methods
@@ -83,27 +87,32 @@ class GeneralNote {
     
     /// Toggle pinned status
     func togglePin() {
-        self.isPinned.toggle()
+        let current = isPinned ?? false
+        self.isPinned = !current
         self.modifiedAt = Date()
     }
     
     /// Toggle favorite status
     func toggleFavorite() {
-        self.isFavorite.toggle()
+        let current = isFavorite ?? false
+        self.isFavorite = !current
         self.modifiedAt = Date()
     }
     
     /// Add a custom tag
     func addCustomTag(_ tag: Tag) {
-        if !customTags.contains(where: { $0.id == tag.id }) {
-            customTags.append(tag)
+        if customTags == nil {
+            customTags = []
+        }
+        if !(customTags?.contains(where: { $0.id == tag.id }) ?? false) {
+            customTags?.append(tag)
             modifiedAt = Date()
         }
     }
     
     /// Remove a custom tag
     func removeCustomTag(_ tag: Tag) {
-        customTags.removeAll { $0.id == tag.id }
+        customTags?.removeAll { $0.id == tag.id }
         modifiedAt = Date()
     }
     
@@ -194,7 +203,7 @@ class GeneralNoteManager {
         
         return allNotes.filter { note in
             note.displayTitle.lowercased().contains(lowercaseQuery) ||
-            note.content.lowercased().contains(lowercaseQuery)
+            (note.content?.lowercased().contains(lowercaseQuery) ?? false)
         }
     }
     
@@ -204,7 +213,7 @@ class GeneralNoteManager {
         
         return allNotes.filter { note in
             note.primaryTag?.id == tag.id ||
-            note.customTags.contains(where: { $0.id == tag.id })
+            (note.customTags?.contains(where: { $0.id == tag.id }) ?? false)
         }
     }
 }

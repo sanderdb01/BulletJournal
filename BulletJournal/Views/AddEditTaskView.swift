@@ -118,20 +118,31 @@ struct AddEditTaskView: View {
          #if os(iOS)
          .navigationBarTitleDisplayMode(.inline)
          #endif
+//         .onAppear {
+//            // Set default Blue tag for new tasks
+//            if taskToEdit == nil && selectedPrimaryTag == nil {
+//               if let blueTag = TagManager.findTag(byName: "Blue", in: modelContext) {
+////                  selectedPrimaryTag = blueTag
+//                  // Find blue tag and select it
+//                                 let descriptor = FetchDescriptor<Tag>(
+//                                    predicate: #Predicate { tag in
+//                                       tag.isPrimary == true && tag.name == "blue"
+//                                    }
+//                                 )
+//                                 if let blueTag = try? modelContext.fetch(descriptor).first {
+//                                    selectedPrimaryTag = blueTag
+//                                 }
+//               }
+//            }
+//         }
          .onAppear {
             // Set default Blue tag for new tasks
             if taskToEdit == nil && selectedPrimaryTag == nil {
+               // Find Blue tag (note: capitalized "Blue" to match the tag name)
                if let blueTag = TagManager.findTag(byName: "Blue", in: modelContext) {
-//                  selectedPrimaryTag = blueTag
-                  // Find blue tag and select it
-                                 let descriptor = FetchDescriptor<Tag>(
-                                    predicate: #Predicate { tag in
-                                       tag.isPrimary == true && tag.name == "blue"
-                                    }
-                                 )
-                                 if let blueTag = try? modelContext.fetch(descriptor).first {
-                                    selectedPrimaryTag = blueTag
-                                 }
+                  DispatchQueue.main.async {
+                     selectedPrimaryTag = blueTag
+                  }
                }
             }
          }
@@ -287,7 +298,13 @@ struct AddEditTaskView: View {
          createTask(recurrenceRule: recurrenceRule)
       }
       
-      try? modelContext.save()
+//      try? modelContext.save()
+      do {
+              try modelContext.save()
+              print("✅ Task saved successfully")
+          } catch {
+              print("❌ Error saving task: \(error)")
+          }
       
       // Generate future recurring tasks
       if isRecurring {

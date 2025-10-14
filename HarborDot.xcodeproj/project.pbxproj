@@ -176,12 +176,24 @@
 			);
 			target = E14AE71C2E98AAE70099EED7 /* HarborDotMacOS */;
 		};
-		E14AE7A02E9D555C0099EED7 /* Exceptions for "BulletJournal" folder in "HarborDot" target */ = {
+		E14AE7BB2E9DAA260099EED7 /* Exceptions for "BulletJournal" folder in "HarborDot" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"Views/Mac Files/GeneralNoteEditorView.swift",
+				"Views/Mac Files/MacMainView.swift",
+				"Views/Mac Files/NewNoteSheet.swift",
+				"Views/Mac Files/NoteRowView.swift",
 				"Views/Mac Files/NotesListView.swift",
 			);
 			target = E17783612E8DB0FA00E047F4 /* HarborDot */;
+		};
+		E14AE7C12E9DAA700099EED7 /* Exceptions for "HarborDot Watch App Watch App" folder in "HarborDot Watch WidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				WatchMainView.swift,
+				WatchTaskRow.swift,
+			);
+			target = E19773282E946DD100293A38 /* HarborDot Watch WidgetExtension */;
 		};
 		E17783D72E900B1C00E047F4 /* Exceptions for "HarborDotWidget" folder in "HarborDotWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -193,6 +205,7 @@
 		E17783E32E900E7C00E047F4 /* Exceptions for "BulletJournal" folder in "HarborDotWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				ContentView.swift,
 				Helpers/AppTheme.swift,
 				Helpers/ColorExtensions.swift,
 				Helpers/DateExtensions.swift,
@@ -212,9 +225,6 @@
 				Views/CalendarView.swift,
 				Views/DayView.swift,
 				Views/iPadMainView.swift,
-				"Views/Mac Files/GeneralNoteEditorView.swift",
-				"Views/Mac Files/NewNoteSheet.swift",
-				"Views/Mac Files/NoteRowView.swift",
 				Views/MainTabView.swift,
 				Views/NotesEditorView.swift,
 				Views/SearchView.swift,
@@ -239,7 +249,6 @@
 				Helpers/ColorExtensions.swift,
 				Helpers/DateExtensions.swift,
 				Helpers/DeepLinkHandler.swift,
-				Helpers/KeyboardShortcuts.swift,
 				Helpers/NotificationManager.swift,
 				Helpers/RecurrenceManager.swift,
 				Helpers/SharedModelContainer.swift,
@@ -249,19 +258,8 @@
 				Models/RecurrenceRule.swift,
 				Models/Tag.swift,
 				Models/TaskItem.swift,
-				Views/AddEditTaskView.swift,
-				Views/CalendarView.swift,
-				Views/DayView.swift,
-				"Views/Mac Files/GeneralNoteEditorView.swift",
-				"Views/Mac Files/NewNoteSheet.swift",
-				"Views/Mac Files/NoteRowView.swift",
-				Views/MainTabView.swift,
-				Views/NotesEditorView.swift,
-				Views/SearchView.swift,
-				Views/SettingsView.swift,
 				Views/TagPicker.swift,
 				Views/TagSettings.swift,
-				Views/TaskRowView.swift,
 			);
 			target = E19772F92E946D8B00293A38 /* HarborDot Watch App Watch App */;
 		};
@@ -272,7 +270,6 @@
 				Helpers/ColorExtensions.swift,
 				Helpers/DateExtensions.swift,
 				Helpers/DeepLinkHandler.swift,
-				Helpers/KeyboardShortcuts.swift,
 				Helpers/NotificationManager.swift,
 				Helpers/RecurrenceManager.swift,
 				Helpers/SharedModelContainer.swift,
@@ -282,19 +279,8 @@
 				Models/RecurrenceRule.swift,
 				Models/Tag.swift,
 				Models/TaskItem.swift,
-				Views/AddEditTaskView.swift,
-				Views/CalendarView.swift,
-				Views/DayView.swift,
-				"Views/Mac Files/GeneralNoteEditorView.swift",
-				"Views/Mac Files/NewNoteSheet.swift",
-				"Views/Mac Files/NoteRowView.swift",
-				Views/MainTabView.swift,
-				Views/NotesEditorView.swift,
-				Views/SearchView.swift,
-				Views/SettingsView.swift,
 				Views/TagPicker.swift,
 				Views/TagSettings.swift,
-				Views/TaskRowView.swift,
 			);
 			target = E19773282E946DD100293A38 /* HarborDot Watch WidgetExtension */;
 		};
@@ -319,7 +305,7 @@
 		E17783642E8DB0FA00E047F4 /* BulletJournal */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				E14AE7A02E9D555C0099EED7 /* Exceptions for "BulletJournal" folder in "HarborDot" target */,
+				E14AE7BB2E9DAA260099EED7 /* Exceptions for "BulletJournal" folder in "HarborDot" target */,
 				E17783E32E900E7C00E047F4 /* Exceptions for "BulletJournal" folder in "HarborDotWidgetExtension" target */,
 				E19773482E946DF800293A38 /* Exceptions for "BulletJournal" folder in "HarborDot Watch App Watch App" target */,
 				E19773492E946DF800293A38 /* Exceptions for "BulletJournal" folder in "HarborDot Watch WidgetExtension" target */,
@@ -348,6 +334,9 @@
 		};
 		E19772FB2E946D8B00293A38 /* HarborDot Watch App Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E14AE7C12E9DAA700099EED7 /* Exceptions for "HarborDot Watch App Watch App" folder in "HarborDot Watch WidgetExtension" target */,
+			);
 			path = "HarborDot Watch App Watch App";
 			sourceTree = "<group>";
 		};
