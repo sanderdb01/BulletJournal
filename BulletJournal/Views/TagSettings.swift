@@ -8,6 +8,7 @@ struct TagSettingsView: View {
    
    @State private var editingTag: Tag?
    @State private var newTagName = ""
+   @State private var showingResetAlert = false
    
    var colorTags: [Tag] {
       allTags.filter { $0.isPrimary == true }.sorted { ($0.name ?? "") < ($1.name ?? "") }
@@ -79,7 +80,8 @@ struct TagSettingsView: View {
                   Text("Total Color Tags")
                   Spacer()
                   Text("\(colorTags.count)")
-                     .foregroundColor(.secondary)
+                     .foregroundColor(colorTags.count == 8 ? .secondary : .red)
+                     .bold(colorTags.count != 8)
                }
                
                HStack {
@@ -95,8 +97,35 @@ struct TagSettingsView: View {
                   Text("\(allTags.count)")
                      .foregroundColor(.secondary)
                }
+               
+               if colorTags.count != 8 {
+                  VStack(alignment: .leading, spacing: 4) {
+                     Text("⚠️ Warning: Color tag count is incorrect!")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                     Text("Expected: 8, Found: \(colorTags.count)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                  }
+               }
             } header: {
                Text("Statistics")
+            }
+            
+            // Reset Section
+            Section {
+               Button(role: .destructive) {
+                  showingResetAlert = true
+               } label: {
+                  HStack {
+                     Image(systemName: "arrow.counterclockwise.circle.fill")
+                     Text("Reset All Tags")
+                  }
+               }
+            } header: {
+               Text("Advanced")
+            } footer: {
+               Text("This will delete ALL tags (including custom tags) and recreate the 8 default color tags. Use this if you have duplicate color tags from CloudKit sync. This action cannot be undone.")
             }
          }
          .navigationTitle("Manage Tags")
@@ -124,6 +153,14 @@ struct TagSettingsView: View {
                   newTagName = ""
                }
             )
+         }
+         .alert("Reset All Tags?", isPresented: $showingResetAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+               TagManager.resetAllTags(in: modelContext)
+            }
+         } message: {
+            Text("This will delete ALL tags and recreate the 8 default color tags. Your tasks will lose their tag associations. This cannot be undone.")
          }
       }
    }
@@ -190,7 +227,7 @@ struct RenameTagSheet: View {
                Button("Save") {
                   onSave()
                }
-               .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
+               .disabled(newName.trimmingCharacters(in: CharacterSet.whitespaces).isEmpty)
             }
          }
       }
