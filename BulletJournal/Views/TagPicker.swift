@@ -115,7 +115,8 @@ struct ColorTagButton: View {
         Button(action: action) {
             VStack(spacing: 6) {
                 Circle()
-                    .fill(Color.fromString(tag.name?.lowercased() ?? "gray"))
+//                    .fill(Color.fromString(tag.name?.lowercased() ?? "gray"))
+                  .fill(Color.fromString(tag.returnColorString()))
                     .frame(width: 44, height: 44)
                     .overlay(
                         Circle()

@@ -24,7 +24,7 @@ struct TaskRowView: View {
                     // Primary color tag indicator
                     if let primaryTag = task.primaryTag {
                         Circle()
-                            .fill(Color.fromString(primaryTag.name?.lowercased() ?? "gray"))
+                          .fill(Color.fromString(primaryTag.returnColorString()))
                             .frame(width: 12, height: 12)
                     } else if let color = task.color {
                         // Fallback to legacy color

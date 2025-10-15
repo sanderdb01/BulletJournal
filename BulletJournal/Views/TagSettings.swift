@@ -26,7 +26,8 @@ struct TagSettingsView: View {
                ForEach(colorTags, id: \.id) { tag in
                   HStack {
                      Circle()
-                        .fill(Color.fromString(tag.name?.lowercased() ?? "gray"))
+//                        .fill(Color.fromString(tag.name?.lowercased() ?? "gray"))
+                        .fill(Color.fromString(tag.returnColorString()))
                         .frame(width: 24, height: 24)
                      
                      Text(tag.name ?? "")
@@ -129,9 +130,9 @@ struct TagSettingsView: View {
             }
          }
          .navigationTitle("Manage Tags")
-         #if os(iOS)
+#if os(iOS)
          .navigationBarTitleDisplayMode(.inline)
-         #endif
+#endif
          .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                Button("Done") {
@@ -189,15 +190,16 @@ struct RenameTagSheet: View {
                      Text("Current Color:")
                      Spacer()
                      Circle()
-                        .fill(Color.fromString(tag.name?.lowercased() ?? "gray"))
+//                        .fill(Color.fromString(tag.name?.lowercased() ?? "gray"))
+                        .fill(Color.fromString(tag.returnColorString()))
                         .frame(width: 24, height: 24)
                   }
                }
                
                TextField("Tag Name", text: $newName)
-               #if os(iOS)
+#if os(iOS)
                   .autocapitalization(.words)
-               #endif
+#endif
             }
             
             Section {

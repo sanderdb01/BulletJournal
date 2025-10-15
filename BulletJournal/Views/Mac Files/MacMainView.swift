@@ -137,6 +137,11 @@ struct MacMainView: View {
             selectedTab: .constant(1),
             displayedMonth: .constant(Date()),
             onDateSelected: { date in
+               // Just update the date - don't switch views
+               currentDate = date
+            },
+            onGoToDay: { date in
+               // Only switch to day view when "Go to day" button is pressed
                currentDate = date
                if viewMode == .splitView {
                   if isLeftPane {

@@ -12,6 +12,7 @@ struct CalendarView: View {
    var onDateSelected: ((Date) -> Void)? = nil
    
    var isLandscape: Bool = false  // Add this parameter
+   var onGoToDay: ((Date) -> Void)? = nil
    
    @State private var selectedDate: Date? = Date()
    
@@ -291,9 +292,13 @@ struct CalendarView: View {
    }
    
    private func goToDayView() {
+      #if os(macOS)
+      onGoToDay?(currentDate)
+      #else
       guard let selectedDate = selectedDate else { return }
       currentDate = selectedDate
       selectedTab = 0 // Switch to Day View tab
+      #endif
    }
 }
 

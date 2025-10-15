@@ -25,8 +25,8 @@ struct TaskProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<TaskEntry>) -> Void) {
         let entry = fetchTodaysTasks()
         
-        // Update every 15 minutes
-        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+        // Update every 5 minutes (was 15)
+        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 5, to: Date())!
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         
         completion(timeline)
