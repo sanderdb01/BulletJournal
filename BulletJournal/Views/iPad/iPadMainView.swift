@@ -5,7 +5,8 @@ enum ViewMode: Int {
     case split = 0
     case calendarOnly = 1
     case dayOnly = 2
-    case search = 3
+   case notes = 3
+    case search = 4
 }
 
 struct iPadMainView: View {
@@ -102,6 +103,9 @@ struct iPadMainView: View {
             
         case .dayOnly:
             DayView(currentDate: $currentDate)
+              
+           case .notes:
+              iPadNotesSplitView()
             
         case .search:
             SearchView(currentDate: $currentDate, selectedTab: $selectedTab)
@@ -175,6 +179,24 @@ struct iPadMainView: View {
                         }
                     }
                     .listRowBackground(viewMode == .dayOnly ? Color.blue.opacity(0.1) : Color.clear)
+                   
+                   Button(action: {
+                       withAnimation {
+                           viewMode = .notes
+                       }
+                   }) {
+                       HStack {
+                           Image(systemName: "note.text")
+                               .frame(width: 20)
+                           Text("Notes")
+                           Spacer()
+                           if viewMode == .notes {
+                               Image(systemName: "checkmark")
+                                   .foregroundColor(.blue)
+                           }
+                       }
+                   }
+                   .listRowBackground(viewMode == .notes ? Color.blue.opacity(0.1) : Color.clear)
                 }
                 
                 Section("Actions") {

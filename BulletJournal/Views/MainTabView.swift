@@ -1,3 +1,11 @@
+//
+// MainTabView.swift
+// HarborDot
+//
+// Main tab view with device detection - Updated with Notes tab
+//
+
+#if os(iOS)
 import SwiftUI
 import SwiftData
 
@@ -8,16 +16,16 @@ struct MainTabView: View {
     
     @State private var selectedTab = 0
     @State private var currentDate = Date()
-    @State private var displayedMonth = Date()  // Add this line
+    @State private var displayedMonth = Date()
     
     var body: some View {
         Group {
             if horizontalSizeClass == .regular {
-                // iPad layout
+                // iPad layout - uses existing iPadMainView
                 iPadMainView()
                     .environmentObject(deepLinkManager)
             } else {
-                // iPhone layout
+                // iPhone layout - tab view
                 iPhoneTabView
             }
         }
@@ -41,18 +49,25 @@ struct MainTabView: View {
             CalendarView(
                 currentDate: $currentDate,
                 selectedTab: $selectedTab,
-                displayedMonth: $displayedMonth  // Add this parameter
+                displayedMonth: $displayedMonth
             )
                 .tabItem {
                     Label("Calendar", systemImage: "calendar")
                 }
                 .tag(1)
             
+            // NEW: Notes tab for iPhone
+            iOSNotesListView()
+                .tabItem {
+                    Label("Notes", systemImage: "note.text")
+                }
+                .tag(2)
+            
             SearchView(currentDate: $currentDate, selectedTab: $selectedTab)
                 .tabItem {
                     Label("Search", systemImage: "magnifyingglass")
                 }
-                .tag(2)
+                .tag(3)
         }
         .background(AppTheme.primaryBackground.ignoresSafeArea())
     }
@@ -63,16 +78,16 @@ struct MainTabView: View {
         switch link {
         case .today:
             currentDate = Date()
-            displayedMonth = Date()  // Also update this
+            displayedMonth = Date()
             selectedTab = 0
         case .date(let date):
             currentDate = date
-            displayedMonth = date  // And this
+            displayedMonth = date
             selectedTab = 0
         case .search:
-            selectedTab = 2
+            selectedTab = 3
         case .settings:
-            selectedTab = 2
+            selectedTab = 3
         }
         
         // Clear the link after handling
@@ -81,3 +96,10 @@ struct MainTabView: View {
         }
     }
 }
+
+#Preview {
+    MainTabView()
+        .environmentObject(DeepLinkManager())
+        .modelContainer(for: [DayLog.self, TaskItem.self, AppSettings.self, Tag.self, GeneralNote.self], inMemory: true)
+}
+#endif
