@@ -9,10 +9,33 @@ struct iPadNotesSplitView: View {
     @State private var selectedNote: GeneralNote?
     @State private var searchText = ""
     @State private var showingNewNoteSheet = false
-    @State private var columnVisibility: NavigationSplitViewVisibility = .all
-    
+    @State private var isFullScreen = false
     var body: some View {
-        NavigationSplitView(columnVisibility: $columnVisibility) {
+        Group {
+            if isFullScreen, let selectedNote = selectedNote {
+                // Full-screen editor mode
+                NavigationStack {
+                    iPadNoteEditorDetailView(
+                        note: selectedNote,
+                        isFullScreen: $isFullScreen
+                    )
+                    .navigationTitle("")
+                    .navigationBarTitleDisplayMode(.inline)
+                }
+            } else {
+                // Normal split view
+                splitView
+            }
+        }
+        .sheet(isPresented: $showingNewNoteSheet) {
+            iOSNewNoteSheet(modelContext: modelContext, onCreate: { newNote in
+                selectedNote = newNote
+            })
+        }
+    }
+    
+    private var splitView: some View {
+        NavigationSplitView {
             // Sidebar - Notes List
             notesList
                 .navigationTitle("Notes")
@@ -26,19 +49,20 @@ struct iPadNotesSplitView: View {
                     }
                 }
                 .searchable(text: $searchText, prompt: "Search notes")
+           // Hide the native sidebar toggle button
+                .toolbar(removing: .sidebarToggle)
         } detail: {
             // Detail - Note Editor or Empty State
             if let selectedNote = selectedNote {
-                iPadNoteEditorDetailView(note: selectedNote)
+                iPadNoteEditorDetailView(
+                    note: selectedNote,
+                    isFullScreen: $isFullScreen
+                )
             } else {
                 emptyDetailView
             }
         }
-        .sheet(isPresented: $showingNewNoteSheet) {
-            iOSNewNoteSheet(modelContext: modelContext, onCreate: { newNote in
-                selectedNote = newNote
-            })
-        }
+        .navigationSplitViewStyle(.balanced)
     }
     
     // MARK: - Filtered Notes
@@ -222,6 +246,7 @@ struct iPadNoteEditorDetailView: View {
     @Environment(\.modelContext) private var modelContext
     
     @Bindable var note: GeneralNote
+    @Binding var isFullScreen: Bool
     
     @State private var isEditingTitle = false
     @State private var showingMarkdownPreview = false
@@ -284,10 +309,19 @@ struct iPadNoteEditorDetailView: View {
                 .padding(.horizontal, 8)
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 HStack(spacing: 16) {
+                    // Full-screen toggle button
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            isFullScreen.toggle()
+                        }
+                    } label: {
+                        Image(systemName: isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                            .foregroundStyle(.blue)
+                    }
+                    
                     Button {
                         let current = note.isPinned ?? false
                         note.isPinned = !current
