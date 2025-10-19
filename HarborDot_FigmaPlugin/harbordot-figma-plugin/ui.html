@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 16px;
+      background: #f9f9f9;
+      overflow-x: hidden;
+    }
+    
+    .header {
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #333;
+    }
+    
+    .subtitle {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #333;
+    }
+    
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .color-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .color-swatch {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .color-swatch:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .color-swatch.selected {
+      border-color: #18A0FB;
+    }
+    
+    .color-label {
+      font-size: 11px;
+      color: #666;
+      text-transform: capitalize;
+      font-weight: 500;
+    }
+    
+    .color-input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    
+    input[type="color"] {
+      width: 40px;
+      height: 30px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    input[type="text"] {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: 'Monaco', monospace;
+    }
+    
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .primary-btn {
+      background: #18A0FB;
+      color: white;
+    }
+    
+    .primary-btn:hover {
+      background: #0d8ce8;
+      transform: translateY(-1px);
+    }
+    
+    .secondary-btn {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .secondary-btn:hover {
+      background: #e0e0e0;
+    }
+    
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .preset-card {
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .preset-card:hover {
+      border-color: #18A0FB;
+      background: #f8fbff;
+      transform: translateY(-2px);
+    }
+    
+    .preset-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    
+    .preset-colors {
+      display: flex;
+      gap: 4px;
+    }
+    
+    .preset-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .code-output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre;
+      margin-top: 12px;
+      display: none;
+      line-height: 1.5;
+    }
+    
+    .code-output.show {
+      display: block;
+    }
+    
+    .info-box {
+      background: #e8f5ff;
+      border-left: 3px solid #18A0FB;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #333;
+      margin-top: 12px;
+      line-height: 1.4;
+    }
+    
+    .copy-btn {
+      background: #4CAF50;
+      color: white;
+      font-size: 11px;
+      padding: 6px 12px;
+      margin-top: 8px;
+    }
+    
+    .copy-btn:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎨 HarborDot Colors</h1>
+    <div class="subtitle">Experiment with color schemes for your app</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Current Palette</div>
+    <div class="color-grid" id="colorGrid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Color Presets</div>
+    <div class="preset-grid" id="presetGrid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Actions</div>
+    <div class="button-group">
+      <button class="primary-btn" onclick="createPalette()">
+        📋 Create Color Palette
+      </button>
+      <button class="primary-btn" onclick="generateTaskCards()">
+        🎴 Generate Task Cards
+      </button>
+      <button class="secondary-btn" onclick="applyToSelection()">
+        🎯 Apply to Selection
+      </button>
+      <button class="secondary-btn" onclick="analyzeSelection()">
+        🔍 Analyze Selection
+      </button>
+      <button class="secondary-btn" onclick="exportToSwift()">
+        💾 Export Swift Code
+      </button>
+    </div>
+    <div class="code-output" id="codeOutput"></div>
+    <button class="copy-btn" id="copyBtn" style="display:none;" onclick="copyCode()">
+      📋 Copy Swift Code
+    </button>
+  </div>
+
+  <div class="info-box">
+    💡 <strong>Quick Start:</strong> Try a preset, click "Generate Task Cards" to see previews, then "Export Swift Code" to get the code for your app!
+  </div>
+
+  <script>
+    const defaultColors = {
+      red: { r: 1, g: 0, b: 0 },
+      orange: { r: 1, g: 0.6, b: 0 },
+      yellow: { r: 1, g: 1, b: 0 },
+      green: { r: 0, g: 1, b: 0 },
+      blue: { r: 0, g: 0.5, b: 1 },
+      purple: { r: 0.5, g: 0, b: 0.5 },
+      pink: { r: 1, g: 0.75, b: 0.8 },
+      gray: { r: 0.5, g: 0.5, b: 0.5 }
+    };
+
+    let currentColors = {...defaultColors};
+    let currentSwiftCode = '';
+
+    const presets = [
+      {
+        name: 'Vibrant',
+        colors: {
+          red: { r: 0.96, g: 0.26, b: 0.21 },
+          orange: { r: 1, g: 0.6, b: 0.2 },
+          yellow: { r: 1, g: 0.82, b: 0.27 },
+          green: { r: 0.3, g: 0.69, b: 0.31 },
+          blue: { r: 0.13, g: 0.59, b: 0.95 },
+          purple: { r: 0.61, g: 0.15, b: 0.69 },
+          pink: { r: 0.91, g: 0.12, b: 0.39 },
+          gray: { r: 0.62, g: 0.62, b: 0.62 }
+        }
+      },
+      {
+        name: 'Pastel',
+        colors: {
+          red: { r: 1, g: 0.71, b: 0.76 },
+          orange: { r: 1, g: 0.85, b: 0.73 },
+          yellow: { r: 1, g: 0.96, b: 0.71 },
+          green: { r: 0.73, g: 0.94, b: 0.75 },
+          blue: { r: 0.68, g: 0.85, b: 0.96 },
+          purple: { r: 0.82, g: 0.71, b: 0.93 },
+          pink: { r: 1, g: 0.75, b: 0.86 },
+          gray: { r: 0.85, g: 0.85, b: 0.85 }
+        }
+      },
+      {
+        name: 'Dark Mode',
+        colors: {
+          red: { r: 0.8, g: 0.2, b: 0.2 },
+          orange: { r: 0.9, g: 0.49, b: 0.13 },
+          yellow: { r: 0.95, g: 0.77, b: 0.06 },
+          green: { r: 0.3, g: 0.7, b: 0.3 },
+          blue: { r: 0.25, g: 0.54, b: 0.89 },
+          purple: { r: 0.64, g: 0.31, b: 0.71 },
+          pink: { r: 0.86, g: 0.44, b: 0.58 },
+          gray: { r: 0.53, g: 0.53, b: 0.53 }
+        }
+      },
+      {
+        name: 'Nature',
+        colors: {
+          red: { r: 0.77, g: 0.30, b: 0.32 },
+          orange: { r: 0.85, g: 0.52, b: 0.27 },
+          yellow: { r: 0.95, g: 0.84, b: 0.48 },
+          green: { r: 0.42, g: 0.66, b: 0.38 },
+          blue: { r: 0.29, g: 0.57, b: 0.68 },
+          purple: { r: 0.55, g: 0.45, b: 0.66 },
+          pink: { r: 0.84, g: 0.60, b: 0.65 },
+          gray: { r: 0.55, g: 0.58, b: 0.54 }
+        }
+      }
+    ];
+
+    function rgbToHex(r, g, b) {
+      const toHex = (n) => {
+        const hex = Math.round(n * 255).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      };
+      return '#' + toHex(r) + toHex(g) + toHex(b);
+    }
+
+    function hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16) / 255,
+        g: parseInt(result[2], 16) / 255,
+        b: parseInt(result[3], 16) / 255
+      } : null;
+    }
+
+    function renderColorGrid() {
+      const grid = document.getElementById('colorGrid');
+      grid.innerHTML = '';
+
+      Object.keys(currentColors).forEach(key => {
+        const color = currentColors[key];
+        const hexColor = rgbToHex(color.r, color.g, color.b);
+
+        const item = document.createElement('div');
+        item.className = 'color-item';
+
+        const swatch = document.createElement('div');
+        swatch.className = 'color-swatch';
+        swatch.style.backgroundColor = hexColor;
+
+        const label = document.createElement('div');
+        label.className = 'color-label';
+        label.textContent = key;
+
+        const inputWrapper = document.createElement('div');
+        inputWrapper.className = 'color-input-wrapper';
+
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.value = hexColor;
+        colorInput.addEventListener('change', (e) => {
+          const rgb = hexToRgb(e.target.value);
+          currentColors[key] = rgb;
+          renderColorGrid();
+        });
+
+        inputWrapper.appendChild(colorInput);
+        item.appendChild(swatch);
+        item.appendChild(label);
+        item.appendChild(inputWrapper);
+        grid.appendChild(item);
+      });
+    }
+
+    function renderPresets() {
+      const grid = document.getElementById('presetGrid');
+      grid.innerHTML = '';
+
+      presets.forEach(preset => {
+        const card = document.createElement('div');
+        card.className = 'preset-card';
+        card.onclick = () => applyPreset(preset.colors);
+
+        const title = document.createElement('div');
+        title.className = 'preset-title';
+        title.textContent = preset.name;
+
+        const colors = document.createElement('div');
+        colors.className = 'preset-colors';
+
+        Object.values(preset.colors).slice(0, 8).forEach(color => {
+          const dot = document.createElement('div');
+          dot.className = 'preset-dot';
+          dot.style.backgroundColor = rgbToHex(color.r, color.g, color.b);
+          colors.appendChild(dot);
+        });
+
+        card.appendChild(title);
+        card.appendChild(colors);
+        grid.appendChild(card);
+      });
+    }
+
+    function applyPreset(colors) {
+      currentColors = {...colors};
+      renderColorGrid();
+    }
+
+    function createPalette() {
+      parent.postMessage({ pluginMessage: { type: 'create-palette', colors: currentColors } }, '*');
+    }
+
+    function generateTaskCards() {
+      parent.postMessage({ pluginMessage: { type: 'generate-task-cards', colors: currentColors } }, '*');
+    }
+
+    function applyToSelection() {
+      parent.postMessage({ pluginMessage: { type: 'apply-colors', colors: currentColors } }, '*');
+    }
+
+    function analyzeSelection() {
+      parent.postMessage({ pluginMessage: { type: 'analyze-selection' } }, '*');
+    }
+
+    function exportToSwift() {
+      parent.postMessage({ pluginMessage: { type: 'export-swift', colors: currentColors } }, '*');
+    }
+
+    function copyCode() {
+      navigator.clipboard.writeText(currentSwiftCode).then(() => {
+        const btn = document.getElementById('copyBtn');
+        const originalText = btn.textContent;
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => {
+          btn.textContent = originalText;
+        }, 2000);
+      });
+    }
+
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (msg.type === 'swift-code') {
+        const output = document.getElementById('codeOutput');
+        const copyBtn = document.getElementById('copyBtn');
+        currentSwiftCode = msg.code;
+        output.textContent = msg.code;
+        output.classList.add('show');
+        copyBtn.style.display = 'block';
+      } else if (msg.type === 'analyzed-colors') {
+        console.log('Analyzed colors:', msg.colors);
+        if (msg.colors.length > 0) {
+          alert(`Found ${msg.colors.length} colors in selection!`);
+        }
+      }
+    };
+
+    // Initialize
+    renderColorGrid();
+    renderPresets();
+  </script>
+</body>
+</html>

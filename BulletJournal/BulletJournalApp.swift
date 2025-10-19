@@ -4,6 +4,7 @@ import SwiftData
 @main
 struct HarborDotApp: App {
     @StateObject private var deepLinkManager = DeepLinkManager()
+    @State private var hasInitialized = false
     
     init() {
         // Request notification permission on launch
@@ -25,6 +26,10 @@ struct HarborDotApp: App {
                     deepLinkManager.handle(url: url)
                 }
                 .onAppear {
+                    // Ensure initialization only happens once per app launch
+                    guard !hasInitialized else { return }
+                    hasInitialized = true
+                    
                     initializeDefaultTags()
                     generateRecurringTasks()
                 }
@@ -38,7 +43,8 @@ struct HarborDotApp: App {
         #endif
     }
     
-    // Initialize color tags - idempotent, safe to call on every launch
+    // Initialize color tags using iCloud Key-Value Storage to prevent duplicates
+    // This is idempotent and safe to call on every launch
     private func initializeDefaultTags() {
         let context = SharedModelContainer.shared.mainContext
         TagManager.createDefaultTags(in: context)

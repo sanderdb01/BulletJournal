@@ -9,31 +9,33 @@ struct TaskRowView: View {
     let dayLog: DayLog
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 16) {  // Increased from 12 to 16
             // Checkmark for completed tasks
             if task.status == .complete {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
-                    .font(.title3)
+                    .font(.title2)  // Larger icon - changed from .title3
             }
             
             // Task content
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {  // Increased from 6 to 8
                 // Task name and status
-                HStack(spacing: 8) {
-                    // Primary color tag indicator
+                HStack(spacing: 12) {  // Increased from 8 to 12
+                    // Primary color tag indicator - BIGGER
                     if let primaryTag = task.primaryTag {
                         Circle()
-                          .fill(Color.fromString(primaryTag.returnColorString()))
-                            .frame(width: 12, height: 12)
+                            .fill(Color.fromString(primaryTag.returnColorString()))
+                            .frame(width: 20, height: 20)  // Increased from 12 to 20
                     } else if let color = task.color {
                         // Fallback to legacy color
                         Circle()
                             .fill(Color.fromString(color))
-                            .frame(width: 12, height: 12)
+                            .frame(width: 20, height: 20)  // Increased from 12 to 20
                     }
                     
                     Text(task.name ?? "")
+                        .font(.body)  // Larger text
+                        .fontWeight(.medium)  // Added weight for better readability
                         .foregroundColor(textColor)
                         .strikethrough(task.status == .complete)
                     
@@ -43,15 +45,16 @@ struct TaskRowView: View {
                     statusBadge
                 }
                 
-                // NEW: Custom tags display
+                // Custom tags display
                 if !task.customTags.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 6) {
+                        HStack(spacing: 8) {  // Increased from 6 to 8
                             ForEach(task.customTags, id: \.id) { tag in
                                 Text(tag.name ?? "")
-                                    .font(.caption2)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
+                                    .font(.caption)  // Slightly larger than .caption2
+                                    .fontWeight(.medium)
+                                    .padding(.horizontal, 10)  // Increased from 8
+                                    .padding(.vertical, 5)  // Increased from 3
                                     .background(Color.blue.opacity(0.15))
                                     .foregroundColor(.blue)
                                     .cornerRadius(8)
@@ -65,7 +68,7 @@ struct TaskRowView: View {
                     // Notes preview
                     if let notes = task.notes, !notes.isEmpty {
                         Text(notes)
-                            .font(.caption)
+                            .font(.subheadline)  // Slightly larger than .caption
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                     }
@@ -76,9 +79,9 @@ struct TaskRowView: View {
                     if let reminderTime = task.reminderTime {
                         HStack(spacing: 4) {
                             Image(systemName: "bell.fill")
-                                .font(.caption2)
+                                .font(.caption)  // Slightly larger than .caption2
                             Text(reminderTime, style: .time)
-                                .font(.caption)
+                                .font(.subheadline)  // Slightly larger
                         }
                         .foregroundColor(.orange)
                     }
@@ -86,14 +89,17 @@ struct TaskRowView: View {
                     // Recurring indicator
                     if task.isRecurring == true || task.isRecurringInstance {
                         Image(systemName: "repeat")
-                            .font(.caption)
+                            .font(.subheadline)  // Slightly larger
                             .foregroundColor(.purple)
                     }
                 }
             }
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)  // Increased from 12 to 16
         .padding(.horizontal, 16)
+        .background(taskRowBackground)  // Custom background color
+        .cornerRadius(12)  // Rounded corners for card effect
+        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)  // Subtle shadow
         .contentShape(Rectangle())
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.2)) {
@@ -117,16 +123,16 @@ struct TaskRowView: View {
             }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                    // Only show "Move to Tomorrow" for non-recurring tasks
-                    if task.isRecurring != true && !task.isRecurringInstance {
-                        Button {
-                            moveTaskToTomorrow()
-                        } label: {
-                            Label("Tomorrow", systemImage: "arrow.right.circle.fill")
-                        }
-                        .tint(.blue)
-                    }
+            // Only show "Move to Tomorrow" for non-recurring tasks
+            if task.isRecurring != true && !task.isRecurringInstance {
+                Button {
+                    moveTaskToTomorrow()
+                } label: {
+                    Label("Tomorrow", systemImage: "arrow.right.circle.fill")
                 }
+                .tint(.blue)
+            }
+        }
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive) {
                 withAnimation {
@@ -147,6 +153,27 @@ struct TaskRowView: View {
         }
     }
     
+    // MARK: - Background Color
+    private var taskRowBackground: Color {
+        // Different background colors based on task status
+        switch task.status {
+        case .complete:
+            return Color.green.opacity(0.08)  // Subtle green tint
+        case .inProgress:
+            return Color.orange.opacity(0.08)  // Subtle orange tint
+        case .notCompleted:
+            return Color.red.opacity(0.08)  // Subtle red tint
+        default:
+            // Default: lighter background that stands out from the main background
+            #if os(iOS)
+//            return Color(uiColor: .secondarySystemGroupedBackground)
+              return Color(uiColor: .tertiarySystemGroupedBackground)
+            #else
+            return Color(nsColor: .controlBackgroundColor)
+            #endif
+        }
+    }
+    
     private var textColor: Color {
         switch task.status {
         case .normal:
@@ -154,7 +181,7 @@ struct TaskRowView: View {
         case .inProgress:
             return .green
         case .complete:
-            return .green
+            return Color.green.opacity(0.8)  // Adjustable green shade
         case .notCompleted:
             return .red
         default:
@@ -168,109 +195,119 @@ struct TaskRowView: View {
         case .normal:
             EmptyView()
         case .inProgress:
-            Text("In Progress")
-                .font(.caption2)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.green.opacity(0.2))
-                .foregroundColor(.green)
-                .cornerRadius(8)
+            HStack(spacing: 4) {
+                Image(systemName: "clock.fill")
+                    .font(.caption)
+                Text("In Progress")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(.orange)  // Changed from .green to .orange for better distinction
+            .padding(.horizontal, 10)  // Increased from 8
+            .padding(.vertical, 5)  // Increased from 4
+            .background(Color.orange.opacity(0.15))  // Changed from .green
+            .cornerRadius(8)
         case .complete:
             EmptyView()
         case .notCompleted:
-            Text("Not Completed")
-                .font(.caption2)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.red.opacity(0.2))
-                .foregroundColor(.red)
-                .cornerRadius(8)
+            HStack(spacing: 4) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.caption)
+                Text("Not Completed")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(.red)
+            .padding(.horizontal, 10)  // Increased from 8
+            .padding(.vertical, 5)  // Increased from 4
+            .background(Color.red.opacity(0.15))  // Changed from 0.2
+            .cornerRadius(8)
         default:
             EmptyView()
         }
     }
    
-   // MARK: - Move to Tomorrow
-       private func moveTaskToTomorrow() {
-           guard let currentDate = dayLog.date else { return }
-           
-           let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: currentDate)!
-           
-           // Find or create day log for tomorrow
-           let descriptor = FetchDescriptor<DayLog>(
-               predicate: #Predicate { log in
-                   log.date == tomorrow
-               }
-           )
-           
-           do {
-               let tomorrowLogs = try modelContext.fetch(descriptor)
-               let tomorrowLog: DayLog
-               
-               if let existing = tomorrowLogs.first {
-                   tomorrowLog = existing
-               } else {
-                   tomorrowLog = DayLog(date: tomorrow)
-                   modelContext.insert(tomorrowLog)
-               }
-               
-               // Create a copy of the task for tomorrow
-               let newTask = TaskItem(
-                   name: task.name!,
-                   color: task.color!,
-                   notes: task.notes ?? "",
-                   status: .normal  // Reset status to normal
-               )
-               
-               // Copy tags
-               if let primaryTag = task.primaryTag {
-                   newTask.setPrimaryTag(primaryTag)
-               }
-               for customTag in task.customTags {
-                   newTask.addCustomTag(customTag)
-               }
-               
-               // Copy reminder if it exists (adjust to tomorrow)
-               if let reminderTime = task.reminderTime {
-                   let calendar = Calendar.current
-                   let timeComponents = calendar.dateComponents([.hour, .minute], from: reminderTime)
-                   var tomorrowComponents = calendar.dateComponents([.year, .month, .day], from: tomorrow)
-                   tomorrowComponents.hour = timeComponents.hour
-                   tomorrowComponents.minute = timeComponents.minute
-                   
-                   if let newReminderDate = calendar.date(from: tomorrowComponents) {
-                       newTask.reminderTime = newReminderDate
-                       
-                       // Schedule notification for tomorrow
-                       Task {
-                           let notificationId = await NotificationManager.shared.scheduleTaskNotification(
-                               task: newTask,
-                               date: newReminderDate
-                           )
-                           newTask.notificationId = notificationId
-                       }
-                   }
-               }
-               
-               tomorrowLog.addTask(newTask)
-               modelContext.insert(newTask)
-               
-               // Delete original task
-               if let notificationId = task.notificationId {
-                   NotificationManager.shared.cancelTaskNotification(notificationId: notificationId)
-               }
-               dayLog.deleteTask(task)
-               
-               try modelContext.save()
-               
+    // MARK: - Move to Tomorrow
+    private func moveTaskToTomorrow() {
+        guard let currentDate = dayLog.date else { return }
+        
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: currentDate)!
+        
+        // Find or create day log for tomorrow
+        let descriptor = FetchDescriptor<DayLog>(
+            predicate: #Predicate { log in
+                log.date == tomorrow
+            }
+        )
+        
+        do {
+            let tomorrowLogs = try modelContext.fetch(descriptor)
+            let tomorrowLog: DayLog
+            
+            if let existing = tomorrowLogs.first {
+                tomorrowLog = existing
+            } else {
+                tomorrowLog = DayLog(date: tomorrow)
+                modelContext.insert(tomorrowLog)
+            }
+            
+            // Create a copy of the task for tomorrow
+            let newTask = TaskItem(
+                name: task.name!,
+                color: task.color!,
+                notes: task.notes ?? "",
+                status: .normal  // Reset status to normal
+            )
+            
+            // Copy tags
+            if let primaryTag = task.primaryTag {
+                newTask.setPrimaryTag(primaryTag)
+            }
+            for customTag in task.customTags {
+                newTask.addCustomTag(customTag)
+            }
+            
+            // Copy reminder if it exists (adjust to tomorrow)
+            if let reminderTime = task.reminderTime {
+                let calendar = Calendar.current
+                let timeComponents = calendar.dateComponents([.hour, .minute], from: reminderTime)
+                var tomorrowComponents = calendar.dateComponents([.year, .month, .day], from: tomorrow)
+                tomorrowComponents.hour = timeComponents.hour
+                tomorrowComponents.minute = timeComponents.minute
+                
+                if let newReminderDate = calendar.date(from: tomorrowComponents) {
+                    newTask.reminderTime = newReminderDate
+                    
+                    // Schedule notification for tomorrow
+                    Task {
+                        let notificationId = await NotificationManager.shared.scheduleTaskNotification(
+                            task: newTask,
+                            date: newReminderDate
+                        )
+                        newTask.notificationId = notificationId
+                    }
+                }
+            }
+            
+            tomorrowLog.addTask(newTask)
+            modelContext.insert(newTask)
+            
+            // Delete original task
+            if let notificationId = task.notificationId {
+                NotificationManager.shared.cancelTaskNotification(notificationId: notificationId)
+            }
+            dayLog.deleteTask(task)
+            
+            try modelContext.save()
+            
 #if os(iOS)
-               // Haptic feedback
-               HapticManager.shared.notification(type: .success)
-              #endif
-           } catch {
-               print("Error moving task to tomorrow: \(error)")
-           }
-       }
+            // Haptic feedback
+            HapticManager.shared.notification(type: .success)
+           #endif
+        } catch {
+            print("Error moving task to tomorrow: \(error)")
+        }
+    }
 }
 
 #Preview {

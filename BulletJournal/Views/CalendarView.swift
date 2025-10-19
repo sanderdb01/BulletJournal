@@ -407,6 +407,12 @@ return Color(nsColor: .windowBackgroundColor)
 }
 
 #Preview {
+   #if os(iOS)
    MainTabView()
+      .environmentObject(DeepLinkManager())
       .modelContainer(for: [DayLog.self, TaskItem.self, AppSettings.self], inMemory: true)
+   #elseif os(macOS)
+   MacMainView()
+      .modelContainer(for: [DayLog.self, TaskItem.self, AppSettings.self], inMemory: true)
+   #endif
 }

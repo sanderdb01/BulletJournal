@@ -1,7 +1,6 @@
 import Foundation
 import SwiftData
 
-// MARK: - Tag Model
 @Model
 class Tag {
    var id: UUID?
@@ -29,6 +28,7 @@ class Tag {
       self.createdAt = Date()
    }
    
+   // Returns the color string for color tag circles
    func returnColorString() -> String {
       switch self.id {
          case UUID(uuidString: "00000000-0000-0000-0000-000000000001"): return "red"
@@ -43,12 +43,11 @@ class Tag {
             return "white"
          case .some(_):
             return "white"
-            
       }
    }
 }
 
-// MARK: - Default Color Tags with Predefined UUIDs
+// MARK: - Color Tag Enum
 enum ColorTag: String, CaseIterable {
    case red = "Red"
    case orange = "Orange"
@@ -63,7 +62,7 @@ enum ColorTag: String, CaseIterable {
       return self.rawValue.lowercased()
    }
    
-   // Each color tag has a HARDCODED UUID that never changes
+   // Predefined UUIDs that NEVER change - same on ALL devices
    var predefinedUUID: UUID {
       switch self {
          case .red:    return UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
@@ -79,132 +78,129 @@ enum ColorTag: String, CaseIterable {
 }
 
 // MARK: - Tag Manager
-class TagManager {
-   static let shared = TagManager()
+struct TagManager {
+   // Static flags to prevent concurrent calls - using a lock for thread safety
+       private static let lock = NSLock()
+   private static var isCreatingTags = false
+   private static var hasAttemptedCreation = false
    
-   // ALWAYS ensure the 8 color tags exist on every launch
-   // This is idempotent - safe to call multiple times
+   // Create default color tags using iCloud Key-Value Storage to prevent duplicates
    static func createDefaultTags(in context: ModelContext) {
-      print("🏷️ Initializing color tags with predefined UUIDs...")
+//      // Prevent concurrent execution
+//      guard !isCreatingTags else {
+//         print("⚠️ Tag creation already in progress, skipping")
+//         return
+//      }
+//      
+//      // Only attempt once per app launch
+//      guard !hasAttemptedCreation else {
+//         return
+//      }
+//      
+//      isCreatingTags = true
+//      hasAttemptedCreation = true
       
-      // FIRST: Clean up any duplicate or invalid color tags
-      cleanupColorTags(in: context)
+      // Thread-safe check to prevent concurrent execution
+             lock.lock()
+             let alreadyCreating = isCreatingTags
+             let alreadyAttempted = hasAttemptedCreation
+             
+             if alreadyCreating || alreadyAttempted {
+                 lock.unlock()
+                 if alreadyCreating {
+                     print("⚠️ Tag creation already in progress, skipping")
+                 }
+                 return
+             }
+             
+             isCreatingTags = true
+             hasAttemptedCreation = true
+             lock.unlock()
       
-      // SECOND: Ensure the 8 correct color tags exist
-      for colorTag in ColorTag.allCases {
-         let predefinedId = colorTag.predefinedUUID
+      print("⏰ Starting delayed tag initialization after iCloud KV sync...")
+      
+      // Use iCloud Key-Value Storage for fast cross-device sync
+      let store = NSUbiquitousKeyValueStore.default
+      
+      // Force iCloud to sync down latest values
+      store.synchronize()
+      
+      // Wait 2 seconds for iCloud KV to sync (much faster than CloudKit's 30-60 seconds)
+      DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+         defer { isCreatingTags = false }
          
-         // Check if this specific color tag exists
-         let descriptor = FetchDescriptor<Tag>(
-            predicate: #Predicate { $0.id == predefinedId }
-         )
+         // STEP 1: Check the fast-syncing iCloud flag
+         let tagsCreatedGlobally = store.bool(forKey: "colorTagsCreatedGlobally")
          
+         if tagsCreatedGlobally {
+            print("ℹ️ Tags created by another device, waiting for CloudKit sync")
+            return
+         }
+         
+         // STEP 2: Check local database
          do {
-            let existing = try context.fetch(descriptor)
+            let descriptor = FetchDescriptor<Tag>(
+               predicate: #Predicate { $0.isPrimary == true }
+            )
+            let existingColorTags = try context.fetch(descriptor)
             
-            if existing.isEmpty {
-               // Tag doesn't exist - create it with predefined UUID and default name
-               let newTag = Tag(name: colorTag.rawValue, isPrimary: true, order: 0)
-               newTag.id = predefinedId
-               context.insert(newTag)
-               print("✅ Created \(colorTag.rawValue) tag (UUID: \(predefinedId))")
-            } else {
-               // Tag exists - CloudKit will sync any name changes
-               print("✓ \(colorTag.rawValue) tag exists (UUID: \(predefinedId))")
+            if !existingColorTags.isEmpty {
+               print("ℹ️ Found \(existingColorTags.count) existing color tags in database")
+               // Set the flag so other devices don't create tags
+               store.set(true, forKey: "colorTagsCreatedGlobally")
+               store.synchronize()
+               return
             }
-         } catch {
-            print("❌ Error checking for tag \(colorTag.rawValue): \(error)")
-         }
-      }
-      
-      // Save all changes
-      do {
-         try context.save()
-         print("✅ Color tags initialization complete")
-         
-         // Verify we have exactly 8 color tags
-         let verifyDescriptor = FetchDescriptor<Tag>(
-            predicate: #Predicate { $0.isPrimary == true }
-         )
-         let colorTagCount = (try? context.fetch(verifyDescriptor).count) ?? 0
-         print("📊 Total color tags in database: \(colorTagCount)")
-         
-         if colorTagCount > 8 {
-            print("⚠️ WARNING: More than 8 color tags detected! Running cleanup again...")
-            cleanupColorTags(in: context)
-         }
-      } catch {
-         print("❌ Error saving color tags: \(error)")
-      }
-   }
-   
-   // Clean up duplicate or invalid color tags
-   // Keep ONLY the 8 tags with predefined UUIDs
-   private static func cleanupColorTags(in context: ModelContext) {
-      do {
-         // Get ALL color tags
-         let allColorTagsDescriptor = FetchDescriptor<Tag>(
-            predicate: #Predicate { $0.isPrimary == true }
-         )
-         let allColorTags = try context.fetch(allColorTagsDescriptor)
-         
-         print("🧹 Cleanup: Found \(allColorTags.count) color tags")
-         
-         // Get the set of valid predefined UUIDs
-         let validUUIDs = Set(ColorTag.allCases.map { $0.predefinedUUID })
-         
-         // Delete any color tag that doesn't have a predefined UUID
-         var deletedCount = 0
-         for tag in allColorTags {
-            if let tagId = tag.id, !validUUIDs.contains(tagId) {
-               print("🗑️ Deleting invalid color tag: \(tag.name ?? "unknown") (UUID: \(tagId))")
-               context.delete(tag)
-               deletedCount += 1
+            
+            // STEP 3: This is the first device - create tags with predefined UUIDs
+            print("✅ Creating 8 color tags for the first time...")
+            for colorTag in ColorTag.allCases {
+               let tag = Tag(name: colorTag.rawValue, isPrimary: true, order: 0)
+               tag.id = colorTag.predefinedUUID // Use hardcoded UUID
+               context.insert(tag)
             }
-         }
-         
-         if deletedCount > 0 {
+            
             try context.save()
-            print("✅ Cleanup: Deleted \(deletedCount) invalid color tags")
-         } else {
-            print("✅ Cleanup: No invalid color tags found")
+            print("✅ Successfully created \(ColorTag.allCases.count) color tags")
+            
+            // STEP 4: Mark as created globally (prevents other devices)
+            store.set(true, forKey: "colorTagsCreatedGlobally")
+            store.synchronize()
+            print("✅ Marked tags as created globally in iCloud KV")
+            
+         } catch {
+            print("❌ Error creating default tags: \(error)")
          }
-      } catch {
-         print("❌ Error during color tag cleanup: \(error)")
       }
    }
    
-   // Get all primary (color) tags
+   // Find a tag by name
+   static func findTag(byName name: String, in context: ModelContext) -> Tag? {
+      let descriptor = FetchDescriptor<Tag>(
+         predicate: #Predicate { $0.name == name }
+      )
+      return try? context.fetch(descriptor).first
+   }
+   
+   // Get all color tags (isPrimary = true)
    static func getColorTags(from context: ModelContext) -> [Tag] {
       let descriptor = FetchDescriptor<Tag>(
          predicate: #Predicate { $0.isPrimary == true },
          sortBy: [SortDescriptor(\.name)]
       )
-      
-      do {
-         return try context.fetch(descriptor)
-      } catch {
-         print("Error fetching color tags: \(error)")
-         return []
-      }
+      return (try? context.fetch(descriptor)) ?? []
    }
    
-   // Get all custom tags
+   // Get all custom tags (isPrimary = false)
    static func getCustomTags(from context: ModelContext) -> [Tag] {
       let descriptor = FetchDescriptor<Tag>(
          predicate: #Predicate { $0.isPrimary == false },
-         sortBy: [SortDescriptor(\.order), SortDescriptor(\.name)]
+         sortBy: [SortDescriptor(\.name)]
       )
-      
-      do {
-         return try context.fetch(descriptor)
-      } catch {
-         print("Error fetching custom tags: \(error)")
-         return []
-      }
+      return (try? context.fetch(descriptor)) ?? []
    }
    
-   // Get all tags (color + custom)
+   // Get all tags sorted (color tags first, then custom)
    static func getAllTags(from context: ModelContext) -> [Tag] {
       let descriptor = FetchDescriptor<Tag>(
          sortBy: [SortDescriptor(\.name)]
@@ -223,118 +219,72 @@ class TagManager {
             return (tag1.name ?? "") < (tag2.name ?? "")
          }
       } catch {
-         print("Error fetching all tags: \(error)")
+         print("❌ Error fetching all tags: \(error)")
          return []
       }
    }
    
-   // Create a new custom tag
+   // Create a custom tag
    static func createCustomTag(name: String, in context: ModelContext) -> Tag? {
-      let trimmedName = name.trimmingCharacters(in: .whitespaces)
-      guard !trimmedName.isEmpty else { return nil }
-      
       // Check if tag already exists
-      let descriptor = FetchDescriptor<Tag>(
-         predicate: #Predicate { tag in
-            tag.name == trimmedName && tag.isPrimary == false
-         }
-      )
+      if let existing = findTag(byName: name, in: context) {
+         return existing
+      }
+      
+      let tag = Tag(name: name, isPrimary: false, order: 0)
+      context.insert(tag)
       
       do {
-         let existing = try context.fetch(descriptor)
-         if !existing.isEmpty {
-            print("⚠️ Tag '\(trimmedName)' already exists")
-            return existing.first
-         }
-         
-         // Get the highest order number
-         let allCustomTags = getCustomTags(from: context)
-         let maxOrder = allCustomTags.compactMap { $0.order }.max() ?? 0
-         
-         // Create new tag
-         let newTag = Tag(name: trimmedName, isPrimary: false, order: maxOrder + 1)
-         context.insert(newTag)
          try context.save()
-         
-         print("✅ Created custom tag: \(trimmedName)")
-         return newTag
+         return tag
       } catch {
          print("❌ Error creating custom tag: \(error)")
          return nil
       }
    }
    
-   // Rename a tag
-   static func renameTag(_ tag: Tag, newName: String, in context: ModelContext) -> Bool {
-      let trimmedName = newName.trimmingCharacters(in: .whitespaces)
-      guard !trimmedName.isEmpty else { return false }
-      
-      tag.name = trimmedName
-      
-      do {
-         try context.save()
-         print("✅ Renamed tag to: \(trimmedName)")
-         return true
-      } catch {
-         print("❌ Error renaming tag: \(error)")
-         return false
-      }
-   }
-   
    // Delete a custom tag
-   static func deleteCustomTag(_ tag: Tag, from context: ModelContext) -> Bool {
-      // Don't allow deleting primary color tags
-      guard tag.isPrimary != true else {
+   static func deleteCustomTag(_ tag: Tag, from context: ModelContext) {
+      // Don't delete primary (color) tags
+      guard tag.isPrimary == false else {
          print("⚠️ Cannot delete primary color tags")
-         return false
+         return
       }
       
       context.delete(tag)
-      
       do {
          try context.save()
-         print("✅ Deleted tag: \(tag.name ?? "unknown")")
-         return true
       } catch {
          print("❌ Error deleting tag: \(error)")
-         return false
       }
    }
    
-   // Get tag usage count
-   static func getTagUsageCount(_ tag: Tag) -> Int {
-      return tag.tasks?.count ?? 0
-   }
-   
-   // Find tag by name
-   static func findTag(byName name: String, in context: ModelContext) -> Tag? {
-      let descriptor = FetchDescriptor<Tag>(
-         predicate: #Predicate { tag in
-            tag.name == name
-         }
-      )
-      
+   // Rename a tag
+   static func renameTag(_ tag: Tag, newName: String, in context: ModelContext) {
+      tag.name = newName
       do {
-         let tags = try context.fetch(descriptor)
-         return tags.first
+         try context.save()
       } catch {
-         print("Error finding tag: \(error)")
-         return nil
+         print("❌ Error renaming tag: \(error)")
       }
    }
    
-   // Get or create a tag by name (useful for import)
-   static func getOrCreateTag(name: String, isPrimary: Bool, in context: ModelContext) -> Tag? {
+   // Get or create a tag by name
+   static func getOrCreateTag(name: String, isPrimary: Bool, in context: ModelContext) -> Tag {
       if let existing = findTag(byName: name, in: context) {
          return existing
       }
       
-      if isPrimary {
-         // Don't create new primary tags dynamically
-         return nil
+      let tag = Tag(name: name, isPrimary: isPrimary, order: 0)
+      context.insert(tag)
+      
+      do {
+         try context.save()
+      } catch {
+         print("❌ Error creating tag: \(error)")
       }
       
-      return createCustomTag(name: name, in: context)
+      return tag
    }
    
    // MARK: - Nuclear Reset (Use with caution!)
@@ -358,6 +308,12 @@ class TagManager {
          
          // Wait a moment for CloudKit to process
          Thread.sleep(forTimeInterval: 1.0)
+         
+         // Reset the iCloud KV flag so tags can be recreated
+         let store = NSUbiquitousKeyValueStore.default
+         store.set(false, forKey: "colorTagsCreatedGlobally")
+         store.synchronize()
+         print("✅ Reset iCloud KV flag")
          
          // Recreate the 8 color tags
          print("🔄 Recreating 8 color tags...")
