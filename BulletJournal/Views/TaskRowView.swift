@@ -9,33 +9,17 @@ struct TaskRowView: View {
     let dayLog: DayLog
     
     var body: some View {
-        HStack(spacing: 16) {  // Increased from 12 to 16
-            // Checkmark for completed tasks
-            if task.status == .complete {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                    .font(.title2)  // Larger icon - changed from .title3
-            }
+        HStack(spacing: 16) {
+            // Interactive color dot with checkmark overlay
+            interactiveColorDot
             
             // Task content
-            VStack(alignment: .leading, spacing: 8) {  // Increased from 6 to 8
+            VStack(alignment: .leading, spacing: 8) {
                 // Task name and status
-                HStack(spacing: 12) {  // Increased from 8 to 12
-                    // Primary color tag indicator - BIGGER
-                    if let primaryTag = task.primaryTag {
-                        Circle()
-                            .fill(Color.fromString(primaryTag.returnColorString()))
-                            .frame(width: 20, height: 20)  // Increased from 12 to 20
-                    } else if let color = task.color {
-                        // Fallback to legacy color
-                        Circle()
-                            .fill(Color.fromString(color))
-                            .frame(width: 20, height: 20)  // Increased from 12 to 20
-                    }
-                    
+                HStack(spacing: 12) {
                     Text(task.name ?? "")
-                        .font(.body)  // Larger text
-                        .fontWeight(.medium)  // Added weight for better readability
+                        .font(.body)
+                        .fontWeight(.medium)
                         .foregroundColor(textColor)
                         .strikethrough(task.status == .complete)
                     
@@ -48,13 +32,13 @@ struct TaskRowView: View {
                 // Custom tags display
                 if !task.customTags.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {  // Increased from 6 to 8
+                        HStack(spacing: 8) {
                             ForEach(task.customTags, id: \.id) { tag in
                                 Text(tag.name ?? "")
-                                    .font(.caption)  // Slightly larger than .caption2
+                                    .font(.caption)
                                     .fontWeight(.medium)
-                                    .padding(.horizontal, 10)  // Increased from 8
-                                    .padding(.vertical, 5)  // Increased from 3
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
                                     .background(Color.blue.opacity(0.15))
                                     .foregroundColor(.blue)
                                     .cornerRadius(8)
@@ -68,7 +52,7 @@ struct TaskRowView: View {
                     // Notes preview
                     if let notes = task.notes, !notes.isEmpty {
                         Text(notes)
-                            .font(.subheadline)  // Slightly larger than .caption
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                     }
@@ -79,9 +63,9 @@ struct TaskRowView: View {
                     if let reminderTime = task.reminderTime {
                         HStack(spacing: 4) {
                             Image(systemName: "bell.fill")
-                                .font(.caption)  // Slightly larger than .caption2
+                                .font(.caption)
                             Text(reminderTime, style: .time)
-                                .font(.subheadline)  // Slightly larger
+                                .font(.subheadline)
                         }
                         .foregroundColor(.orange)
                     }
@@ -89,19 +73,20 @@ struct TaskRowView: View {
                     // Recurring indicator
                     if task.isRecurring == true || task.isRecurringInstance {
                         Image(systemName: "repeat")
-                            .font(.subheadline)  // Slightly larger
+                            .font(.subheadline)
                             .foregroundColor(.purple)
                     }
                 }
             }
         }
-        .padding(.vertical, 16)  // Increased from 12 to 16
+        .padding(.vertical, 16)
         .padding(.horizontal, 16)
-        .background(taskRowBackground)  // Custom background color
-        .cornerRadius(12)  // Rounded corners for card effect
-        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)  // Subtle shadow
+        .background(taskRowBackground)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
         .contentShape(Rectangle())
         .onTapGesture {
+            // Tap on the row itself cycles through all statuses
             withAnimation(.easeInOut(duration: 0.2)) {
                 task.cycleStatus()
                #if os(iOS)
@@ -153,6 +138,57 @@ struct TaskRowView: View {
         }
     }
     
+    // MARK: - Interactive Color Dot
+    @ViewBuilder
+    private var interactiveColorDot: some View {
+        ZStack {
+            // Base color circle
+            Circle()
+                .fill(getTaskColor())
+                .frame(width: 28, height: 28)  // Slightly larger to accommodate checkmark
+            
+            // Checkmark overlay when complete
+            if task.status == .complete {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+            }
+        }
+        .contentShape(Circle())  // Make the entire circle tappable
+        .onTapGesture {
+            // Tapping the dot toggles complete/normal status
+            withAnimation(.easeInOut(duration: 0.2)) {
+                toggleCompletion()
+               #if os(iOS)
+                HapticManager.shared.impact(style: .medium)
+               #endif
+                try? modelContext.save()
+            }
+        }
+    }
+    
+    // MARK: - Helper Functions
+    
+    /// Get the task's color (from primary tag or legacy color)
+    private func getTaskColor() -> Color {
+        if let primaryTag = task.primaryTag {
+            return Color.fromString(primaryTag.returnColorString())
+        } else if let color = task.color {
+            return Color.fromString(color)
+        } else {
+            return .blue  // Default fallback
+        }
+    }
+    
+    /// Toggle between complete and normal status (for dot tap)
+    private func toggleCompletion() {
+        if task.status == .complete {
+            task.status = .normal
+        } else {
+            task.status = .complete
+        }
+    }
+    
     // MARK: - Background Color
     private var taskRowBackground: Color {
         // Different background colors based on task status
@@ -164,10 +200,9 @@ struct TaskRowView: View {
         case .notCompleted:
             return Color.red.opacity(0.08)  // Subtle red tint
         default:
-            // Default: lighter background that stands out from the main background
+            // Default: tertiarySystemGroupedBackground
             #if os(iOS)
-//            return Color(uiColor: .secondarySystemGroupedBackground)
-              return Color(uiColor: .tertiarySystemGroupedBackground)
+            return Color(uiColor: .tertiarySystemGroupedBackground)
             #else
             return Color(nsColor: .controlBackgroundColor)
             #endif
@@ -202,10 +237,10 @@ struct TaskRowView: View {
                     .font(.caption)
                     .fontWeight(.medium)
             }
-            .foregroundColor(.orange)  // Changed from .green to .orange for better distinction
-            .padding(.horizontal, 10)  // Increased from 8
-            .padding(.vertical, 5)  // Increased from 4
-            .background(Color.orange.opacity(0.15))  // Changed from .green
+            .foregroundColor(.orange)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.orange.opacity(0.15))
             .cornerRadius(8)
         case .complete:
             EmptyView()
@@ -218,9 +253,9 @@ struct TaskRowView: View {
                     .fontWeight(.medium)
             }
             .foregroundColor(.red)
-            .padding(.horizontal, 10)  // Increased from 8
-            .padding(.vertical, 5)  // Increased from 4
-            .background(Color.red.opacity(0.15))  // Changed from 0.2
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.red.opacity(0.15))
             .cornerRadius(8)
         default:
             EmptyView()
