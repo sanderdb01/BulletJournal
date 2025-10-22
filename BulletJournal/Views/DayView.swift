@@ -10,6 +10,8 @@ struct DayView: View {
    @Binding var currentDate: Date
    @State private var showingAddTask = false
    @State private var isNotesExpanded = false
+   @State private var showingVoiceRecording = false
+   @State private var parsedTaskFromVoice: ParsedTask? = nil
    
    // Computed property to get current day log
    private var currentDayLog: DayLog? {
@@ -31,6 +33,11 @@ struct DayView: View {
    // Get date format preference
    private var dateFormat: DateFormatStyle {
       settings.first?.dateFormat ?? .numeric
+   }
+   
+   private var availableTags: [Tag] {
+       let descriptor = FetchDescriptor<Tag>()
+       return (try? modelContext.fetch(descriptor)) ?? []
    }
    
    var body: some View {
@@ -76,26 +83,42 @@ struct DayView: View {
                      .listRowBackground(Color.clear)
                   }
                   
-                  // Add Task Button
+                  // Add Task Button and voice button
                   Button(action: {
-                     showingAddTask = true
+                      showingAddTask = true
                   }) {
-                     HStack {
-                        Image(systemName: "plus.circle.fill")
-                           .foregroundColor(.blue)
-                           .font(.title3)
-                        Text("Add New Task")
-                           .foregroundColor(.blue)
-                           .font(.headline)
-                        Spacer()
-                     }
-                     .padding()
-                     .background(AppTheme.tertiaryBackground)
-                     .cornerRadius(12)
+                      HStack(spacing: 12) {
+                          // Plus icon
+                          Image(systemName: "plus.circle.fill")
+                              .foregroundColor(.blue)
+                              .font(.title3)
+                          
+                          Text("Add New Task")
+                              .foregroundColor(.blue)
+                              .font(.headline)
+                          
+                          Spacer()
+                         #if os(iOS)
+                          // Voice button (tap stops propagation to main button)
+                          Button(action: {
+                              showingVoiceRecording = true
+                          }) {
+                              Image(systemName: "waveform.circle.fill")
+                                  .foregroundColor(.purple)
+                                  .font(.title3)
+                                  .padding(8)
+                          }
+                          .buttonStyle(.plain)  // Prevents triggering parent button
+                         #endif
+                      }
+                      .padding()
+                      .background(AppTheme.tertiaryBackground)
+                      .cornerRadius(12)
                   }
                   .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                   .listRowSeparator(.hidden)
                   .listRowBackground(Color.clear)
+
                   
                   // Notes Section
                   Section {
@@ -114,8 +137,30 @@ struct DayView: View {
          .navigationBarHidden(true)
 #endif
          .sheet(isPresented: $showingAddTask) {
-            AddEditTaskView(dayLog: getOrCreateDayLog(), isPresented: $showingAddTask)
+            AddEditTaskView(
+                    dayLog: getOrCreateDayLog(),
+                    parsedTaskFromVoice: parsedTaskFromVoice,  // ADD THIS LINE
+                    isPresented: $showingAddTask
+                )
          }
+         #if os(iOS)
+         .sheet(isPresented: $showingVoiceRecording) {
+             VoiceRecordingView(
+                 isPresented: $showingVoiceRecording,
+                 parsedTask: $parsedTaskFromVoice,
+                 availableTags: availableTags
+             )
+         }
+         .onChange(of: parsedTaskFromVoice) { oldValue, newValue in
+             if let _ = newValue {
+                 // Voice recording complete, show add task sheet with pre-filled data
+                 showingVoiceRecording = false
+                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                     showingAddTask = true
+                 }
+             }
+         }
+         #endif
       }
    }
    

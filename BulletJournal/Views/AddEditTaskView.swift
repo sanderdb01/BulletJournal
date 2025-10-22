@@ -7,6 +7,7 @@ struct AddEditTaskView: View {
    
    let dayLog: DayLog
    let taskToEdit: TaskItem?
+   let parsedTaskFromVoice: ParsedTask?
    
    @State private var taskName: String
    @State private var selectedColor: String
@@ -20,59 +21,147 @@ struct AddEditTaskView: View {
    @State private var dayOfMonth: Int
    @State private var hasEndDate: Bool
    @State private var recurrenceEndDate: Date
-//   @State private var saveAsTemplate: Bool
+   //   @State private var saveAsTemplate: Bool
    
    // NEW: Tag states
    @State private var selectedPrimaryTag: Tag?
    @State private var selectedCustomTags: [Tag] = []
    
-   init(dayLog: DayLog, taskToEdit: TaskItem? = nil, isPresented: Binding<Bool>) {
+   init(dayLog: DayLog, taskToEdit: TaskItem? = nil, parsedTaskFromVoice: ParsedTask? = nil, isPresented: Binding<Bool>) {
       self.dayLog = dayLog
       self.taskToEdit = taskToEdit
       self._isPresented = isPresented
+      self.parsedTaskFromVoice = parsedTaskFromVoice
       
-      // Initialize state with existing task data or defaults
-      _taskName = State(initialValue: taskToEdit?.name ?? "")
-      _selectedColor = State(initialValue: taskToEdit?.color ?? "blue")
-      _taskNotes = State(initialValue: taskToEdit?.notes ?? "")
-      
-      // Initialize reminder state
-      let hasExistingReminder = taskToEdit?.reminderTime != nil
-      _hasReminder = State(initialValue: hasExistingReminder)
-      _reminderTime = State(initialValue: taskToEdit?.reminderTime ?? Date())
-      
-      // Initialize recurrence state
-      _isRecurring = State(initialValue: taskToEdit?.isRecurring ?? false)
-      _recurrenceFrequency = State(initialValue: .daily)
-      _recurrenceInterval = State(initialValue: 1)
-      _selectedDaysOfWeek = State(initialValue: [])
-      _dayOfMonth = State(initialValue: 1)
-      _hasEndDate = State(initialValue: taskToEdit?.recurrenceEndDate != nil)
-      _recurrenceEndDate = State(initialValue: taskToEdit?.recurrenceEndDate ?? Date().addingTimeInterval(86400 * 30))
-//      _saveAsTemplate = State(initialValue: taskToEdit?.isTemplate ?? false)
-      
-      // Load existing recurrence rule if editing
-      if let ruleString = taskToEdit?.recurrenceRule,
-         let rule = RecurrenceRule.from(jsonString: ruleString) {
-         _recurrenceFrequency = State(initialValue: rule.frequency)
-         _recurrenceInterval = State(initialValue: rule.interval)
-         _selectedDaysOfWeek = State(initialValue: rule.daysOfWeek ?? [])
-         _dayOfMonth = State(initialValue: rule.dayOfMonth ?? 1)
+      if let task = taskToEdit {
+         // Initialize state with existing task data or defaults
+         _taskName = State(initialValue: taskToEdit?.name ?? "")
+         _selectedColor = State(initialValue: taskToEdit?.color ?? "blue")
+         _taskNotes = State(initialValue: taskToEdit?.notes ?? "")
+         
+         // Initialize reminder state
+         let hasExistingReminder = taskToEdit?.reminderTime != nil
+         _hasReminder = State(initialValue: hasExistingReminder)
+         _reminderTime = State(initialValue: taskToEdit?.reminderTime ?? Date())
+         
+         // Initialize recurrence state
+         _isRecurring = State(initialValue: taskToEdit?.isRecurring ?? false)
+         _recurrenceFrequency = State(initialValue: .daily)
+         _recurrenceInterval = State(initialValue: 1)
+         _selectedDaysOfWeek = State(initialValue: [])
+         _dayOfMonth = State(initialValue: 1)
+         _hasEndDate = State(initialValue: taskToEdit?.recurrenceEndDate != nil)
+         _recurrenceEndDate = State(initialValue: taskToEdit?.recurrenceEndDate ?? Date().addingTimeInterval(86400 * 30))
+         //      _saveAsTemplate = State(initialValue: taskToEdit?.isTemplate ?? false)
+         
+         // Load existing recurrence rule if editing
+         if let ruleString = taskToEdit?.recurrenceRule,
+            let rule = RecurrenceRule.from(jsonString: ruleString) {
+            _recurrenceFrequency = State(initialValue: rule.frequency)
+            _recurrenceInterval = State(initialValue: rule.interval)
+            _selectedDaysOfWeek = State(initialValue: rule.daysOfWeek ?? [])
+            _dayOfMonth = State(initialValue: rule.dayOfMonth ?? 1)
+         }
+         
+         // NEW: Initialize tags
+         _selectedPrimaryTag = State(initialValue: taskToEdit?.primaryTag)
+         _selectedCustomTags = State(initialValue: taskToEdit?.customTags ?? [])
       }
-      
-      // NEW: Initialize tags
-      _selectedPrimaryTag = State(initialValue: taskToEdit?.primaryTag)
-      _selectedCustomTags = State(initialValue: taskToEdit?.customTags ?? [])
+      else if let parsed = parsedTaskFromVoice {
+         // Pre-fill from voice
+         _taskName = State(initialValue: parsed.taskName)
+         _selectedPrimaryTag = State(initialValue: parsed.colorTag)
+         _taskNotes = State(initialValue: parsed.notes ?? "")
+         _selectedCustomTags = State(initialValue: [])
+         _recurrenceFrequency = State(initialValue: .daily)
+         _recurrenceInterval = State(initialValue: 1)
+         if let reminderTime = parsed.reminderTime {
+            _reminderTime = State(initialValue: reminderTime)
+            _hasReminder = State(initialValue: true)
+         } else {
+            _reminderTime = State(initialValue: Date())
+            _hasReminder = State(initialValue: false)
+         }
+         
+         // Handle recurrence from voice
+         if let voicePattern = parsed.voiceRecurrencePattern {
+            _isRecurring = State(initialValue: true)
+            _hasReminder = State(initialValue: parsed.reminderTime != nil)
+            
+            // Map voice pattern to your RecurrenceRule
+            switch voicePattern {
+               case .daily:
+                  _recurrenceFrequency = State(initialValue: .daily)
+                  _recurrenceInterval = State(initialValue: 1)
+               case .weekly:
+                  _recurrenceFrequency = State(initialValue: .weekly)
+                  _recurrenceInterval = State(initialValue: 1)
+               case .monthly:
+                  _recurrenceFrequency = State(initialValue: .monthly)
+                  _recurrenceInterval = State(initialValue: 1)
+               case .yearly:
+                  // You might not have yearly, so use monthly
+                  _recurrenceFrequency = State(initialValue: .monthly)
+                  _recurrenceInterval = State(initialValue: 12)
+            }
+         } else {
+            _isRecurring = State(initialValue: false)
+            _hasReminder = State(initialValue: parsed.reminderTime != nil)
+         }
+         
+         // Set color from tag or default
+         if let tag = parsed.colorTag {
+            _selectedColor = State(initialValue: tag.returnColorString())
+         } else {
+            _selectedColor = State(initialValue: "blue")
+         }
+         
+         // Default values for other fields
+         _hasEndDate = State(initialValue: false)
+         _recurrenceEndDate = State(initialValue: Date())
+         _selectedDaysOfWeek = State(initialValue: [])
+         _dayOfMonth = State(initialValue: 1)
+      }
+      else {
+          // New task - initialize ALL properties with defaults
+          _taskName = State(initialValue: "")
+          _selectedColor = State(initialValue: "blue")
+          _taskNotes = State(initialValue: "")
+          _hasReminder = State(initialValue: false)
+          _reminderTime = State(initialValue: Date())
+          _isRecurring = State(initialValue: false)
+          _recurrenceFrequency = State(initialValue: .daily)
+          _recurrenceInterval = State(initialValue: 1)
+          _selectedDaysOfWeek = State(initialValue: [])
+          _dayOfMonth = State(initialValue: 1)
+          _hasEndDate = State(initialValue: false)
+          _recurrenceEndDate = State(initialValue: Date().addingTimeInterval(86400 * 30))
+          _selectedPrimaryTag = State(initialValue: nil)
+          _selectedCustomTags = State(initialValue: [])
+      }
    }
    
    var body: some View {
       NavigationStack {
          Form {
+            if parsedTaskFromVoice != nil {
+               Section {
+                  HStack {
+                     Image(systemName: "waveform.badge.checkmark")
+                        .foregroundColor(.purple)
+                     Text("Created from voice - review details")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                     Spacer()
+                  }
+                  .padding(.vertical, 4)
+               }
+            }
             Section("Task Details") {
                TextField("Task Name", text: $taskName)
-               #if os(iOS)
+#if os(iOS)
                   .autocorrectionDisabled()
-               #endif
+#endif
             }
             
             // NEW: Tags Section
@@ -108,33 +197,33 @@ struct AddEditTaskView: View {
                   .frame(minHeight: 100)
             }
             
-//            Section {
-//               Toggle("Save as Template", isOn: $saveAsTemplate)
-//            } footer: {
-//               Text("Templates can be quickly created from the templates menu")
-//            }
+            //            Section {
+            //               Toggle("Save as Template", isOn: $saveAsTemplate)
+            //            } footer: {
+            //               Text("Templates can be quickly created from the templates menu")
+            //            }
          }
          .navigationTitle(taskToEdit == nil ? "New Task" : "Edit Task")
-         #if os(iOS)
+#if os(iOS)
          .navigationBarTitleDisplayMode(.inline)
-         #endif
-//         .onAppear {
-//            // Set default Blue tag for new tasks
-//            if taskToEdit == nil && selectedPrimaryTag == nil {
-//               if let blueTag = TagManager.findTag(byName: "Blue", in: modelContext) {
-////                  selectedPrimaryTag = blueTag
-//                  // Find blue tag and select it
-//                                 let descriptor = FetchDescriptor<Tag>(
-//                                    predicate: #Predicate { tag in
-//                                       tag.isPrimary == true && tag.name == "blue"
-//                                    }
-//                                 )
-//                                 if let blueTag = try? modelContext.fetch(descriptor).first {
-//                                    selectedPrimaryTag = blueTag
-//                                 }
-//               }
-//            }
-//         }
+#endif
+         //         .onAppear {
+         //            // Set default Blue tag for new tasks
+         //            if taskToEdit == nil && selectedPrimaryTag == nil {
+         //               if let blueTag = TagManager.findTag(byName: "Blue", in: modelContext) {
+         ////                  selectedPrimaryTag = blueTag
+         //                  // Find blue tag and select it
+         //                                 let descriptor = FetchDescriptor<Tag>(
+         //                                    predicate: #Predicate { tag in
+         //                                       tag.isPrimary == true && tag.name == "blue"
+         //                                    }
+         //                                 )
+         //                                 if let blueTag = try? modelContext.fetch(descriptor).first {
+         //                                    selectedPrimaryTag = blueTag
+         //                                 }
+         //               }
+         //            }
+         //         }
          .onAppear {
             // Set default Blue tag for new tasks
             if taskToEdit == nil && selectedPrimaryTag == nil {
@@ -298,13 +387,13 @@ struct AddEditTaskView: View {
          createTask(recurrenceRule: recurrenceRule)
       }
       
-//      try? modelContext.save()
+      //      try? modelContext.save()
       do {
-              try modelContext.save()
-              print("✅ Task saved successfully")
-          } catch {
-              print("❌ Error saving task: \(error)")
-          }
+         try modelContext.save()
+         print("✅ Task saved successfully")
+      } catch {
+         print("❌ Error saving task: \(error)")
+      }
       
       // Generate future recurring tasks
       if isRecurring {
@@ -326,7 +415,7 @@ struct AddEditTaskView: View {
       task.isRecurring = isRecurring
       task.recurrenceRule = recurrenceRule?.toJSONString()
       task.recurrenceEndDate = hasEndDate ? recurrenceEndDate : nil
-//      task.isTemplate = saveAsTemplate
+      //      task.isTemplate = saveAsTemplate
       task.modifiedAt = Date()
       
       // NEW: Update tags
@@ -360,7 +449,7 @@ struct AddEditTaskView: View {
          notes: taskNotes,
          status: .normal,
          reminderTime: reminderDate,
-//         isTemplate: saveAsTemplate
+         //         isTemplate: saveAsTemplate
       )
       
       newTask.isRecurring = isRecurring
