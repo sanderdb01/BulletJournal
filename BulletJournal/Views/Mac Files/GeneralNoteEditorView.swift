@@ -8,6 +8,8 @@ struct GeneralNoteEditorView: View {
    
    @Environment(\.modelContext) private var modelContext
    
+   @FocusState private var isTitleFocused: Bool
+   
    @State private var title: String
    @State private var content: String
    @State private var isEditingTitle = false
@@ -34,7 +36,7 @@ struct GeneralNoteEditorView: View {
                Button(action: { onBack?() }) {
                   HStack(spacing: 4) {
                      Image(systemName: "chevron.left")
-                     Text("Notes")
+                     Text("Pages")
                   }
                }
                .buttonStyle(.plain)
@@ -87,6 +89,8 @@ struct GeneralNoteEditorView: View {
                      saveTitle()
                   })
                   .textFieldStyle(.plain)
+                  .focused($isTitleFocused)
+                  .clearButton(text: $title, focus: $isTitleFocused)
                   .font(.title)
                } else {
                   Text(title.isEmpty ? "Untitled Note" : title)
@@ -308,6 +312,35 @@ struct GeneralNoteEditorView: View {
    
    private func parseInlineMarkdown(_ text: String) -> AttributedString {
       var result = AttributedString(text)
+      
+      // Links: [text](url) - PROCESS FIRST so other formatting can apply to link text
+              let linkPattern = #"\[(.+?)\]\((.+?)\)"#
+              if let regex = try? NSRegularExpression(pattern: linkPattern) {
+                  let matches = regex.matches(in: result.description, range: NSRange(result.description.startIndex..., in: result.description))
+                  for match in matches.reversed() {
+                      if let textRange = Range(match.range(at: 1), in: result.description),
+                         let urlRange = Range(match.range(at: 2), in: result.description) {
+                          let linkText = String(result.description[textRange])
+                          let urlString = String(result.description[urlRange])
+                          
+                          // Find the full markdown link pattern
+                          if let resultRange = result.range(of: "[\(linkText)](\(urlString))") {
+                              var linkAttr = AttributedString(linkText)
+                              
+                              // Try to create URL
+                              if let url = URL(string: urlString) {
+                                  linkAttr.link = url
+                              }
+                              
+                              // Style the link
+                              linkAttr.foregroundColor = .blue
+                              linkAttr.underlineStyle = .single
+                              
+                              result.replaceSubrange(resultRange, with: linkAttr)
+                          }
+                      }
+                  }
+              }
       
       // Bold: **text**
       let boldPattern = #"\*\*(.+?)\*\*"#

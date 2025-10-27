@@ -5,6 +5,8 @@ struct SearchView: View {
    @Environment(\.modelContext) private var modelContext
    @Query(sort: \DayLog.date, order: .reverse) private var dayLogs: [DayLog]
    
+   @FocusState private var isTitleFocused: Bool
+   
    @Binding var currentDate: Date
    @Binding var selectedTab: Int
    var onTaskSelected: ((Date) -> Void)? = nil
@@ -80,6 +82,8 @@ struct SearchView: View {
          TextField("Search tasks...", text: $searchText)
             .focused($isSearchFocused)
             .textFieldStyle(.plain)
+            .focused($isTitleFocused)
+            .clearButton(text: $searchText, focus: $isTitleFocused)
             .autocorrectionDisabled()
             .submitLabel(.search)
             .onSubmit {
@@ -117,7 +121,7 @@ struct SearchView: View {
          ContentUnavailableView(
             "Search Tasks",
             systemImage: "magnifyingglass",
-            description: Text("Enter text to search through all your tasks and notes")
+            description: Text("Enter text to search through all your tasks and your notebook")
          )
       } else if filteredTasks.isEmpty {
          // No results found

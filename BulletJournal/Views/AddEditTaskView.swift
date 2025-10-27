@@ -4,6 +4,9 @@ import SwiftData
 struct AddEditTaskView: View {
    @Environment(\.modelContext) private var modelContext
    @Binding var isPresented: Bool
+//   @Query private var allTags: [Tag]
+   
+   @FocusState private var isTitleFocused: Bool
    
    let dayLog: DayLog
    let taskToEdit: TaskItem?
@@ -23,6 +26,14 @@ struct AddEditTaskView: View {
    @State private var recurrenceEndDate: Date
    //   @State private var saveAsTemplate: Bool
    
+//   var colorTags: [Tag] {
+//       allTags.filter { $0.isPrimary == true }.sorted { ($0.name ?? "") < ($1.name ?? "") }
+//   }
+//   
+//   var customTags: [Tag] {
+//       allTags.filter { $0.isPrimary == false }.sorted { ($0.order ?? 0) < ($1.order ?? 0) }
+//   }
+   
    // NEW: Tag states
    @State private var selectedPrimaryTag: Tag?
    @State private var selectedCustomTags: [Tag] = []
@@ -32,6 +43,20 @@ struct AddEditTaskView: View {
       self.taskToEdit = taskToEdit
       self._isPresented = isPresented
       self.parsedTaskFromVoice = parsedTaskFromVoice
+      _taskName = State(initialValue: "")
+      _selectedColor = State(initialValue: "blue")
+      _taskNotes = State(initialValue: "")
+      _hasReminder = State(initialValue: false)
+      _reminderTime = State(initialValue: Date())
+      _isRecurring = State(initialValue: false)
+      _recurrenceFrequency = State(initialValue: .daily)
+      _recurrenceInterval = State(initialValue: 1)
+      _selectedDaysOfWeek = State(initialValue: [])
+      _dayOfMonth = State(initialValue: 1)
+      _hasEndDate = State(initialValue: false)
+      _recurrenceEndDate = State(initialValue: Date().addingTimeInterval(86400 * 30))
+      _selectedPrimaryTag = State(initialValue: nil)
+      _selectedCustomTags = State(initialValue: [])
       
       if let task = taskToEdit {
          // Initialize state with existing task data or defaults
@@ -68,13 +93,19 @@ struct AddEditTaskView: View {
          _selectedCustomTags = State(initialValue: taskToEdit?.customTags ?? [])
       }
       else if let parsed = parsedTaskFromVoice {
-         // Pre-fill from voice
+         // Pre-fill from voice (AI-parsed)
          _taskName = State(initialValue: parsed.taskName)
-         _selectedPrimaryTag = State(initialValue: parsed.colorTag)
          _taskNotes = State(initialValue: parsed.notes ?? "")
          _selectedCustomTags = State(initialValue: [])
          _recurrenceFrequency = State(initialValue: .daily)
          _recurrenceInterval = State(initialValue: 1)
+         
+         if let tagName = parsed.colorTag {
+                 // We'll match this in onAppear
+                 print("🎨 AI suggested tag: '\(tagName)' - will match in onAppear")
+             }
+         
+         // Handle reminder time from AI
          if let reminderTime = parsed.reminderTime {
             _reminderTime = State(initialValue: reminderTime)
             _hasReminder = State(initialValue: true)
@@ -83,10 +114,9 @@ struct AddEditTaskView: View {
             _hasReminder = State(initialValue: false)
          }
          
-         // Handle recurrence from voice
+         // Handle recurrence from AI
          if let voicePattern = parsed.voiceRecurrencePattern {
             _isRecurring = State(initialValue: true)
-            _hasReminder = State(initialValue: parsed.reminderTime != nil)
             
             // Map voice pattern to your RecurrenceRule
             switch voicePattern {
@@ -100,20 +130,11 @@ struct AddEditTaskView: View {
                   _recurrenceFrequency = State(initialValue: .monthly)
                   _recurrenceInterval = State(initialValue: 1)
                case .yearly:
-                  // You might not have yearly, so use monthly
                   _recurrenceFrequency = State(initialValue: .monthly)
                   _recurrenceInterval = State(initialValue: 12)
             }
          } else {
             _isRecurring = State(initialValue: false)
-            _hasReminder = State(initialValue: parsed.reminderTime != nil)
-         }
-         
-         // Set color from tag or default
-         if let tag = parsed.colorTag {
-            _selectedColor = State(initialValue: tag.returnColorString())
-         } else {
-            _selectedColor = State(initialValue: "blue")
          }
          
          // Default values for other fields
@@ -123,21 +144,21 @@ struct AddEditTaskView: View {
          _dayOfMonth = State(initialValue: 1)
       }
       else {
-          // New task - initialize ALL properties with defaults
-          _taskName = State(initialValue: "")
-          _selectedColor = State(initialValue: "blue")
-          _taskNotes = State(initialValue: "")
-          _hasReminder = State(initialValue: false)
-          _reminderTime = State(initialValue: Date())
-          _isRecurring = State(initialValue: false)
-          _recurrenceFrequency = State(initialValue: .daily)
-          _recurrenceInterval = State(initialValue: 1)
-          _selectedDaysOfWeek = State(initialValue: [])
-          _dayOfMonth = State(initialValue: 1)
-          _hasEndDate = State(initialValue: false)
-          _recurrenceEndDate = State(initialValue: Date().addingTimeInterval(86400 * 30))
-          _selectedPrimaryTag = State(initialValue: nil)
-          _selectedCustomTags = State(initialValue: [])
+         // New task - initialize ALL properties with defaults
+         _taskName = State(initialValue: "")
+         _selectedColor = State(initialValue: "blue")
+         _taskNotes = State(initialValue: "")
+         _hasReminder = State(initialValue: false)
+         _reminderTime = State(initialValue: Date())
+         _isRecurring = State(initialValue: false)
+         _recurrenceFrequency = State(initialValue: .daily)
+         _recurrenceInterval = State(initialValue: 1)
+         _selectedDaysOfWeek = State(initialValue: [])
+         _dayOfMonth = State(initialValue: 1)
+         _hasEndDate = State(initialValue: false)
+         _recurrenceEndDate = State(initialValue: Date().addingTimeInterval(86400 * 30))
+         _selectedPrimaryTag = State(initialValue: nil)
+         _selectedCustomTags = State(initialValue: [])
       }
    }
    
@@ -157,8 +178,10 @@ struct AddEditTaskView: View {
                   .padding(.vertical, 4)
                }
             }
-            Section("Task Details") {
+            Section("Task Name") {
                TextField("Task Name", text: $taskName)
+                  .focused($isTitleFocused)
+                  .clearButton(text: $taskName, focus: $isTitleFocused)
 #if os(iOS)
                   .autocorrectionDisabled()
 #endif
@@ -192,7 +215,7 @@ struct AddEditTaskView: View {
                }
             }
             
-            Section("Notes (Optional)") {
+            Section("Task Notes (Optional)") {
                TextEditor(text: $taskNotes)
                   .frame(minHeight: 100)
             }
@@ -225,15 +248,35 @@ struct AddEditTaskView: View {
          //            }
          //         }
          .onAppear {
-            // Set default Blue tag for new tasks
-            if taskToEdit == nil && selectedPrimaryTag == nil {
-               // Find Blue tag (note: capitalized "Blue" to match the tag name)
-               if let blueTag = TagManager.findTag(byName: "Blue", in: modelContext) {
-                  DispatchQueue.main.async {
-                     selectedPrimaryTag = blueTag
-                  }
-               }
-            }
+             // Set default Blue tag for new tasks OR match voice tag
+             if taskToEdit == nil && selectedPrimaryTag == nil {
+                 if let parsed = parsedTaskFromVoice, let aiTagName = parsed.colorTag {
+                     // Voice input - match the AI's suggested tag
+                     let descriptor = FetchDescriptor<Tag>(
+                         predicate: #Predicate { tag in
+                             tag.isPrimary == true
+                         }
+                     )
+                     if let allTags = try? modelContext.fetch(descriptor),
+                        let matchedTag = allTags.first(where: {
+                            $0.name?.lowercased() == aiTagName.lowercased()
+                        }) {
+                         selectedPrimaryTag = matchedTag
+                         print("🎨 Matched AI tag '\(aiTagName)' to '\(matchedTag.name ?? "")'")
+                     } else {
+                         print("⚠️ Could not match AI tag '\(aiTagName)'")
+                         // Fall through to default Blue
+                         if let blueTag = TagManager.findTag(byName: "Blue", in: modelContext) {
+                             selectedPrimaryTag = blueTag
+                         }
+                     }
+                 } else {
+                     // Regular new task - default to Blue
+                     if let blueTag = TagManager.findTag(byName: "Blue", in: modelContext) {
+                         selectedPrimaryTag = blueTag
+                     }
+                 }
+             }
          }
          .toolbar {
             ToolbarItem(placement: .cancellationAction) {

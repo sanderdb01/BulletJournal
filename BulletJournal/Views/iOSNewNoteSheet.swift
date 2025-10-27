@@ -4,6 +4,8 @@ import SwiftData
 
 struct iOSNewNoteSheet: View {
     @Environment(\.dismiss) private var dismiss
+   
+   @FocusState private var isTitleFocused: Bool
     
     let modelContext: ModelContext
     var onCreate: ((GeneralNote) -> Void)? = nil
@@ -17,6 +19,8 @@ struct iOSNewNoteSheet: View {
             Form {
                 Section("Title") {
                     TextField("Enter title (optional)", text: $title)
+                      .focused($isTitleFocused)
+                      .clearButton(text: $title, focus: $isTitleFocused)
                 }
                 
                 Section("Content") {
@@ -30,7 +34,7 @@ struct iOSNewNoteSheet: View {
                     Text("Adds a sample markdown note with formatting examples")
                 }
             }
-            .navigationTitle("New Note")
+            .navigationTitle("New Page")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

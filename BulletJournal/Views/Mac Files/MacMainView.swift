@@ -109,7 +109,7 @@ struct MacMainView: View {
          Picker("", selection: selectedView) {
             Text("Day").tag(PaneView.day)
             Text("Calendar").tag(PaneView.calendar)
-            Text("Notes").tag(PaneView.notes)
+            Text("Notebook").tag(PaneView.notes)
             Text("Search").tag(PaneView.search)
          }
          .pickerStyle(.segmented)
@@ -209,7 +209,7 @@ struct MacMainView: View {
          // Header with toggle and + button
          VStack(spacing: 8) {
             HStack {
-               Text("Notes")
+               Text("Pages")
                   .font(.headline)
                
                Spacer()
@@ -218,7 +218,7 @@ struct MacMainView: View {
                   Image(systemName: "plus")
                }
                .buttonStyle(.plain)
-               .help("Create new note")
+               .help("Create new page")
             }
             
             // Markdown toggle

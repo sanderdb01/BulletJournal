@@ -57,7 +57,7 @@ struct NewNoteSheet: View {
             VStack(spacing: 0) {
                 Form {
                     Section("Title") {
-                        TextField("Note Title (Optional)", text: $title)
+                        TextField("Page Title (Optional)", text: $title)
                     }
                     
                     Section {
@@ -65,7 +65,7 @@ struct NewNoteSheet: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Include example markdown")
                                     .font(.body)
-                                Text("Create a new note with example markdown formatting")
+                                Text("Create a new page with example markdown formatting")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -85,7 +85,7 @@ struct NewNoteSheet: View {
                         }
                     } else {
                         Section {
-                            Text("A note with example markdown will be created")
+                            Text("A page with example markdown will be created")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -94,7 +94,7 @@ struct NewNoteSheet: View {
                     }
                 }
             }
-            .navigationTitle("New Note")
+            .navigationTitle("New Page")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

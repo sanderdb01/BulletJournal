@@ -38,7 +38,7 @@ struct iPadNotesSplitView: View {
         NavigationSplitView {
             // Sidebar - Notes List
             notesList
-                .navigationTitle("Notes")
+                .navigationTitle("Notebook")
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
                         Button {
@@ -48,7 +48,7 @@ struct iPadNotesSplitView: View {
                         }
                     }
                 }
-                .searchable(text: $searchText, prompt: "Search notes")
+                .searchable(text: $searchText, prompt: "Search notebook")
            // Hide the native sidebar toggle button
                 .toolbar(removing: .sidebarToggle)
         } detail: {
@@ -100,7 +100,7 @@ struct iPadNotesSplitView: View {
             }
             
             if !unpinnedNotes.isEmpty {
-                Section(pinnedNotes.isEmpty ? "All Notes" : "Notes") {
+                Section(pinnedNotes.isEmpty ? "All Pages" : "Pages") {
                     ForEach(unpinnedNotes) { note in
                         noteRow(note)
                     }
@@ -179,7 +179,7 @@ struct iPadNotesSplitView: View {
                 .font(.system(size: 40))
                 .foregroundStyle(.secondary)
             
-            Text("No Notes")
+            Text("No Pages")
                 .font(.headline)
             
             Text("Tap + to create your first note")
@@ -231,6 +231,7 @@ enum MarkdownLineType {
     case bullet, numbered(Int)
     case checkbox(Bool)
     case code
+   case quote
     case normal
 }
 
@@ -245,6 +246,8 @@ struct MarkdownLine: Identifiable {
 struct iPadNoteEditorDetailView: View {
     @Environment(\.modelContext) private var modelContext
     
+   @FocusState private var isTitleFocused: Bool
+   
     @Bindable var note: GeneralNote
     @Binding var isFullScreen: Bool
     
@@ -258,13 +261,16 @@ struct iPadNoteEditorDetailView: View {
         VStack(spacing: 0) {
             // Title Section
             if isEditingTitle {
-                TextField("Title", text: Binding(
-                    get: { note.title ?? "" },
-                    set: { note.updateTitle($0.isEmpty ? nil : $0) }
-                ))
+               let titleBinding = Binding(
+                   get: { note.title ?? "" },
+                   set: { note.updateTitle($0.isEmpty ? nil : $0) }
+               )
+                TextField("Title", text: titleBinding)
                 .font(.title2)
                 .fontWeight(.bold)
                 .textFieldStyle(.plain)
+                .focused($isTitleFocused)
+                .clearButton(text: titleBinding, focus: $isTitleFocused)
                 .padding()
                 .background(Color(.systemGray6))
                 .onSubmit {
@@ -400,7 +406,9 @@ struct iPadNoteEditorDetailView: View {
                 continue
             }
             
-            if line.hasPrefix("# ") {
+           if line.hasPrefix("> ") {
+                           result.append(MarkdownLine(type: .quote, content: String(line.dropFirst(2))))
+                       } else if line.hasPrefix("# ") {
                 result.append(MarkdownLine(type: .header1, content: String(line.dropFirst(2))))
             } else if line.hasPrefix("## ") {
                 result.append(MarkdownLine(type: .header2, content: String(line.dropFirst(3))))
@@ -437,6 +445,19 @@ struct iPadNoteEditorDetailView: View {
         case .header3:
             Text(parseInlineMarkdown(line.content))
                 .font(.system(size: 18, weight: .semibold))
+              
+           case .quote:
+                       HStack(alignment: .top, spacing: 12) {
+                           Rectangle()
+                               .fill(Color.blue)
+                               .frame(width: 4)
+                           Text(parseInlineMarkdown(line.content))
+                               .font(.body.italic())
+                               .foregroundColor(.secondary)
+                       }
+                       .padding(.leading, 16)
+                       .padding(.vertical, 4)
+                       
             
         case .bullet:
             HStack(alignment: .top, spacing: 8) {
@@ -488,6 +509,35 @@ struct iPadNoteEditorDetailView: View {
     
     private func parseInlineMarkdown(_ text: String) -> AttributedString {
         var result = AttributedString(text)
+       
+       // Links: [text](url) - PROCESS FIRST so other formatting can apply to link text
+               let linkPattern = #"\[(.+?)\]\((.+?)\)"#
+               if let regex = try? NSRegularExpression(pattern: linkPattern) {
+                   let matches = regex.matches(in: result.description, range: NSRange(result.description.startIndex..., in: result.description))
+                   for match in matches.reversed() {
+                       if let textRange = Range(match.range(at: 1), in: result.description),
+                          let urlRange = Range(match.range(at: 2), in: result.description) {
+                           let linkText = String(result.description[textRange])
+                           let urlString = String(result.description[urlRange])
+                           
+                           // Find the full markdown link pattern
+                           if let resultRange = result.range(of: "[\(linkText)](\(urlString))") {
+                               var linkAttr = AttributedString(linkText)
+                               
+                               // Try to create URL
+                               if let url = URL(string: urlString) {
+                                   linkAttr.link = url
+                               }
+                               
+                               // Style the link
+                               linkAttr.foregroundColor = .blue
+                               linkAttr.underlineStyle = .single
+                               
+                               result.replaceSubrange(resultRange, with: linkAttr)
+                           }
+                       }
+                   }
+               }
         
         // Bold: **text**
         let boldPattern = #"\*\*(.+?)\*\*"#

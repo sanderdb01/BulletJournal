@@ -144,6 +144,7 @@
 				BulletJournalApp.swift,
 				ContentView.swift,
 				Helpers/AppTheme.swift,
+				Helpers/ClearButton.swift,
 				Helpers/ColorExtensions.swift,
 				Helpers/DateExtensions.swift,
 				Helpers/DeepLinkHandler.swift,
@@ -206,6 +207,7 @@
 			membershipExceptions = (
 				ContentView.swift,
 				Helpers/AppTheme.swift,
+				Helpers/ClearButton.swift,
 				Helpers/ColorExtensions.swift,
 				Helpers/DateExtensions.swift,
 				Helpers/DeepLinkHandler.swift,
@@ -252,12 +254,12 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Helpers/AppTheme.swift,
+				Helpers/ClearButton.swift,
 				Helpers/ColorExtensions.swift,
 				Helpers/DateExtensions.swift,
 				Helpers/DeepLinkHandler.swift,
 				Helpers/SharedModelContainer.swift,
 				Managers/NotificationManager.swift,
-				Managers/ParsedTask.swift,
 				Managers/RecurrenceManager.swift,
 				Models/AppSettings.swift,
 				Models/DayLog.swift,
@@ -274,12 +276,12 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Helpers/AppTheme.swift,
+				Helpers/ClearButton.swift,
 				Helpers/ColorExtensions.swift,
 				Helpers/DateExtensions.swift,
 				Helpers/DeepLinkHandler.swift,
 				Helpers/SharedModelContainer.swift,
 				Managers/NotificationManager.swift,
-				Managers/ParsedTask.swift,
 				Managers/RecurrenceManager.swift,
 				Models/AppSettings.swift,
 				Models/DayLog.swift,

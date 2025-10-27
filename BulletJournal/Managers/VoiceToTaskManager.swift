@@ -3,13 +3,14 @@ import Speech
 import AVFoundation
 import NaturalLanguage
 import SwiftData
+import FoundationModels
 
 #if canImport(Combine)
 internal import Combine
 #endif
 
-/// Manages voice-to-task conversion using Apple's on-device AI
-@available(iOS 13.0, macOS 10.15, *)
+/// Manages voice-to-task conversion using Apple Foundation Models
+@available(iOS 18.2, macOS 15.2, *)
 class VoiceToTaskManager: NSObject, ObservableObject {
    // MARK: - Published Properties
    @Published var isRecording = false
@@ -18,7 +19,7 @@ class VoiceToTaskManager: NSObject, ObservableObject {
    @Published var transcribedText: String = ""
    @Published var isProcessing = false
    @Published var errorMessage: String?
-   @Published var parsedTask: ParsedTask? = nil  // ADDED: This is what DayView watches!
+   @Published var parsedTask: ParsedTask? = nil
    
    // MARK: - Private Properties
    private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
@@ -27,14 +28,15 @@ class VoiceToTaskManager: NSObject, ObservableObject {
    private let audioEngine = AVAudioEngine()
    private var recordingTimer: Timer?
    private var levelTimer: Timer?
-   private var availableTags: [Tag] = []  // ADDED: Store tags
+   private var availableTags: [Tag] = []
+   private var aiSession = LanguageModelSession()
    
    // MARK: - Public Methods
    
    /// Set available tags for color matching
    func setAvailableTags(_ tags: [Tag]) {
       self.availableTags = tags
-      print("🏷️ Set \(tags.count) available tags")
+      print("🏷️ Set \(tags.count) available tags for AI parsing")
    }
    
    /// Request speech recognition and microphone permissions
@@ -136,7 +138,7 @@ class VoiceToTaskManager: NSObject, ObservableObject {
       }
    }
    
-   /// Stop recording and parse the result
+   /// Stop recording and parse with AI
    func stopRecording() {
       print("🛑 Stopping recording...")
       print("🎤 Final transcribed text: '\(transcribedText)'")
@@ -153,105 +155,156 @@ class VoiceToTaskManager: NSObject, ObservableObject {
          inputNode.removeTap(onBus: 0)
       }
       
-      // CRITICAL FIX: Parse the transcription and assign to parsedTask
+      // Parse with Foundation Models AI
       if !transcribedText.isEmpty {
-         print("🔍 Starting to parse task...")
-         let parsed = parseTask(from: transcribedText, availableTags: availableTags)
-         
-         // Assign to the published property so DayView can see it
-         DispatchQueue.main.async {
-            self.parsedTask = parsed
-            print("✅ ParsedTask assigned:")
-            print("   - Task name: '\(parsed.taskName)'")
-            print("   - Has reminder: \(parsed.reminderTime != nil)")
-            print("   - Has recurrence: \(parsed.voiceRecurrencePattern != nil)")
-            print("   - Has color tag: \(parsed.colorTag != nil)")
-            print("   - Has notes: \(parsed.notes != nil)")
+         Task { @MainActor in
+            await parseTaskWithAI(from: transcribedText)
          }
       } else {
          print("⚠️ Transcribed text is empty!")
       }
    }
    
-   /// Parse transcribed text into task components using Apple's Natural Language framework
-   func parseTask(from text: String, availableTags: [Tag]) -> ParsedTask {
-      print("🔍 parseTask called with text: '\(text)'")
+   // MARK: - AI Parsing with Foundation Models
+   
+   /// Parse transcribed text using Apple's Foundation Models
+   @MainActor
+   func parseTaskWithAI(from text: String) async {
+      print("🤖 Starting AI parsing with Foundation Models...")
       isProcessing = true
-      defer { isProcessing = false }
       
-      var parsedTask = ParsedTask(
-         taskName: text,
-         reminderTime: nil,
-         voiceRecurrencePattern: nil,
-         colorTag: nil,
-         notes: nil
+      do {
+         // Create tag list for the AI
+         let tagNames = availableTags
+            .filter { $0.isPrimary == true }
+            .compactMap { $0.name }
+         let tagList = tagNames.isEmpty ? "Work, Personal, Home" : tagNames.joined(separator: ", ")
+         
+         // Create a comprehensive prompt for the AI
+         let prompt = """
+         Parse this voice input into a structured task. Be intelligent about categorization.
+         
+         Voice input: "\(text)"
+         
+         Extract and return ONLY a valid JSON object with these exact fields:
+         {
+           "taskName": "clean task name without phrases like 'remind me to' or 'I need to'",
+           "reminderTime": "ISO 8601 date string if time mentioned (e.g., 'at 3pm', 'tomorrow'), otherwise null",
+           "voiceRecurrencePattern": "one of: daily, weekly, monthly, yearly, or null if not repeating",
+           "colorTag": "choose from: \(tagList) - be smart: 'groceries'→Personal, 'meeting'→Work, 'workout'→Gym",
+           "notes": "any additional details mentioned, or null"
+         }
+         
+         Examples:
+         - "Buy groceries tomorrow at 3pm" → taskName: "Buy groceries", reminderTime: tomorrow 3pm, colorTag: "Personal"
+         - "Workout every day" → taskName: "Workout", voiceRecurrencePattern: "daily", colorTag: "Gym"
+         - "Meeting with John" → taskName: "Meeting with John", colorTag: "Work"
+         
+         Return ONLY the JSON object, no other text.
+         """
+         
+         print("📤 Sending to Foundation Models AI...")
+         
+         // Send to the model and get response
+         let response = try await aiSession.respond(to: prompt)
+         let aiOutput = response.content
+         
+         print("✅ AI Response received: \(aiOutput)")
+         
+         // Parse the JSON response
+         guard let jsonData = aiOutput.data(using: .utf8),
+               let jsonObject = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
+            // If not valid JSON, try to extract from the response
+            print("⚠️ Response is not pure JSON, attempting to extract...")
+            
+            // Look for JSON object in the response
+            if let jsonStart = aiOutput.range(of: "{"),
+               let jsonEnd = aiOutput.range(of: "}", options: .backwards) {
+               let jsonString = String(aiOutput[jsonStart.lowerBound...jsonEnd.upperBound])
+               if let extractedData = jsonString.data(using: .utf8),
+                  let extractedJson = try? JSONSerialization.jsonObject(with: extractedData) as? [String: Any] {
+                  try await processParsedJSON(extractedJson, originalText: text)
+                  return
+               }
+            }
+            
+            throw VoiceError.aiParsingFailed
+         }
+         
+         try await processParsedJSON(jsonObject, originalText: text)
+         
+      } catch {
+         print("❌ AI Parsing error: \(error.localizedDescription)")
+         self.errorMessage = "Failed to parse with AI: \(error.localizedDescription)"
+         self.isProcessing = false
+         
+         // Fallback to basic parsing
+         print("⚠️ Falling back to basic parsing...")
+         let basicTask = ParsedTask(taskName: text)
+         self.parsedTask = basicTask
+      }
+   }
+   
+   /// Process the parsed JSON into a ParsedTask
+   @MainActor
+   private func processParsedJSON(_ jsonObject: [String: Any], originalText: String) async throws {
+      // Extract fields from JSON
+      let taskName = jsonObject["taskName"] as? String ?? originalText
+      let colorTag = jsonObject["colorTag"] as? String
+      let notes = jsonObject["notes"] as? String
+      let recurrenceString = jsonObject["voiceRecurrencePattern"] as? String
+      
+      // Parse recurrence
+      let recurrence: VoiceRecurrencePattern? = {
+         guard let str = recurrenceString?.lowercased() else { return nil }
+         return VoiceRecurrencePattern(rawValue: str)
+      }()
+      
+      // Parse reminder time
+      let reminderTime: Date? = {
+         guard let timeString = jsonObject["reminderTime"] as? String else { return nil }
+         
+         // Try ISO 8601 first
+         let isoFormatter = ISO8601DateFormatter()
+         if let date = isoFormatter.date(from: timeString) {
+            return date
+         }
+         
+         // Try to parse relative times from the AI
+         let calendar = Calendar.current
+         let lowercased = timeString.lowercased()
+         
+         if lowercased.contains("tomorrow") {
+            // Try to extract time
+            if let hourMatch = lowercased.range(of: #"(\d{1,2}):?(\d{2})?\s?(am|pm)"#, options: .regularExpression) {
+               // Parse the time components
+               // This is a simplified version - you may want more robust parsing
+               return calendar.date(byAdding: .day, value: 1, to: Date())
+            }
+            return calendar.date(byAdding: .day, value: 1, to: Date())
+         }
+         
+         return nil
+      }()
+      
+      let finalParsedTask = ParsedTask(
+         taskName: taskName,
+         reminderTime: reminderTime,
+         voiceRecurrencePattern: recurrence,
+         colorTag: colorTag,
+         notes: notes
       )
       
-      // Use NLTagger for linguistic analysis
-      let tagger = NLTagger(tagSchemes: [.nameType, .lexicalClass])
-      tagger.string = text
+      print("   - Task name: '\(finalParsedTask.taskName)'")
+      print("   - Reminder time: \(finalParsedTask.reminderTime != nil ? "Yes" : "No")")
+      print("   - Recurrence: \(finalParsedTask.voiceRecurrencePattern?.rawValue ?? "None")")
+      print("   - Color tag: \(finalParsedTask.colorTag ?? "None")")
+      print("   - Notes: \(finalParsedTask.notes != nil ? "Yes" : "No")")
       
-      // Extract task name (this will be refined based on other components)
-      var taskName = text
+      self.parsedTask = finalParsedTask
+      self.isProcessing = false
       
-      // 1. Extract reminder time
-      if let (time, cleanedText) = extractReminderTime(from: text) {
-         parsedTask.reminderTime = time
-         taskName = cleanedText
-         print("⏰ Found reminder time: \(time)")
-      }
-      
-      // 2. Extract recurrence pattern
-      if let (pattern, cleanedText) = extractRecurrence(from: taskName) {
-         parsedTask.voiceRecurrencePattern = pattern
-         taskName = cleanedText
-         print("🔁 Found recurrence: \(pattern)")
-      }
-      
-      // 3. Match color tag by custom name
-      if let (tag, cleanedText) = matchColorTag(from: taskName, availableTags: availableTags) {
-         parsedTask.colorTag = tag
-         taskName = cleanedText
-         print("🎨 Found color tag: \(tag.name ?? "unknown")")
-      }
-      
-      // 4. Extract notes/description (anything after "note:", "description:", etc.)
-      if let (notes, cleanedText) = extractNotes(from: taskName) {
-         parsedTask.notes = notes
-         taskName = cleanedText
-         print("📝 Found notes: \(notes)")
-      }
-      
-      // Clean up task name
-      taskName = taskName
-         .trimmingCharacters(in: .whitespacesAndNewlines)
-         .replacingOccurrences(of: "  +", with: " ", options: .regularExpression) // Remove multiple spaces
-      
-      // Remove common task prefixes
-      let prefixes = ["remind me to ", "remember to ", "I need to ", "don't forget to ", "task "]
-      for prefix in prefixes {
-         if taskName.lowercased().hasPrefix(prefix) {
-            taskName = String(taskName.dropFirst(prefix.count))
-            break
-         }
-      }
-      
-      // Capitalize first letter
-      if let first = taskName.first {
-         taskName = first.uppercased() + taskName.dropFirst()
-      }
-      
-      parsedTask.taskName = taskName
-      
-      // If task name is empty, use original text
-      if parsedTask.taskName.isEmpty {
-         parsedTask.taskName = text
-         print("⚠️ Task name was empty, using original text")
-      }
-      
-      print("✅ Final parsed task name: '\(parsedTask.taskName)'")
-      
-      return parsedTask
+      print("📦 ParsedTask assigned and ready!")
    }
    
    // MARK: - Private Helper Methods
@@ -270,195 +323,13 @@ class VoiceToTaskManager: NSObject, ObservableObject {
       
       audioLevel = normalizedLevel
    }
-   
-   /// Extract reminder time from text
-   private func extractReminderTime(from text: String) -> (Date, String)? {
-      let calendar = Calendar.current
-      var cleanedText = text
-      var reminderDate: Date?
-      
-      // Common time patterns
-      let timePatterns: [(String, ([String?]) -> Date?)] = [
-         // "at 3pm", "at 3:30pm"
-         ("at (\\d{1,2}):?(\\d{2})? ?(am|pm)", { matches -> Date? in
-            guard let hourStr = matches[1], let hour = Int(hourStr) else { return nil }
-            let minute = matches[2].flatMap { Int($0) } ?? 0
-            let isPM = matches[3]?.lowercased() == "pm"
-            
-            var components = calendar.dateComponents([.year, .month, .day], from: Date())
-            // Break down the ternary operator to avoid type ambiguity
-            let calculatedHour: Int
-            if isPM && hour != 12 {
-               calculatedHour = hour + 12
-            } else if hour == 12 && !isPM {
-               calculatedHour = 0
-            } else {
-               calculatedHour = hour
-            }
-            components.hour = calculatedHour
-            components.minute = minute
-            
-            return calendar.date(from: components)
-         }),
-         // "tomorrow at 3pm"
-         ("tomorrow at (\\d{1,2}):?(\\d{2})? ?(am|pm)?", { matches -> Date? in
-            guard let hourStr = matches[1], let hour = Int(hourStr) else { return nil }
-            let minute = matches[2].flatMap { Int($0) } ?? 0
-            let isPM = matches[3]?.lowercased() == "pm"
-            
-            var tomorrow = calendar.date(byAdding: .day, value: 1, to: Date()) ?? Date()
-            var components = calendar.dateComponents([.year, .month, .day], from: tomorrow)
-            components.hour = isPM && hour != 12 ? hour + 12 : (hour == 12 && !isPM ? 0 : hour)
-            components.minute = minute
-            
-            return calendar.date(from: components)
-         }),
-         // "in 30 minutes"
-         ("in (\\d+) minutes?", { matches -> Date? in
-            guard let minutesStr = matches[1], let minutes = Int(minutesStr) else { return nil }
-            return calendar.date(byAdding: .minute, value: minutes, to: Date())
-         }),
-      ]
-      
-      for (pattern, handler) in timePatterns {
-         if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
-            let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) {
-            
-            var captures: [String?] = []
-            for i in 0..<match.numberOfRanges {
-               if let range = Range(match.range(at: i), in: text) {
-                  captures.append(String(text[range]))
-               } else {
-                  captures.append(nil)
-               }
-            }
-            
-            if let date = handler(captures) {
-               reminderDate = date
-               
-               // Remove matched text
-               if let range = Range(match.range, in: text) {
-                  cleanedText.removeSubrange(range)
-               }
-               break
-            }
-         }
-      }
-      
-      if let date = reminderDate {
-         return (date, cleanedText)
-      }
-      
-      return nil
-   }
-   
-   /// Extract recurrence pattern
-   private func extractRecurrence(from text: String) -> (VoiceRecurrencePattern, String)? {
-      var cleanedText = text
-      var recurrencePattern: VoiceRecurrencePattern?
-      
-      let patterns: [(String, VoiceRecurrencePattern)] = [
-         ("every day|daily", .daily),
-         ("every week|weekly", .weekly),
-         ("every month|monthly", .monthly),
-         ("every year|yearly", .yearly),
-         ("every monday", .weekly),
-         ("every tuesday", .weekly),
-         ("every wednesday", .weekly),
-         ("every thursday", .weekly),
-         ("every friday", .weekly),
-         ("every saturday", .weekly),
-         ("every sunday", .weekly),
-      ]
-      
-      for (pattern, rule) in patterns {
-         if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
-            let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) {
-            recurrencePattern = rule
-            
-            // Remove matched text
-            if let range = Range(match.range, in: text) {
-               cleanedText.removeSubrange(range)
-            }
-            break
-         }
-      }
-      
-      if let pattern = recurrencePattern {
-         return (pattern, cleanedText)
-      }
-      
-      return nil
-   }
-   
-   /// Match color tag by custom name
-   private func matchColorTag(from text: String, availableTags: [Tag]) -> (Tag, String)? {
-      var cleanedText = text
-      let lowercasedText = text.lowercased()
-      
-      print("🔍 Matching color tag from '\(text)' with \(availableTags.count) available tags")
-      
-      // Try to find color tags by their custom names
-      for tag in availableTags where tag.isPrimary == true {
-         guard let tagName = tag.name else { continue }
-         let lowercasedTagName = tagName.lowercased()
-         
-         print("   Checking tag: '\(tagName)'")
-         
-         // Look for patterns like "tag it as work", "use red tag", "with blue", etc.
-         let patterns = [
-            "tag it as \(lowercasedTagName)",
-            "use \(lowercasedTagName) tag",
-            "with \(lowercasedTagName)",
-            "\(lowercasedTagName) tag",
-         ]
-         
-         for pattern in patterns {
-            if lowercasedText.contains(pattern) {
-               cleanedText = cleanedText.replacingOccurrences(of: pattern, with: "", options: .caseInsensitive)
-               print("   ✅ Matched pattern '\(pattern)'")
-               return (tag, cleanedText)
-            }
-         }
-         
-         // Also check if the tag name appears as a standalone word
-         let words = lowercasedText.components(separatedBy: .whitespaces)
-         if words.contains(lowercasedTagName) {
-            cleanedText = cleanedText.replacingOccurrences(of: tagName, with: "", options: .caseInsensitive)
-            print("   ✅ Matched standalone word '\(tagName)'")
-            return (tag, cleanedText)
-         }
-      }
-      
-      print("   ❌ No color tag matched")
-      return nil
-   }
-   
-   /// Extract notes/description
-   private func extractNotes(from text: String) -> (String, String)? {
-      let patterns = [
-         "note:",
-         "notes:",
-         "description:",
-         "details:",
-      ]
-      
-      for pattern in patterns {
-         if let range = text.range(of: pattern, options: .caseInsensitive) {
-            let notes = String(text[range.upperBound...]).trimmingCharacters(in: .whitespaces)
-            let taskName = String(text[..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
-            return (notes, taskName)
-         }
-      }
-      
-      return nil
-   }
 }
 
 /// Voice-related errors
 enum VoiceError: LocalizedError {
    case recognitionFailed
    case permissionDenied
+   case aiParsingFailed
    
    var errorDescription: String? {
       switch self {
@@ -466,6 +337,8 @@ enum VoiceError: LocalizedError {
             return "Failed to start speech recognition"
          case .permissionDenied:
             return "Please enable microphone and speech recognition in Settings"
+         case .aiParsingFailed:
+            return "Failed to parse task with AI"
       }
    }
 }

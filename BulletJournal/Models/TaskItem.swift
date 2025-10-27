@@ -106,7 +106,8 @@ class TaskItem {
         tags?.append(tag)
         
         // Update legacy color field for backward compatibility
-        color = tag.name?.lowercased()
+//        color = tag.name?.lowercased()
+       color = tag.returnColorString().lowercased()
         modifiedAt = Date()
     }
     

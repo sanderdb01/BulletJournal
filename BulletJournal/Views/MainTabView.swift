@@ -59,7 +59,7 @@ struct MainTabView: View {
             // NEW: Notes tab for iPhone
             iOSNotesListView()
                 .tabItem {
-                    Label("Notes", systemImage: "note.text")
+                    Label("Notebook", systemImage: "note.text")
                 }
                 .tag(2)
             

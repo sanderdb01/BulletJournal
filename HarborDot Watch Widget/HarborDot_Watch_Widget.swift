@@ -27,25 +27,28 @@ struct WatchWidgetProvider: TimelineProvider {
     }
     
    private func fetchTodayStats() -> WatchWidgetEntry {
+       print("🔄 Watch Widget: Fetching today's stats...")
+       
        let container = SharedModelContainer.shared
-       let modelContext = ModelContext(container)  // Create background context
+       let modelContext = ModelContext(container)
        let today = Calendar.current.startOfDay(for: Date())
        
-       // Fetch all day logs and filter in Swift (not in predicate)
        let descriptor = FetchDescriptor<DayLog>()
        
        do {
            let allDayLogs = try modelContext.fetch(descriptor)
+           print("📊 Watch Widget: Found \(allDayLogs.count) day logs")
            
-           // Filter for today in Swift
            if let todayLog = allDayLogs.first(where: { dayLog in
                guard let date = dayLog.date else { return false }
-               return date == today
+               return Calendar.current.isDate(date, inSameDayAs: today)
            }) {
                let tasks = todayLog.tasks ?? []
                let completed = tasks.filter { $0.status == .complete }.count
                let notCompleted = tasks.filter { $0.status == .notCompleted }.count
                let normal = tasks.count - completed - notCompleted
+               
+               print("✅ Watch Widget: Completed: \(completed), Normal: \(normal), Not Completed: \(notCompleted)")
                
                return WatchWidgetEntry(
                    date: Date(),
@@ -53,9 +56,11 @@ struct WatchWidgetProvider: TimelineProvider {
                    normalCount: normal,
                    notCompletedCount: notCompleted
                )
+           } else {
+               print("⚠️ Watch Widget: No log found for today")
            }
        } catch {
-           print("Error fetching watch widget data: \(error)")
+           print("❌ Watch Widget Error: \(error)")
        }
        
        return WatchWidgetEntry(date: Date(), completedCount: 0, normalCount: 0, notCompletedCount: 0)
@@ -100,7 +105,9 @@ struct RectangularWidgetView: View {
                 .font(.title2)
                 .foregroundColor(.blue)
         }
-        .padding(8)
+        .containerBackground(for: .widget) {
+            Color.clear
+        }
     }
 }
 
@@ -108,19 +115,23 @@ struct RectangularWidgetView: View {
 struct CircularWidgetView: View {
     let entry: WatchWidgetEntry
     
+    private var totalTasks: Int {
+        entry.completedCount + entry.normalCount + entry.notCompletedCount
+    }
+    
     var body: some View {
-        ZStack {
-            AccessoryWidgetBackground()
+        VStack(spacing: 2) {
+            Text("\(entry.completedCount)")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(.green)
             
-            VStack(spacing: 0) {
-                Text("\(entry.completedCount)")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.green)
-                
-                Text("/\(entry.completedCount + entry.normalCount + entry.notCompletedCount)")
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.7))
-            }
+            Text("of \(totalTasks)")
+                .font(.system(size: 9))
+                .foregroundColor(.secondary)
+        }
+        .containerBackground(for: .widget) {
+            // Background for the widget
+            Color.clear
         }
     }
 }

@@ -166,29 +166,26 @@ struct VoiceRecordingView: View {
         }
     }
     
-    private func stopAndProcess() {
-        voiceManager.stopRecording()
-        
-        // Wait a moment for final transcription
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            if !voiceManager.transcribedText.isEmpty {
-                // Parse the transcribed text
-                let parsed = voiceManager.parseTask(
-                    from: voiceManager.transcribedText,
-                    availableTags: availableTags
-                )
-                
-                // Set the parsed task
-                parsedTask = parsed
-                
-                // Dismiss this view
-                isPresented = false
-            } else {
-                voiceManager.errorMessage = "No speech detected. Please try again."
-            }
-        }
-    }
-    
+   private func stopAndProcess() {
+       voiceManager.stopRecording()
+       
+       // Wait a moment for AI parsing to complete
+       DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+           if let parsed = voiceManager.parsedTask {
+               // AI parsing succeeded
+               parsedTask = parsed
+               isPresented = false
+           } else if !voiceManager.transcribedText.isEmpty {
+               // Transcription succeeded but parsing failed - use basic fallback
+               let basicTask = ParsedTask(taskName: voiceManager.transcribedText)
+               parsedTask = basicTask
+               isPresented = false
+           } else {
+               // No speech detected
+               voiceManager.errorMessage = "No speech detected. Please try again."
+           }
+       }
+   }
     private func formatDuration(_ duration: TimeInterval) -> String {
         let minutes = Int(duration) / 60
         let seconds = Int(duration) % 60

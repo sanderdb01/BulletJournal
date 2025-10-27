@@ -241,7 +241,7 @@ struct DayView: View {
             }
          }) {
             HStack {
-               Text("Notes")
+               Text("Day Notes")
                   .font(.headline)
                   .foregroundColor(.primary)
                

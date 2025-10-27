@@ -4,6 +4,7 @@ import SwiftData
 struct TaskRowView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showingEditTask = false
+   @State private var isPressed = false
     
     let task: TaskItem
     let dayLog: DayLog
@@ -81,10 +82,22 @@ struct TaskRowView: View {
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 16)
-        .background(taskRowBackground)
+        .scaleEffect(isPressed ? 1.03 : 1.0)
         .cornerRadius(12)
+//        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .background(
+         ZStack {
+                 RoundedRectangle(cornerRadius: 12)
+                     .fill(taskRowBackground)
+                 RoundedRectangle(cornerRadius: 12)
+                     .fill(isPressed ? Color.blue.opacity(0.1) : Color.clear)
+             }
+                        .scaleEffect(isPressed ? 1.03 : 1.0)
+                )
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .shadow(color: isPressed ? .black.opacity(0.1) : .clear, radius: 4, y: 2)
         .contentShape(Rectangle())
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         .onTapGesture {
             // Tap on the row itself cycles through all statuses
             withAnimation(.easeInOut(duration: 0.2)) {
@@ -100,12 +113,13 @@ struct TaskRowView: View {
             HapticManager.shared.impact(style: .heavy)
            #endif
             showingEditTask = true
-        } onPressingChanged: { isPressing in
-            if isPressing {
+        } onPressingChanged: { pressing in
+            if pressing {
 #if os(iOS)
                 HapticManager.shared.impact(style: .medium)
                #endif
             }
+           isPressed = pressing
         }
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
             // Only show "Move to Tomorrow" for non-recurring tasks

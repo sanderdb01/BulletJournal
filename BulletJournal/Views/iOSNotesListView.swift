@@ -18,7 +18,7 @@ struct iOSNotesListView: View {
                     notesList
                 }
             }
-            .navigationTitle("Notes")
+            .navigationTitle("Notebook")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -28,7 +28,7 @@ struct iOSNotesListView: View {
                     }
                 }
             }
-            .searchable(text: $searchText, prompt: "Search notes")
+            .searchable(text: $searchText, prompt: "Search Notebook")
             .sheet(isPresented: $showingNewNoteSheet) {
                 iOSNewNoteSheet(modelContext: modelContext)
             }
@@ -79,7 +79,7 @@ struct iOSNotesListView: View {
             }
             
             if !unpinnedNotes.isEmpty {
-                Section(pinnedNotes.isEmpty ? "All Notes" : "Notes") {
+                Section(pinnedNotes.isEmpty ? "All Pages" : "Pages") {
                     ForEach(unpinnedNotes) { note in
                         NavigationLink(value: note) {
                             NoteRowView(note: note)
@@ -108,17 +108,17 @@ struct iOSNotesListView: View {
                 .font(.system(size: 60))
                 .foregroundStyle(.secondary)
             
-            Text("No Notes")
+            Text("No Pages")
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            Text("Tap + to create your first note")
+            Text("Tap + to create your first page")
                 .foregroundStyle(.secondary)
             
             Button {
                 showingNewNoteSheet = true
             } label: {
-                Label("New Note", systemImage: "plus.circle.fill")
+                Label("New Page", systemImage: "plus.circle.fill")
                     .font(.headline)
             }
             .buttonStyle(.borderedProminent)

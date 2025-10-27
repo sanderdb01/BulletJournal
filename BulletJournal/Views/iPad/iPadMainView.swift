@@ -188,7 +188,7 @@ struct iPadMainView: View {
                        HStack {
                            Image(systemName: "note.text")
                                .frame(width: 20)
-                           Text("Notes")
+                           Text("Notebook")
                            Spacer()
                            if viewMode == .notes {
                                Image(systemName: "checkmark")

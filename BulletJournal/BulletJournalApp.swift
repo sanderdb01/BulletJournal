@@ -32,6 +32,9 @@ struct HarborDotApp: App {
                     
                     initializeDefaultTags()
                     generateRecurringTasks()
+                   let context = SharedModelContainer.shared.mainContext
+                      WatchConnectivityHandler.shared.setModelContext(context)
+                   
                 }
         }
         .modelContainer(SharedModelContainer.shared)

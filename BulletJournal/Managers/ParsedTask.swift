@@ -1,26 +1,30 @@
 import Foundation
-/// Parsed task components
-struct ParsedTask: Equatable {  // Add Equatable conformance
-   var taskName: String = ""
-   var reminderTime: Date?
-   var voiceRecurrencePattern: VoiceRecurrencePattern?
-   var colorTag: Tag?
-   var notes: String?
-   
-   // Implement Equatable
-   static func == (lhs: ParsedTask, rhs: ParsedTask) -> Bool {
-      return lhs.taskName == rhs.taskName &&
-      lhs.reminderTime == rhs.reminderTime &&
-      lhs.voiceRecurrencePattern == rhs.voiceRecurrencePattern &&
-      lhs.colorTag?.id == rhs.colorTag?.id &&
-      lhs.notes == rhs.notes
-   }
+import FoundationModels
+
+// Shared data structure for parsed voice input
+// Conforms to Codable for Foundation Models structured output
+@available(iOS 18.2, macOS 15.2, *)
+struct ParsedTask: Codable, Equatable {
+    var taskName: String
+    var reminderTime: Date?
+    var voiceRecurrencePattern: VoiceRecurrencePattern?
+    var colorTag: String?  // Store tag name as String for AI
+    var notes: String?
+    
+    // Default initializer
+    init(taskName: String = "", reminderTime: Date? = nil, voiceRecurrencePattern: VoiceRecurrencePattern? = nil, colorTag: String? = nil, notes: String? = nil) {
+        self.taskName = taskName
+        self.reminderTime = reminderTime
+        self.voiceRecurrencePattern = voiceRecurrencePattern
+        self.colorTag = colorTag
+        self.notes = notes
+    }
 }
 
-/// Voice-detected recurrence pattern (different from your RecurrenceRule struct)
-enum VoiceRecurrencePattern: Equatable {  // Add Equatable conformance
-   case daily
-   case weekly
-   case monthly
-   case yearly
+@available(iOS 18.2, macOS 15.2, *)
+enum VoiceRecurrencePattern: String, Codable, Equatable {
+    case daily = "daily"
+    case weekly = "weekly"
+    case monthly = "monthly"
+    case yearly = "yearly"
 }

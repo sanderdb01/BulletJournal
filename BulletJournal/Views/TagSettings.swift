@@ -179,6 +179,9 @@ struct RenameTagSheet: View {
    let tag: Tag
    @Binding var newName: String
    @Binding var isPresented: Bool
+   
+   @FocusState private var isTitleFocused: Bool
+   
    let onSave: () -> Void
    
    var body: some View {
@@ -197,6 +200,8 @@ struct RenameTagSheet: View {
                }
                
                TextField("Tag Name", text: $newName)
+                  .focused($isTitleFocused)
+                  .clearButton(text: $newName, focus: $isTitleFocused)
 #if os(iOS)
                   .autocapitalization(.words)
 #endif

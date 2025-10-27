@@ -174,13 +174,18 @@ struct CustomTagChip: View {
 struct AddCustomTagSheet: View {
     @Binding var newTagName: String
     @Binding var isPresented: Bool
-    let onSave: () -> Void
+   
+   @FocusState private var isTitleFocused: Bool
+   
+   let onSave: () -> Void
     
     var body: some View {
         NavigationView {
             Form {
                 Section {
                     TextField("Tag Name", text: $newTagName)
+                      .focused($isTitleFocused)
+                      .clearButton(text: $newTagName, focus: $isTitleFocused)
                    #if os(iOS)
                         .autocapitalization(.words)
                    #endif

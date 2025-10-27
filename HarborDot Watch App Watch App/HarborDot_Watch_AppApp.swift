@@ -5,7 +5,8 @@ import SwiftData
 struct HarborDot_Watch_App: App {
     var body: some Scene {
         WindowGroup {
-            WatchMainView()
+//            WatchMainView()
+           WatchDayView()
         }
         .modelContainer(SharedModelContainer.shared)
     }
