@@ -4,7 +4,8 @@ import SwiftData
 struct TaskRowView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showingEditTask = false
-   @State private var isPressed = false
+    @State private var showingDeleteOptions = false
+    @State private var isPressed = false
     
     let task: TaskItem
     let dayLog: DayLog
@@ -84,16 +85,15 @@ struct TaskRowView: View {
         .padding(.horizontal, 16)
         .scaleEffect(isPressed ? 1.03 : 1.0)
         .cornerRadius(12)
-//        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
         .background(
-         ZStack {
-                 RoundedRectangle(cornerRadius: 12)
-                     .fill(taskRowBackground)
-                 RoundedRectangle(cornerRadius: 12)
-                     .fill(isPressed ? Color.blue.opacity(0.1) : Color.clear)
-             }
-                        .scaleEffect(isPressed ? 1.03 : 1.0)
-                )
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(taskRowBackground)
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isPressed ? Color.blue.opacity(0.1) : Color.clear)
+            }
+            .scaleEffect(isPressed ? 1.03 : 1.0)
+        )
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
         .shadow(color: isPressed ? .black.opacity(0.1) : .clear, radius: 4, y: 2)
         .contentShape(Rectangle())
@@ -102,24 +102,24 @@ struct TaskRowView: View {
             // Tap on the row itself cycles through all statuses
             withAnimation(.easeInOut(duration: 0.2)) {
                 task.cycleStatus()
-               #if os(iOS)
+#if os(iOS)
                 HapticManager.shared.impact(style: .light)
-               #endif
+#endif
                 try? modelContext.save()
             }
         }
         .onLongPressGesture(minimumDuration: 0.5) {
 #if os(iOS)
             HapticManager.shared.impact(style: .heavy)
-           #endif
+#endif
             showingEditTask = true
         } onPressingChanged: { pressing in
             if pressing {
 #if os(iOS)
                 HapticManager.shared.impact(style: .medium)
-               #endif
+#endif
             }
-           isPressed = pressing
+            isPressed = pressing
         }
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
             // Only show "Move to Tomorrow" for non-recurring tasks
@@ -133,22 +133,58 @@ struct TaskRowView: View {
             }
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            Button(role: .destructive) {
-                withAnimation {
-                    // Cancel notification if it exists
-                    if let notificationId = task.notificationId {
-                        NotificationManager.shared.cancelTaskNotification(notificationId: notificationId)
-                    }
-                    
-                    dayLog.deleteTask(task)
-                    try? modelContext.save()
-                }
+           Button(role: .destructive) {
+               deleteThisInstance()
+           } label: {
+               Label("Delete", systemImage: "trash")
+           }
+            // Only show swipe delete for NON-recurring tasks
+//            if task.isRecurring != true && !task.isRecurringInstance {
+//                Button(role: .destructive) {
+//                    deleteThisInstance()
+//                } label: {
+//                    Label("Delete", systemImage: "trash")
+//                }
+//            }
+        }
+        .contextMenu {
+            // Context menu for ALL tasks (edit option)
+            Button {
+                showingEditTask = true
             } label: {
-                Label("Delete", systemImage: "trash")
+                Label("Edit", systemImage: "pencil")
+            }
+            
+            // Delete option - shows dialog for recurring tasks
+            if task.isRecurring == true || task.isRecurringInstance {
+                Divider()
+                
+                Button(role: .destructive) {
+                    showingDeleteOptions = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
             }
         }
         .sheet(isPresented: $showingEditTask) {
             AddEditTaskView(dayLog: dayLog, taskToEdit: task, isPresented: $showingEditTask)
+        }
+        .confirmationDialog(
+            "Delete Recurring Task",
+            isPresented: $showingDeleteOptions,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Only This Instance", role: .destructive) {
+                deleteThisInstance()
+            }
+            
+            Button("Delete This and All Future Instances", role: .destructive) {
+                deleteThisAndFutureInstances()
+            }
+            
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This is a recurring task. What would you like to delete?")
         }
     }
     
@@ -173,9 +209,9 @@ struct TaskRowView: View {
             // Tapping the dot toggles complete/normal status
             withAnimation(.easeInOut(duration: 0.2)) {
                 toggleCompletion()
-               #if os(iOS)
+#if os(iOS)
                 HapticManager.shared.impact(style: .medium)
-               #endif
+#endif
                 try? modelContext.save()
             }
         }
@@ -215,11 +251,11 @@ struct TaskRowView: View {
             return Color.red.opacity(0.08)  // Subtle red tint
         default:
             // Default: tertiarySystemGroupedBackground
-            #if os(iOS)
+#if os(iOS)
             return Color(uiColor: .tertiarySystemGroupedBackground)
-            #else
+#else
             return Color(nsColor: .controlBackgroundColor)
-            #endif
+#endif
         }
     }
     
@@ -275,22 +311,105 @@ struct TaskRowView: View {
             EmptyView()
         }
     }
-   
+    
+    // MARK: - Delete Handling
+    
+    private func handleDelete() {
+        // Check if this is a recurring task or instance
+        if task.isRecurring == true || task.isRecurringInstance {
+            showingDeleteOptions = true
+        } else {
+            // Regular task - delete immediately
+            deleteThisInstance()
+        }
+    }
+    
+    private func deleteThisInstance() {
+        withAnimation {
+            // Cancel notification if it exists
+            if let notificationId = task.notificationId {
+                NotificationManager.shared.cancelTaskNotification(notificationId: notificationId)
+            }
+            
+            dayLog.deleteTask(task)
+            
+            do {
+                try modelContext.save()
+#if os(iOS)
+                HapticManager.shared.notification(type: .success)
+#endif
+            } catch {
+                print("Error deleting task: \(error)")
+            }
+        }
+    }
+    
+   private func deleteThisAndFutureInstances() {
+       withAnimation {
+           // Get the template ID (either this task's ID if it's the original, or its sourceTemplateId)
+           guard let templateId = task.sourceTemplateId ?? task.id else {
+               print("Error: Unable to get template ID")
+               return
+           }
+           
+           // Delete from this day forward
+           deleteFutureInstances(templateId: templateId, fromDate: dayLog.date ?? Date())
+           
+   #if os(iOS)
+           HapticManager.shared.notification(type: .success)
+   #endif
+       }
+   }
+    
+    private func deleteFutureInstances(templateId: UUID, fromDate: Date) {
+        // Fetch all day logs from this date forward
+        let descriptor = FetchDescriptor<DayLog>()
+        
+        do {
+            let allDayLogs = try modelContext.fetch(descriptor)
+            let futureDayLogs = allDayLogs.filter { dayLog in
+                guard let date = dayLog.date else { return false }
+                return date >= fromDate
+            }
+            
+            for dayLog in futureDayLogs {
+                // Find and delete tasks linked to this template
+                let tasksToDelete = (dayLog.tasks ?? []).filter { task in
+                    task.sourceTemplateId == templateId || task.id == templateId
+                }
+                
+                for task in tasksToDelete {
+                    // Cancel notifications
+                    if let notificationId = task.notificationId {
+                        NotificationManager.shared.cancelTaskNotification(notificationId: notificationId)
+                    }
+                    
+                    dayLog.deleteTask(task)
+                }
+            }
+            
+            try modelContext.save()
+        } catch {
+            print("Error deleting future instances: \(error)")
+        }
+    }
+    
     // MARK: - Move to Tomorrow
+    
     private func moveTaskToTomorrow() {
         guard let currentDate = dayLog.date else { return }
         
         let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: currentDate)!
         
         // Find or create day log for tomorrow
-        let descriptor = FetchDescriptor<DayLog>(
-            predicate: #Predicate { log in
-                log.date == tomorrow
-            }
-        )
+        let descriptor = FetchDescriptor<DayLog>()
         
         do {
-            let tomorrowLogs = try modelContext.fetch(descriptor)
+            let allLogs = try modelContext.fetch(descriptor)
+            let tomorrowLogs = allLogs.filter { log in
+                guard let logDate = log.date else { return false }
+                return Calendar.current.isDate(logDate, inSameDayAs: tomorrow)
+            }
             let tomorrowLog: DayLog
             
             if let existing = tomorrowLogs.first {
@@ -349,10 +468,10 @@ struct TaskRowView: View {
             
             try modelContext.save()
             
-#if os(iOS)
             // Haptic feedback
+#if os(iOS)
             HapticManager.shared.notification(type: .success)
-           #endif
+#endif
         } catch {
             print("Error moving task to tomorrow: \(error)")
         }
@@ -361,32 +480,17 @@ struct TaskRowView: View {
 
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: DayLog.self, TaskItem.self, Tag.self, configurations: config)
+    let container = try! ModelContainer(for: DayLog.self, TaskItem.self, configurations: config)
     let context = container.mainContext
     
     let dayLog = DayLog(date: Date())
-    let task1 = TaskItem(name: "Sample Task with Tags", color: "blue", notes: "This is a note with some details")
-    
-    // Create sample tags
-    let blueTag = Tag(name: "Blue", isPrimary: true)
-    let workTag = Tag(name: "Work", isPrimary: false)
-    let urgentTag = Tag(name: "Urgent", isPrimary: false)
-    
-    context.insert(blueTag)
-    context.insert(workTag)
-    context.insert(urgentTag)
-    
-    task1.setPrimaryTag(blueTag)
-    task1.addCustomTag(workTag)
-    task1.addCustomTag(urgentTag)
-    task1.reminderTime = Date()
-    task1.isRecurring = true
-    
+    let task1 = TaskItem(name: "Sample Task", color: "blue", notes: "This is a note")
     let task2 = TaskItem(name: "Completed Task", color: "green")
     task2.status = .complete
     
-    let task3 = TaskItem(name: "In Progress Task", color: "orange")
-    task3.status = .inProgress
+    // Create a recurring task
+    let task3 = TaskItem(name: "Recurring Task", color: "purple")
+    task3.isRecurring = true
     
     dayLog.addTask(task1)
     dayLog.addTask(task2)
