@@ -224,23 +224,6 @@ struct iPadNotesSplitView: View {
     }
 }
 
-// MARK: - Markdown Line Types
-
-enum MarkdownLineType {
-    case header1, header2, header3
-    case bullet, numbered(Int)
-    case checkbox(Bool)
-    case code
-   case quote
-    case normal
-}
-
-struct MarkdownLine: Identifiable {
-    let id = UUID()
-    let type: MarkdownLineType
-    let content: String
-}
-
 // MARK: - iPad Note Editor Detail View
 
 struct iPadNoteEditorDetailView: View {

@@ -190,52 +190,59 @@ struct GeneralNoteEditorView: View {
       }
    }
    
-   // MARK: - Markdown Parsing
-   
-   struct MarkdownLine: Identifiable {
-      let id = UUID()
-      let content: String
-      let type: LineType
-      
-      enum LineType {
-         case h1, h2, h3
-         case bullet
-         case numbered(Int)
-         case checkbox(Bool)
-         case code
-         case normal
-      }
-   }
+//   // MARK: - Markdown Parsing
+//   
+//   struct MarkdownLine: Identifiable {
+//      let id = UUID()
+//      let content: String
+//      let type: LineType
+//      
+//      enum LineType {
+//         case h1, h2, h3
+//         case bullet
+//         case numbered(Int)
+//         case checkbox(Bool)
+//         case code
+//         case normal
+//      }
+//   }
    
    private func parseMarkdownLines(_ text: String) -> [MarkdownLine] {
       let lines = text.components(separatedBy: .newlines)
       var result: [MarkdownLine] = []
+      var inCodeBlock = false
       
       for line in lines {
-         let trimmed = line.trimmingCharacters(in: .whitespaces)
-         
-         if trimmed.isEmpty {
-            result.append(MarkdownLine(content: "", type: .normal))
-         } else if trimmed.hasPrefix("# ") {
-            result.append(MarkdownLine(content: String(trimmed.dropFirst(2)), type: .h1))
-         } else if trimmed.hasPrefix("## ") {
-            result.append(MarkdownLine(content: String(trimmed.dropFirst(3)), type: .h2))
-         } else if trimmed.hasPrefix("### ") {
-            result.append(MarkdownLine(content: String(trimmed.dropFirst(4)), type: .h3))
-         } else if trimmed.hasPrefix("- [x] ") || trimmed.hasPrefix("- [X] ") {
-            result.append(MarkdownLine(content: String(trimmed.dropFirst(6)), type: .checkbox(true)))
-         } else if trimmed.hasPrefix("- [ ] ") {
-            result.append(MarkdownLine(content: String(trimmed.dropFirst(6)), type: .checkbox(false)))
-         } else if trimmed.hasPrefix("- ") {
-            result.append(MarkdownLine(content: String(trimmed.dropFirst(2)), type: .bullet))
-         } else if let match = trimmed.range(of: #"^\d+\.\s"#, options: .regularExpression) {
-            let num = Int(trimmed[match].dropLast(2)) ?? 1
-            result.append(MarkdownLine(content: String(trimmed[match.upperBound...]), type: .numbered(num)))
-         } else if trimmed.hasPrefix("```") {
-            result.append(MarkdownLine(content: trimmed, type: .code))
-         } else {
-            result.append(MarkdownLine(content: line, type: .normal))
-         }
+          if line.hasPrefix("```") {
+              inCodeBlock.toggle()
+              continue
+          }
+          
+          if inCodeBlock {
+              result.append(MarkdownLine(type: .code, content: line))
+              continue
+          }
+          
+         if line.hasPrefix("> ") {
+                         result.append(MarkdownLine(type: .quote, content: String(line.dropFirst(2))))
+                     } else if line.hasPrefix("# ") {
+              result.append(MarkdownLine(type: .header1, content: String(line.dropFirst(2))))
+          } else if line.hasPrefix("## ") {
+              result.append(MarkdownLine(type: .header2, content: String(line.dropFirst(3))))
+          } else if line.hasPrefix("### ") {
+              result.append(MarkdownLine(type: .header3, content: String(line.dropFirst(4))))
+          } else if line.hasPrefix("- [ ]") {
+              result.append(MarkdownLine(type: .checkbox(false), content: String(line.dropFirst(5).trimmingCharacters(in: .whitespaces))))
+          } else if line.hasPrefix("- [x]") || line.hasPrefix("- [X]") {
+              result.append(MarkdownLine(type: .checkbox(true), content: String(line.dropFirst(5).trimmingCharacters(in: .whitespaces))))
+          } else if line.hasPrefix("- ") || line.hasPrefix("* ") {
+              result.append(MarkdownLine(type: .bullet, content: String(line.dropFirst(2))))
+          } else if let match = line.range(of: #"^\d+\.\s"#, options: .regularExpression) {
+              let number = Int(line[match].dropLast(2).trimmingCharacters(in: .whitespaces)) ?? 1
+              result.append(MarkdownLine(type: .numbered(number), content: String(line[match.upperBound...])))
+          } else {
+              result.append(MarkdownLine(type: .normal, content: line))
+          }
       }
       
       return result
@@ -244,69 +251,76 @@ struct GeneralNoteEditorView: View {
    @ViewBuilder
    private func renderMarkdownLine(_ line: MarkdownLine) -> some View {
       switch line.type {
-      case .h1:
-         Text(parseInlineMarkdown(line.content))
-            .font(.system(size: 28, weight: .bold))
-            .padding(.top, 8)
-            .padding(.bottom, 4)
-         
-      case .h2:
-         Text(parseInlineMarkdown(line.content))
-            .font(.system(size: 22, weight: .semibold))
-            .padding(.top, 6)
-            .padding(.bottom, 3)
-         
-      case .h3:
-         Text(parseInlineMarkdown(line.content))
-            .font(.system(size: 18, weight: .semibold))
-            .padding(.top, 4)
-            .padding(.bottom, 2)
-         
+      case .header1:
+          Text(parseInlineMarkdown(line.content))
+              .font(.system(size: 28, weight: .bold))
+          
+      case .header2:
+          Text(parseInlineMarkdown(line.content))
+              .font(.system(size: 22, weight: .semibold))
+          
+      case .header3:
+          Text(parseInlineMarkdown(line.content))
+              .font(.system(size: 18, weight: .semibold))
+            
+         case .quote:
+                     HStack(alignment: .top, spacing: 12) {
+                         Rectangle()
+                             .fill(Color.blue)
+                             .frame(width: 4)
+                         Text(parseInlineMarkdown(line.content))
+                             .font(.body.italic())
+                             .foregroundColor(.secondary)
+                     }
+                     .padding(.leading, 16)
+                     .padding(.vertical, 4)
+                     
+          
       case .bullet:
-         HStack(alignment: .top, spacing: 8) {
-            Text("•")
-               .font(.body)
-            Text(parseInlineMarkdown(line.content))
-               .font(.body)
-         }
-         .padding(.leading, 20)
-         
-      case .numbered(let num):
-         HStack(alignment: .top, spacing: 8) {
-            Text("\(num).")
-               .font(.body)
-            Text(parseInlineMarkdown(line.content))
-               .font(.body)
-         }
-         .padding(.leading, 20)
-         
+          HStack(alignment: .top, spacing: 8) {
+              Text("•")
+                  .font(.body)
+              Text(parseInlineMarkdown(line.content))
+                  .font(.body)
+          }
+          .padding(.leading, 20)
+          
+      case .numbered(let number):
+          HStack(alignment: .top, spacing: 8) {
+              Text("\(number).")
+                  .font(.body)
+              Text(parseInlineMarkdown(line.content))
+                  .font(.body)
+          }
+          .padding(.leading, 20)
+          
       case .checkbox(let checked):
-         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: checked ? "checkmark.square.fill" : "square")
-               .foregroundColor(checked ? .blue : .secondary)
-            Text(parseInlineMarkdown(line.content))
-               .font(.body)
-               .strikethrough(checked)
-               .foregroundColor(checked ? .secondary : .primary)
-         }
-         .padding(.leading, 20)
-         
+          HStack(alignment: .top, spacing: 8) {
+              Image(systemName: checked ? "checkmark.square.fill" : "square")
+                  .foregroundColor(checked ? .blue : .secondary)
+              Text(parseInlineMarkdown(line.content))
+                  .font(.body)
+                  .strikethrough(checked)
+                  .foregroundColor(checked ? .secondary : .primary)
+          }
+          .padding(.leading, 20)
+          
       case .code:
-         Text(line.content)
-            .font(.system(.body, design: .monospaced))
-            .padding(8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.secondary.opacity(0.1))
-            .cornerRadius(4)
-         
+          Text(line.content)
+              .font(.system(.body, design: .monospaced))
+              .padding(8)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .background(Color.secondary.opacity(0.1))
+              .cornerRadius(4)
+          
       case .normal:
-         if line.content.isEmpty {
-            Text(" ")
-               .font(.body)
-         } else {
-            Text(parseInlineMarkdown(line.content))
-               .font(.body)
-         }
+          if line.content.isEmpty {
+              Text(" ")
+                  .font(.body)
+          } else {
+              Text(parseInlineMarkdown(line.content))
+                  .font(.body)
+          }
       }
    }
    

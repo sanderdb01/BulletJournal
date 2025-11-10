@@ -6,6 +6,7 @@
     {
       "layers" : [
         {
+          "blend-mode" : "normal",
           "fill" : "automatic",
           "image-name" : "HarborDot_iOS.svg",
           "name" : "HarborDot_iOS"
