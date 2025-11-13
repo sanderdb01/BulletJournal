@@ -7,6 +7,7 @@ struct AddEditTaskView: View {
 //   @Query private var allTags: [Tag]
    
    @FocusState private var isTitleFocused: Bool
+   @FocusState private var isNotesFocused: Bool
    
    let dayLog: DayLog
    let taskToEdit: TaskItem?
@@ -183,7 +184,10 @@ struct AddEditTaskView: View {
                   .focused($isTitleFocused)
                   .clearButton(text: $taskName, focus: $isTitleFocused)
 #if os(iOS)
-                  .autocorrectionDisabled()
+//                  .autocorrectionDisabled()
+                  .autocorrectionDisabled(false)  // Explicitly enable autocorrection
+                      .textContentType(.none)          // General text content
+                      .keyboardType(.default)          // Standard keyboard
 #endif
             }
             
@@ -218,6 +222,7 @@ struct AddEditTaskView: View {
             Section("Task Notes (Optional)") {
                TextEditor(text: $taskNotes)
                   .frame(minHeight: 100)
+                  .focused($isNotesFocused)
             }
             
             //            Section {
@@ -229,6 +234,20 @@ struct AddEditTaskView: View {
          .navigationTitle(taskToEdit == nil ? "New Task" : "Edit Task")
 #if os(iOS)
          .navigationBarTitleDisplayMode(.inline)
+         .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+               Spacer()
+               Button {
+                       isNotesFocused = false  // or isContentFocused
+                   } label: {
+                       HStack {
+                           Image(systemName: "keyboard.chevron.compact.down")
+                           Text("Done")
+                       }
+                   }
+               .fontWeight(.semibold)
+            }
+         }
 #endif
          //         .onAppear {
          //            // Set default Blue tag for new tasks

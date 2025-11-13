@@ -5,19 +5,21 @@ enum ViewMode: Int {
     case split = 0
     case calendarOnly = 1
     case dayOnly = 2
-   case notes = 3
+    case notes = 3
     case search = 4
 }
 
 struct iPadMainView: View {
     @EnvironmentObject var deepLinkManager: DeepLinkManager
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.scenePhase) var scenePhase
     
     @State private var currentDate = Date()
     @State private var selectedTab = 0
     @State private var viewMode: ViewMode = .split
     @State private var displayedMonth = Date()
     @State private var showSidebar = true
+    @State private var backgroundTimestamp: Date?
     
     var body: some View {
         GeometryReader { geometry in
@@ -29,9 +31,9 @@ struct iPadMainView: View {
                     sidebarContent
                         .frame(width: 200)
 #if os(iOS)
-.background(Color(uiColor: .systemGroupedBackground))
+                        .background(Color(uiColor: .systemGroupedBackground))
 #else
-.background(Color(nsColor: .controlBackgroundColor))
+                        .background(Color(nsColor: .controlBackgroundColor))
 #endif
                         .transition(.move(edge: .leading))
                     
@@ -69,6 +71,9 @@ struct iPadMainView: View {
             .onChange(of: deepLinkManager.activeLink) { oldValue, newValue in
                 handleDeepLink(newValue)
             }
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                handleScenePhaseChange(oldPhase: oldPhase, newPhase: newPhase)
+            }
         }
     }
     
@@ -103,9 +108,9 @@ struct iPadMainView: View {
             
         case .dayOnly:
             DayView(currentDate: $currentDate)
-              
-           case .notes:
-              iPadNotesSplitView()
+            
+        case .notes:
+            iPadNotesSplitView()
             
         case .search:
             SearchView(currentDate: $currentDate, selectedTab: $selectedTab)
@@ -179,24 +184,24 @@ struct iPadMainView: View {
                         }
                     }
                     .listRowBackground(viewMode == .dayOnly ? Color.blue.opacity(0.1) : Color.clear)
-                   
-                   Button(action: {
-                       withAnimation {
-                           viewMode = .notes
-                       }
-                   }) {
-                       HStack {
-                           Image(systemName: "note.text")
-                               .frame(width: 20)
-                           Text("Notebook")
-                           Spacer()
-                           if viewMode == .notes {
-                               Image(systemName: "checkmark")
-                                   .foregroundColor(.blue)
-                           }
-                       }
-                   }
-                   .listRowBackground(viewMode == .notes ? Color.blue.opacity(0.1) : Color.clear)
+                    
+                    Button(action: {
+                        withAnimation {
+                            viewMode = .notes
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "note.text")
+                                .frame(width: 20)
+                            Text("Notebook")
+                            Spacer()
+                            if viewMode == .notes {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                    }
+                    .listRowBackground(viewMode == .notes ? Color.blue.opacity(0.1) : Color.clear)
                 }
                 
                 Section("Actions") {
@@ -236,6 +241,47 @@ struct iPadMainView: View {
             .scrollContentBackground(.hidden)
         }
     }
+    
+    // MARK: - Scene Phase Handling
+    
+    private func handleScenePhaseChange(oldPhase: ScenePhase, newPhase: ScenePhase) {
+        switch newPhase {
+        case .background:
+            // App went to background - store timestamp
+            backgroundTimestamp = Date()
+            print("📱 iPad went to background at \(backgroundTimestamp!)")
+            
+        case .active:
+            // App came back to foreground - check if we should reset date
+            if let backgroundTime = backgroundTimestamp {
+                let timeInBackground = Date().timeIntervalSince(backgroundTime)
+                let tenMinutes: TimeInterval = 10 * 60 // 10 minutes in seconds
+                
+                if timeInBackground >= tenMinutes {
+                    // Been in background for 10+ minutes - reset to today
+                    let today = Date()
+                    if !Calendar.current.isDate(currentDate, inSameDayAs: today) {
+                        print("📅 iPad: Resetting to today (was in background for \(Int(timeInBackground/60)) minutes)")
+                        currentDate = today
+                        displayedMonth = today
+                        viewMode = .split  // Go to split view
+                    }
+                }
+                
+                // Clear the timestamp
+                backgroundTimestamp = nil
+            }
+            
+        case .inactive:
+            // App is transitioning - no action needed
+            break
+            
+        @unknown default:
+            break
+        }
+    }
+    
+    // MARK: - Deep Link Handling
     
     private func handleDeepLink(_ link: DeepLink?) {
         guard let link = link else { return }

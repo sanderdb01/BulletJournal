@@ -238,6 +238,7 @@
 				Views/iOSNotesListView.swift,
 				Views/iPad/iPadMainView.swift,
 				Views/iPad/iPadNotesSplitView.swift,
+				"Views/MainTabView 2.swift",
 				Views/MainTabView.swift,
 				Views/MarkdownFormattingToolbar.swift,
 				Views/NotesEditorView.swift,

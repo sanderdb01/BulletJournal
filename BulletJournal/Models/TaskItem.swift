@@ -183,3 +183,61 @@ enum TaskCategory: String, Codable {
         }
     }
 }
+
+// MARK: - Copy Task Method
+
+extension TaskItem {
+    /// Creates a copy of this task for a specific target date
+    /// - Parameter targetDate: The date for the new task
+    /// - Returns: A new TaskItem with all properties copied (except UUID, status, and recurrence)
+    func makeCopy(for targetDate: Date) -> TaskItem {
+        // Create new task with basic properties
+        let copiedTask = TaskItem(
+            name: self.name ?? "",
+            color: self.color ?? "blue",
+            notes: self.notes ?? "",
+            status: .normal,  // Always start fresh as normal (not completed)
+            reminderTime: nil  // We'll set this below if needed
+        )
+        
+        // Copy metadata
+        copiedTask.createdAt = Date()
+        copiedTask.modifiedAt = Date()
+        
+        // Copy tags using the proper methods
+        if let primaryTag = self.primaryTag {
+            copiedTask.setPrimaryTag(primaryTag)
+        }
+        for customTag in self.customTags {
+            copiedTask.addCustomTag(customTag)
+        }
+        
+        // Copy and adjust reminder time to target date if it exists
+        if let originalReminderTime = self.reminderTime {
+            // Keep the same time of day, but on the target date
+            let calendar = Calendar.current
+            let timeComponents = calendar.dateComponents([.hour, .minute], from: originalReminderTime)
+            
+            if let newReminderTime = calendar.date(
+                bySettingHour: timeComponents.hour ?? 0,
+                minute: timeComponents.minute ?? 0,
+                second: 0,
+                of: targetDate
+            ) {
+                copiedTask.reminderTime = newReminderTime
+                
+                // Note: Notification will be scheduled by the caller after inserting into context
+                copiedTask.notificationId = UUID().uuidString
+            }
+        }
+        
+        // Explicitly do NOT copy recurrence settings - this is a one-time copy
+        copiedTask.isRecurring = false
+        copiedTask.sourceTemplateId = nil
+        copiedTask.recurrenceRule = nil
+        copiedTask.recurrenceEndDate = nil
+        copiedTask.isTemplate = false
+        
+        return copiedTask
+    }
+}

@@ -75,12 +75,18 @@ struct iOSNoteEditorView: View {
                 editorView
             }
             
-            // Formatting Toolbar (only in edit mode)
-            if !showingMarkdownPreview {
-                MarkdownFormattingToolbar { format in
-                    applyMarkdownFormat(format)
-                }
-            }
+           // Formatting Toolbar (only in edit mode)
+           if !showingMarkdownPreview {
+               MarkdownFormattingToolbar(
+                   onFormat: { format in
+                       applyMarkdownFormat(format)
+                   },
+                   onDismiss: {
+                       isContentFocused = false  // Dismiss keyboard
+                   },
+                   isKeyboardVisible: isContentFocused  // Pass keyboard state
+               )
+           }
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -137,6 +143,18 @@ struct iOSNoteEditorView: View {
                     }
                 }
             }
+           ToolbarItemGroup(placement: .keyboard) {
+                   Spacer()
+              Button {
+                 isContentFocused = false  // or isContentFocused
+                  } label: {
+                      HStack {
+                          Image(systemName: "keyboard.chevron.compact.down")
+                          Text("Done")
+                      }
+                  }
+                   .fontWeight(.semibold)
+               }
         }
         .sheet(isPresented: $showingTagPicker) {
             NavigationStack {
@@ -315,12 +333,15 @@ struct SmartTextEditor: UIViewRepresentable {
                     text: textView.text,
                     cursorPosition: range.location
                 ) {
-                    // Update the text and cursor position
-                    textView.text = newText
-                    textView.selectedRange = NSRange(location: newCursor, length: 0)
-                    
-                    // Notify parent of changes
-                    parent.text = newText
+                   // Update the text and cursor position
+                   textView.text = newText
+                   textView.selectedRange = NSRange(location: newCursor, length: 0)
+                   
+                   // Scroll to cursor instead of auto-scrolling to bottom
+                   textView.scrollRangeToVisible(NSRange(location: newCursor, length: 0))
+                   
+                   // Notify parent of changes
+                   parent.text = newText
                     parent.selectedRange = NSRange(location: newCursor, length: 0)
                     
                     // Return false to prevent default newline behavior

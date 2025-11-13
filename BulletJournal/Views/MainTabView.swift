@@ -1,10 +1,3 @@
-//
-// MainTabView.swift
-// HarborDot
-//
-// Main tab view with device detection - Updated with Notes tab
-//
-
 #if os(iOS)
 import SwiftUI
 import SwiftData
@@ -13,19 +6,21 @@ struct MainTabView: View {
     @EnvironmentObject var deepLinkManager: DeepLinkManager
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.scenePhase) var scenePhase
     
     @State private var selectedTab = 0
     @State private var currentDate = Date()
     @State private var displayedMonth = Date()
+    @State private var backgroundTimestamp: Date?
     
     var body: some View {
         Group {
             if horizontalSizeClass == .regular {
-                // iPad layout - uses existing iPadMainView
+                // iPad layout
                 iPadMainView()
                     .environmentObject(deepLinkManager)
             } else {
-                // iPhone layout - tab view
+                // iPhone layout
                 iPhoneTabView
             }
         }
@@ -33,6 +28,9 @@ struct MainTabView: View {
             if horizontalSizeClass != .regular {
                 handleDeepLink(newValue)
             }
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            handleScenePhaseChange(oldPhase: oldPhase, newPhase: newPhase)
         }
     }
     
@@ -51,26 +49,66 @@ struct MainTabView: View {
                 selectedTab: $selectedTab,
                 displayedMonth: $displayedMonth
             )
-                .tabItem {
-                    Label("Calendar", systemImage: "calendar")
-                }
-                .tag(1)
+            .tabItem {
+                Label("Calendar", systemImage: "calendar")
+            }
+            .tag(1)
             
-            // NEW: Notes tab for iPhone
-            iOSNotesListView()
-                .tabItem {
-                    Label("Notebook", systemImage: "note.text")
-                }
-                .tag(2)
-            
-            SearchView(currentDate: $currentDate, selectedTab: $selectedTab)
-                .tabItem {
-                    Label("Search", systemImage: "magnifyingglass")
-                }
-                .tag(3)
+           iOSNotesListView()
+               .tabItem {
+                   Label("Notebook", systemImage: "note.text")
+               }
+               .tag(2)
+           
+           SearchView(currentDate: $currentDate, selectedTab: $selectedTab)
+               .tabItem {
+                   Label("Search", systemImage: "magnifyingglass")
+               }
+               .tag(3)
         }
         .background(AppTheme.primaryBackground.ignoresSafeArea())
     }
+    
+    // MARK: - Scene Phase Handling
+    
+    private func handleScenePhaseChange(oldPhase: ScenePhase, newPhase: ScenePhase) {
+        switch newPhase {
+        case .background:
+            // App went to background - store timestamp
+            backgroundTimestamp = Date()
+            print("📱 App went to background at \(backgroundTimestamp!)")
+            
+        case .active:
+            // App came back to foreground - check if we should reset date
+            if let backgroundTime = backgroundTimestamp {
+                let timeInBackground = Date().timeIntervalSince(backgroundTime)
+                let tenMinutes: TimeInterval = 10 * 60 // 10 minutes in seconds
+                
+                if timeInBackground >= tenMinutes {
+                    // Been in background for 10+ minutes - reset to today
+                    let today = Date()
+                    if !Calendar.current.isDate(currentDate, inSameDayAs: today) {
+                        print("📅 Resetting to today (was in background for \(Int(timeInBackground/60)) minutes)")
+                        currentDate = today
+                        displayedMonth = today
+                        selectedTab = 0  // Go to Day view
+                    }
+                }
+                
+                // Clear the timestamp
+                backgroundTimestamp = nil
+            }
+            
+        case .inactive:
+            // App is transitioning - no action needed
+            break
+            
+        @unknown default:
+            break
+        }
+    }
+    
+    // MARK: - Deep Link Handling
     
     private func handleDeepLink(_ link: DeepLink?) {
         guard let link = link else { return }

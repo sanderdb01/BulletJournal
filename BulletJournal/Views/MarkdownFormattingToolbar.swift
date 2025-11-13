@@ -61,6 +61,8 @@ enum MarkdownFormat: String, CaseIterable {
 
 struct MarkdownFormattingToolbar: View {
     var onFormat: (MarkdownFormat) -> Void
+    var onDismiss: (() -> Void)? = nil  // Optional dismiss callback
+   var isKeyboardVisible: Bool = true
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -127,6 +129,30 @@ struct MarkdownFormattingToolbar: View {
                 // Quote & Code
                 formatButton(.quote)
                 formatButton(.code)
+                
+                // Spacer to push dismiss button to the right
+                Spacer()
+                    .frame(minWidth: 20)
+                
+                // Keyboard dismiss button
+               if let onDismiss = onDismiss {
+                   Button {
+                       isKeyboardVisible ? onDismiss() : nil  // Only works when keyboard is visible
+                   } label: {
+                       HStack(spacing: 6) {
+                           Image(systemName: "keyboard.chevron.compact.down")
+                               .font(.system(size: 16))
+                           Text("Done")
+                               .font(.system(size: 16, weight: .semibold))
+                       }
+                       .foregroundColor(isKeyboardVisible ? .blue : .gray)  // Blue when active, gray when inactive
+                       .padding(.horizontal, 12)
+                       .padding(.vertical, 6)
+                       .background((isKeyboardVisible ? Color.blue : Color.gray).opacity(0.1))
+                       .cornerRadius(8)
+                   }
+                   .disabled(!isKeyboardVisible)  // Disable button when keyboard is hidden
+               }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
@@ -164,6 +190,8 @@ struct MarkdownFormattingToolbar: View {
 
 #Preview {
     struct PreviewWrapper: View {
+        @FocusState private var isFocused: Bool
+        
         var body: some View {
             VStack(spacing: 0) {
                 Spacer()
@@ -176,11 +204,17 @@ struct MarkdownFormattingToolbar: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(.systemBackground))
                 
-                // Toolbar
-                MarkdownFormattingToolbar { format in
-                    print("Format selected: \(format.rawValue)")
-                    print("Would insert: \(format.markdownSyntax)")
-                }
+                // Toolbar with dismiss button
+                MarkdownFormattingToolbar(
+                    onFormat: { format in
+                        print("Format selected: \(format.rawValue)")
+                        print("Would insert: \(format.markdownSyntax)")
+                    },
+                    onDismiss: {
+                        print("Dismiss keyboard")
+                        isFocused = false
+                    }
+                )
             }
         }
     }

@@ -5,7 +5,10 @@ struct TaskRowView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showingEditTask = false
     @State private var showingDeleteOptions = false
+    @State private var showingCopyDatePicker = false
+    @State private var copyTargetDate = Date()
     @State private var isPressed = false
+   @State private var showingMenu = false
     
     let task: TaskItem
     let dayLog: DayLog
@@ -83,16 +86,19 @@ struct TaskRowView: View {
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 16)
-        .scaleEffect(isPressed ? 1.03 : 1.0)
+//        .scaleEffect(isPressed ? 0.97 : 1.0)//1.03
+        .scaleEffect(isPressed || showingMenu ? 0.97 : 1.0)
         .cornerRadius(12)
         .background(
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(taskRowBackground)
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isPressed ? Color.blue.opacity(0.1) : Color.clear)
+//                    .fill(isPressed ? Color.blue.opacity(0.1) : Color.clear)
+                    .fill(isPressed || showingMenu ? Color.blue.opacity(0.1) : Color.clear)
             }
-            .scaleEffect(isPressed ? 1.03 : 1.0)
+//               .scaleEffect(isPressed ? 0.97 : 1.0) //1.03
+               .scaleEffect(isPressed || showingMenu ? 0.97 : 1.0)
         )
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
         .shadow(color: isPressed ? .black.opacity(0.1) : .clear, radius: 4, y: 2)
@@ -108,15 +114,16 @@ struct TaskRowView: View {
                 try? modelContext.save()
             }
         }
-        .onLongPressGesture(minimumDuration: 0.5) {
+        .onLongPressGesture(minimumDuration: 0.4) {
 #if os(iOS)
-            HapticManager.shared.impact(style: .heavy)
+            HapticManager.shared.impact(style: .heavy) //when blue goes away
 #endif
-            showingEditTask = true
+//            showingEditTask = true
+           showingMenu = true
         } onPressingChanged: { pressing in
             if pressing {
 #if os(iOS)
-                HapticManager.shared.impact(style: .medium)
+                HapticManager.shared.impact(style: .heavy)
 #endif
             }
             isPressed = pressing
@@ -138,36 +145,88 @@ struct TaskRowView: View {
            } label: {
                Label("Delete", systemImage: "trash")
            }
-            // Only show swipe delete for NON-recurring tasks
-//            if task.isRecurring != true && !task.isRecurringInstance {
+        }
+        .confirmationDialog("", isPresented: $showingMenu, titleVisibility: .hidden) {
+            Button("Edit") {
+                showingEditTask = true
+            }
+            Button("Copy") {
+                copyTargetDate = Date()
+                showingCopyDatePicker = true
+            }
+            if task.isRecurring == true || task.isRecurringInstance {
+                Button("Delete", role: .destructive) {
+                    showingDeleteOptions = true
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        }
+        .onChange(of: showingMenu, { oldValue, newValue in
+           print("showingMenu changed: \(oldValue) -> \(newValue)")
+        })
+//        .contextMenu {
+//            // Edit option
+//            Button {
+//                showingEditTask = true
+//            } label: {
+//                Label("Edit", systemImage: "pencil")
+//            }
+//            
+//            // Copy option - NEW!
+//            Button {
+//                copyTargetDate = Date()
+//                showingCopyDatePicker = true
+//            } label: {
+//                Label("Copy", systemImage: "doc.on.doc")
+//            }
+//            
+//            // Delete option - shows dialog for recurring tasks
+//            if task.isRecurring == true || task.isRecurringInstance {
+//                Divider()
+//                
 //                Button(role: .destructive) {
-//                    deleteThisInstance()
+//                    showingDeleteOptions = true
 //                } label: {
 //                    Label("Delete", systemImage: "trash")
 //                }
 //            }
-        }
-        .contextMenu {
-            // Context menu for ALL tasks (edit option)
-            Button {
-                showingEditTask = true
-            } label: {
-                Label("Edit", systemImage: "pencil")
-            }
-            
-            // Delete option - shows dialog for recurring tasks
-            if task.isRecurring == true || task.isRecurringInstance {
-                Divider()
-                
-                Button(role: .destructive) {
-                    showingDeleteOptions = true
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
-        }
+//        }
         .sheet(isPresented: $showingEditTask) {
             AddEditTaskView(dayLog: dayLog, taskToEdit: task, isPresented: $showingEditTask)
+        }
+        .sheet(isPresented: $showingCopyDatePicker) {
+            NavigationView {
+                VStack(spacing: 20) {
+                    Text("Copy task to which date?")
+                        .font(.headline)
+                        .padding(.top)
+                    
+                    DatePicker(
+                        "Select Date",
+                        selection: $copyTargetDate,
+                        displayedComponents: [.date]
+                    )
+                    .datePickerStyle(.graphical)
+                    .padding()
+                    
+                    Spacer()
+                }
+                .navigationTitle("Copy Task")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            showingCopyDatePicker = false
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Copy") {
+                            copyTaskToDate(copyTargetDate)
+                            showingCopyDatePicker = false
+                        }
+                    }
+                }
+            }
         }
         .confirmationDialog(
             "Delete Recurring Task",
@@ -394,7 +453,57 @@ struct TaskRowView: View {
         }
     }
     
-    // MARK: - Move to Tomorrow
+    // MARK: - Copy Task to Date
+    
+    private func copyTaskToDate(_ targetDate: Date) {
+        // Find or create day log for target date
+        let descriptor = FetchDescriptor<DayLog>()
+        
+        do {
+            let allLogs = try modelContext.fetch(descriptor)
+            let targetLogs = allLogs.filter { log in
+                guard let logDate = log.date else { return false }
+                return Calendar.current.isDate(logDate, inSameDayAs: targetDate)
+            }
+            let targetDayLog: DayLog
+            
+            if let existing = targetLogs.first {
+                targetDayLog = existing
+            } else {
+                targetDayLog = DayLog(date: targetDate)
+                modelContext.insert(targetDayLog)
+            }
+            
+            // ✨ Use the makeCopy method
+            let copiedTask = task.makeCopy(for: targetDate)
+            
+            // Add to target date's log and insert into context
+            targetDayLog.addTask(copiedTask)
+            modelContext.insert(copiedTask)
+            
+            // Schedule notification if reminder exists
+            if let reminderTime = copiedTask.reminderTime {
+                Task {
+                    let notificationId = await NotificationManager.shared.scheduleTaskNotification(
+                        task: copiedTask,
+                        date: reminderTime
+                    )
+                    copiedTask.notificationId = notificationId
+                }
+            }
+            
+            try modelContext.save()
+            
+            // Haptic feedback
+#if os(iOS)
+            HapticManager.shared.notification(type: .success)
+#endif
+        } catch {
+            print("Error copying task: \(error)")
+        }
+    }
+    
+    // MARK: - Move to Tomorrow (Using makeCopy method)
     
     private func moveTaskToTomorrow() {
         guard let currentDate = dayLog.date else { return }
@@ -419,46 +528,23 @@ struct TaskRowView: View {
                 modelContext.insert(tomorrowLog)
             }
             
-            // Create a copy of the task for tomorrow
-            let newTask = TaskItem(
-                name: task.name!,
-                color: task.color!,
-                notes: task.notes ?? "",
-                status: .normal  // Reset status to normal
-            )
+            // ✨ Use the new makeCopy method - much cleaner!
+            let copiedTask = task.makeCopy(for: tomorrow)
             
-            // Copy tags
-            if let primaryTag = task.primaryTag {
-                newTask.setPrimaryTag(primaryTag)
-            }
-            for customTag in task.customTags {
-                newTask.addCustomTag(customTag)
-            }
+            // Add to tomorrow's log and insert into context
+            tomorrowLog.addTask(copiedTask)
+            modelContext.insert(copiedTask)
             
-            // Copy reminder if it exists (adjust to tomorrow)
-            if let reminderTime = task.reminderTime {
-                let calendar = Calendar.current
-                let timeComponents = calendar.dateComponents([.hour, .minute], from: reminderTime)
-                var tomorrowComponents = calendar.dateComponents([.year, .month, .day], from: tomorrow)
-                tomorrowComponents.hour = timeComponents.hour
-                tomorrowComponents.minute = timeComponents.minute
-                
-                if let newReminderDate = calendar.date(from: tomorrowComponents) {
-                    newTask.reminderTime = newReminderDate
-                    
-                    // Schedule notification for tomorrow
-                    Task {
-                        let notificationId = await NotificationManager.shared.scheduleTaskNotification(
-                            task: newTask,
-                            date: newReminderDate
-                        )
-                        newTask.notificationId = notificationId
-                    }
+            // Schedule notification if reminder exists
+            if let reminderTime = copiedTask.reminderTime {
+                Task {
+                    let notificationId = await NotificationManager.shared.scheduleTaskNotification(
+                        task: copiedTask,
+                        date: reminderTime
+                    )
+                    copiedTask.notificationId = notificationId
                 }
             }
-            
-            tomorrowLog.addTask(newTask)
-            modelContext.insert(newTask)
             
             // Delete original task
             if let notificationId = task.notificationId {

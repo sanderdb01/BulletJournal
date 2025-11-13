@@ -11,31 +11,13 @@ struct MarkdownListHelper {
     
     // MARK: - List Detection
     
-    /// Detects what type of list a line is (if any)
-    static func detectListType(in line: String) -> ListType? {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
-        
-        if trimmed.hasPrefix("- [ ] ") || trimmed.hasPrefix("- [x] ") || trimmed.hasPrefix("- [X] ") {
-            return .checklist
-        } else if trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") {
-            return .bullet
-        } else if let match = trimmed.range(of: #"^\d+\.\s"#, options: .regularExpression) {
-            let numberStr = trimmed[..<match.lowerBound].trimmingCharacters(in: .whitespaces)
-            if let number = Int(numberStr) {
-                return .numbered(number)
-            }
-        }
-        
-        return nil
-    }
-    
     /// Gets the list prefix for a given line
     static func getListPrefix(from line: String) -> String? {
         let trimmed = line.trimmingCharacters(in: .whitespaces)
         
-        if trimmed.hasPrefix("- [ ] ") {
+        if trimmed.hasPrefix("- [ ]") {
             return "- [ ] "
-        } else if trimmed.hasPrefix("- [x] ") || trimmed.hasPrefix("- [X] ") {
+        } else if trimmed.hasPrefix("- [x]") || trimmed.hasPrefix("- [X] ") {
             return "- [ ] " // New items start unchecked
         } else if trimmed.hasPrefix("- ") {
             return "- "
