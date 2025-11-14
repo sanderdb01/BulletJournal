@@ -149,6 +149,7 @@
 				Helpers/DateExtensions.swift,
 				Helpers/DeepLinkHandler.swift,
 				Helpers/KeyboardShortcuts.swift,
+				Helpers/MarkdownHelper.swift,
 				Helpers/SharedModelContainer.swift,
 				Managers/NotificationManager.swift,
 				Managers/ParsedTask.swift,
@@ -156,7 +157,6 @@
 				Models/AppSettings.swift,
 				Models/DayLog.swift,
 				Models/GeneralNote.swift,
-				Models/MarkdownListHelper.swift,
 				Models/MarkdownTypes.swift,
 				Models/RecurrenceRule.swift,
 				Models/Tag.swift,
@@ -215,6 +215,7 @@
 				Helpers/DateExtensions.swift,
 				Helpers/DeepLinkHandler.swift,
 				Helpers/KeyboardShortcuts.swift,
+				Helpers/MarkdownHelper.swift,
 				Helpers/SharedModelContainer.swift,
 				Managers/HapticManager.swift,
 				Managers/NotificationManager.swift,
@@ -224,7 +225,6 @@
 				Models/AppSettings.swift,
 				Models/DayLog.swift,
 				Models/GeneralNote.swift,
-				Models/MarkdownListHelper.swift,
 				Models/MarkdownTypes.swift,
 				Models/RecurrenceRule.swift,
 				Models/Tag.swift,
@@ -237,6 +237,7 @@
 				Views/iOSNoteEditorView.swift,
 				Views/iOSNotesListView.swift,
 				Views/iPad/iPadMainView.swift,
+				Views/iPad/iPadNotesSplitView_backup.swift,
 				Views/iPad/iPadNotesSplitView.swift,
 				"Views/MainTabView 2.swift",
 				Views/MainTabView.swift,
@@ -1358,7 +1359,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.01;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1392,7 +1393,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.01;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1569,7 +1570,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.01;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -1603,7 +1604,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.01;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;

@@ -57,6 +57,34 @@ enum MarkdownFormat: String, CaseIterable {
         case .code: return "`code`"
         }
     }
+   
+   var markdownComponents: (prefix: String, suffix: String, placeholder: String) {
+       switch self {
+       case .bold:
+           return ("**", "**", "text")
+       case .italic:
+           return ("*", "*", "text")
+       case .strikethrough:
+           return ("~~", "~~", "text")
+       case .code:
+           return ("`", "`", "code")
+       case .header1:
+           return ("# ", "", "Heading")
+       case .header2:
+           return ("## ", "", "Heading")
+       case .header3:
+           return ("### ", "", "Heading")
+       case .bulletList:
+           return ("- ", "", "List item")
+       case .numberedList:
+           return ("1. ", "", "List item")
+       case .checklistItem:
+           return ("- [ ] ", "", "Task")
+       case .quote:
+           return ("> ", "", "Quote")
+       }
+   }
+
 }
 
 struct MarkdownFormattingToolbar: View {

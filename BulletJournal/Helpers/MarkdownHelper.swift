@@ -1,16 +1,137 @@
 //
-// MarkdownListHelper.swift
+// MarkdownHelper.swift
 // HarborDot
 //
 // Shared helper for smart markdown list formatting across all platforms
 //
 
 import Foundation
+import SwiftUI
 
-struct MarkdownListHelper {
+struct MarkdownHelper {
+   
+   // MARK: - Parsing and Rendering
+   
+   /// Parses the passes markdown test and returns an array of MarkdownLine objects
+   static func parseMarkdown(_ text: String) -> [MarkdownLine] {
+      let lines = text.components(separatedBy: .newlines)
+      var result: [MarkdownLine] = []
+      var inCodeBlock = false
+      
+      for line in lines {
+          if line.hasPrefix("```") {
+              inCodeBlock.toggle()
+              continue
+          }
+          
+          if inCodeBlock {
+              result.append(MarkdownLine(type: .code, content: line))
+              continue
+          }
+          
+          if line.hasPrefix("> ") {
+              result.append(MarkdownLine(type: .quote, content: String(line.dropFirst(2))))
+          } else if line.hasPrefix("# ") {
+              result.append(MarkdownLine(type: .header1, content: String(line.dropFirst(2))))
+          } else if line.hasPrefix("## ") {
+              result.append(MarkdownLine(type: .header2, content: String(line.dropFirst(3))))
+          } else if line.hasPrefix("### ") {
+              result.append(MarkdownLine(type: .header3, content: String(line.dropFirst(4))))
+          } else if line.hasPrefix("- [ ]") {
+              result.append(MarkdownLine(type: .checkbox(false), content: String(line.dropFirst(5).trimmingCharacters(in: .whitespaces))))
+          } else if line.hasPrefix("- [x]") || line.hasPrefix("- [X]") {
+              result.append(MarkdownLine(type: .checkbox(true), content: String(line.dropFirst(5).trimmingCharacters(in: .whitespaces))))
+          } else if line.hasPrefix("- ") || line.hasPrefix("* ") {
+              result.append(MarkdownLine(type: .bullet, content: String(line.dropFirst(2))))
+          } else if let match = line.range(of: #"^\d+\.\s"#, options: .regularExpression) {
+              let number = Int(line[match].dropLast(2).trimmingCharacters(in: .whitespaces)) ?? 1
+              result.append(MarkdownLine(type: .numbered(number), content: String(line[line.index(match.upperBound, offsetBy: 0)...])))
+          } else {
+              result.append(MarkdownLine(type: .normal, content: line))
+          }
+      }
+      
+      return result
+  }
+   /// Renders the passed in MarkdownLine object and returns a view
+   static func renderLine(_ line: MarkdownLine) -> AnyView {
+      AnyView(Group {
+          switch line.type {
+          case .header1:
+              Text(parseInlineMarkdown(line.content))
+                  .font(.system(size: 28, weight: .bold))
+          case .header2:
+              Text(parseInlineMarkdown(line.content))
+                  .font(.system(size: 22, weight: .semibold))
+          case .header3:
+              Text(parseInlineMarkdown(line.content))
+                  .font(.system(size: 18, weight: .semibold))
+          case .bullet:
+              HStack(alignment: .top, spacing: 8) {
+                  Text("•")
+                      .font(.body)
+                  Text(parseInlineMarkdown(line.content))
+                      .font(.body)
+              }
+              .padding(.leading, 20)
+          case .numbered(let number):
+              HStack(alignment: .top, spacing: 8) {
+                  Text("\(number).")
+                      .font(.body)
+                  Text(parseInlineMarkdown(line.content))
+                      .font(.body)
+              }
+              .padding(.leading, 20)
+          case .checkbox(let checked):
+              HStack(alignment: .top, spacing: 8) {
+                  Image(systemName: checked ? "checkmark.square.fill" : "square")
+                      .foregroundColor(checked ? .blue : .secondary)
+                  Text(parseInlineMarkdown(line.content))
+                      .font(.body)
+                      .strikethrough(checked)
+                      .foregroundColor(checked ? .secondary : .primary)
+              }
+              .padding(.leading, 20)
+          case .code:
+              Text(line.content)
+                  .font(.system(.body, design: .monospaced))
+                  .padding(8)
+                  .frame(maxWidth: .infinity, alignment: .leading)
+                  .background(Color.secondary.opacity(0.1))
+                  .cornerRadius(4)
+          case .quote:
+              HStack(alignment: .top, spacing: 12) {
+                  Rectangle()
+                      .fill(Color.blue)
+                      .frame(width: 4)
+                  Text(parseInlineMarkdown(line.content))
+                      .font(.body.italic())
+                      .foregroundColor(.secondary)
+              }
+              .padding(.leading, 16)
+          case .normal:
+              if line.content.isEmpty {
+                  Text(" ")
+                      .font(.body)
+              } else {
+                  Text(parseInlineMarkdown(line.content))
+                      .font(.body)
+              }
+          }
+      })
+  }
+   /// Parses the passed in string and returns and AttributedString to be added to a Text View in renderLine function
+   static func parseInlineMarkdown(_ text: String) -> AttributedString {
+      do {
+          let options = AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+          return try AttributedString(markdown: text, options: options)
+      } catch {
+          return AttributedString(text)
+      }
+  }
     
     // MARK: - List Detection
-    
+   
     /// Gets the list prefix for a given line
     static func getListPrefix(from line: String) -> String? {
         let trimmed = line.trimmingCharacters(in: .whitespaces)

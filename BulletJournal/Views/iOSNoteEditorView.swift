@@ -3,7 +3,7 @@
 // HarborDot
 //
 // iOS note editor with markdown support and smart formatting toolbar
-// Requires: MarkdownListHelper.swift (shared helper for list formatting)
+// Requires: MarkdownHelper.swift (shared helper for list formatting)
 //
 
 #if os(iOS)
@@ -172,7 +172,6 @@ struct iOSNoteEditorView: View {
     }
     
     // MARK: - Editor View (with smart text selection tracking)
-    
     private var editorView: some View {
         SmartTextEditor(
             text: Binding(
@@ -202,14 +201,17 @@ struct iOSNoteEditorView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 100)
                 } else {
-                    ForEach(parseMarkdown(note.content ?? "")) { line in
-                        renderLine(line)
+                   ForEach(MarkdownHelper.parseMarkdown(note.content ?? "")) { line in
+                      MarkdownHelper.renderLine(line)
                     }
                 }
             }
             .textSelection(.enabled)
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
+            .onAppear {
+                isContentFocused = false
+            }
         }
     }
     
@@ -222,7 +224,7 @@ struct iOSNoteEditorView: View {
         // Check if this is a list format
         if let listType = ListType.from(format) {
             // Use smart list formatting
-            let (newText, newCursor) = MarkdownListHelper.addListToCurrentLine(
+            let (newText, newCursor) = MarkdownHelper.addListToCurrentLine(
                 text: content,
                 cursorPosition: selection.location,
                 listType: listType
@@ -329,7 +331,7 @@ struct SmartTextEditor: UIViewRepresentable {
             // Check if user pressed Return
             if text == "\n" {
                 // Try to handle smart list continuation
-                if let (newText, newCursor) = MarkdownListHelper.handleReturnKey(
+                if let (newText, newCursor) = MarkdownHelper.handleReturnKey(
                     text: textView.text,
                     cursorPosition: range.location
                 ) {
@@ -351,160 +353,6 @@ struct SmartTextEditor: UIViewRepresentable {
             
             // Allow default behavior for non-list lines or other keys
             return true
-        }
-    }
-}
-
-// MARK: - Markdown Parsing Extension
-
-extension iOSNoteEditorView {
-    private func parseMarkdown(_ text: String) -> [MarkdownLine] {
-        let lines = text.components(separatedBy: .newlines)
-        var result: [MarkdownLine] = []
-        var inCodeBlock = false
-        
-        for line in lines {
-            if line.hasPrefix("```") {
-                inCodeBlock.toggle()
-                continue
-            }
-            
-            if inCodeBlock {
-                result.append(MarkdownLine(type: .code, content: line))
-                continue
-            }
-            
-            if line.hasPrefix("> ") {
-                result.append(MarkdownLine(type: .quote, content: String(line.dropFirst(2))))
-            } else if line.hasPrefix("# ") {
-                result.append(MarkdownLine(type: .header1, content: String(line.dropFirst(2))))
-            } else if line.hasPrefix("## ") {
-                result.append(MarkdownLine(type: .header2, content: String(line.dropFirst(3))))
-            } else if line.hasPrefix("### ") {
-                result.append(MarkdownLine(type: .header3, content: String(line.dropFirst(4))))
-            } else if line.hasPrefix("- [ ]") {
-                result.append(MarkdownLine(type: .checkbox(false), content: String(line.dropFirst(5).trimmingCharacters(in: .whitespaces))))
-            } else if line.hasPrefix("- [x]") || line.hasPrefix("- [X]") {
-                result.append(MarkdownLine(type: .checkbox(true), content: String(line.dropFirst(5).trimmingCharacters(in: .whitespaces))))
-            } else if line.hasPrefix("- ") || line.hasPrefix("* ") {
-                result.append(MarkdownLine(type: .bullet, content: String(line.dropFirst(2))))
-            } else if let match = line.range(of: #"^\d+\.\s"#, options: .regularExpression) {
-                let number = Int(line[match].dropLast(2).trimmingCharacters(in: .whitespaces)) ?? 1
-                result.append(MarkdownLine(type: .numbered(number), content: String(line[line.index(match.upperBound, offsetBy: 0)...])))
-            } else {
-                result.append(MarkdownLine(type: .normal, content: line))
-            }
-        }
-        
-        return result
-    }
-    
-    private func renderLine(_ line: MarkdownLine) -> some View {
-        Group {
-            switch line.type {
-            case .header1:
-                Text(parseInlineMarkdown(line.content))
-                    .font(.system(size: 28, weight: .bold))
-            case .header2:
-                Text(parseInlineMarkdown(line.content))
-                    .font(.system(size: 22, weight: .semibold))
-            case .header3:
-                Text(parseInlineMarkdown(line.content))
-                    .font(.system(size: 18, weight: .semibold))
-            case .bullet:
-                HStack(alignment: .top, spacing: 8) {
-                    Text("•")
-                        .font(.body)
-                    Text(parseInlineMarkdown(line.content))
-                        .font(.body)
-                }
-                .padding(.leading, 20)
-            case .numbered(let number):
-                HStack(alignment: .top, spacing: 8) {
-                    Text("\(number).")
-                        .font(.body)
-                    Text(parseInlineMarkdown(line.content))
-                        .font(.body)
-                }
-                .padding(.leading, 20)
-            case .checkbox(let checked):
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: checked ? "checkmark.square.fill" : "square")
-                        .foregroundColor(checked ? .blue : .secondary)
-                    Text(parseInlineMarkdown(line.content))
-                        .font(.body)
-                        .strikethrough(checked)
-                        .foregroundColor(checked ? .secondary : .primary)
-                }
-                .padding(.leading, 20)
-            case .code:
-                Text(line.content)
-                    .font(.system(.body, design: .monospaced))
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.secondary.opacity(0.1))
-                    .cornerRadius(4)
-            case .quote:
-                HStack(alignment: .top, spacing: 12) {
-                    Rectangle()
-                        .fill(Color.blue)
-                        .frame(width: 4)
-                    Text(parseInlineMarkdown(line.content))
-                        .font(.body.italic())
-                        .foregroundColor(.secondary)
-                }
-                .padding(.leading, 16)
-            case .normal:
-                if line.content.isEmpty {
-                    Text(" ")
-                        .font(.body)
-                } else {
-                    Text(parseInlineMarkdown(line.content))
-                        .font(.body)
-                }
-            }
-        }
-    }
-    
-    // MARK: - Inline Markdown Parser
-    
-    private func parseInlineMarkdown(_ text: String) -> AttributedString {
-        do {
-            let options = AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace)
-            return try AttributedString(markdown: text, options: options)
-        } catch {
-            return AttributedString(text)
-        }
-    }
-}
-
-// MARK: - MarkdownFormat Extension
-
-extension MarkdownFormat {
-    var markdownComponents: (prefix: String, suffix: String, placeholder: String) {
-        switch self {
-        case .bold:
-            return ("**", "**", "text")
-        case .italic:
-            return ("*", "*", "text")
-        case .strikethrough:
-            return ("~~", "~~", "text")
-        case .code:
-            return ("`", "`", "code")
-        case .header1:
-            return ("# ", "", "Heading")
-        case .header2:
-            return ("## ", "", "Heading")
-        case .header3:
-            return ("### ", "", "Heading")
-        case .bulletList:
-            return ("- ", "", "List item")
-        case .numberedList:
-            return ("1. ", "", "List item")
-        case .checklistItem:
-            return ("- [ ] ", "", "Task")
-        case .quote:
-            return ("> ", "", "Quote")
         }
     }
 }
