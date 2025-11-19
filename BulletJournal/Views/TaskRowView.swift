@@ -212,7 +212,9 @@ struct TaskRowView: View {
                     Spacer()
                 }
                 .navigationTitle("Copy Task")
-                .navigationBarTitleDisplayMode(.inline)
+#if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+#endif
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") {

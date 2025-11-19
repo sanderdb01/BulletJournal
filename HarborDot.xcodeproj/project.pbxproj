@@ -164,6 +164,7 @@
 				Views/AddEditTaskView.swift,
 				Views/CalendarView.swift,
 				Views/DayView.swift,
+				"Views/Mac Files/GeneralNoteEditorView_old.swift",
 				"Views/Mac Files/GeneralNoteEditorView.swift",
 				"Views/Mac Files/MacMainView.swift",
 				"Views/Mac Files/NewNoteSheet.swift",
@@ -182,6 +183,7 @@
 		E14AE7BB2E9DAA260099EED7 /* Exceptions for "BulletJournal" folder in "HarborDot" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"Views/Mac Files/GeneralNoteEditorView_old.swift",
 				"Views/Mac Files/GeneralNoteEditorView.swift",
 				"Views/Mac Files/MacMainView.swift",
 				"Views/Mac Files/NewNoteSheet.swift",
@@ -1359,7 +1361,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.01;
+				MARKETING_VERSION = 1.02;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1393,7 +1395,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.01;
+				MARKETING_VERSION = 1.02;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1570,7 +1572,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.01;
+				MARKETING_VERSION = 1.02;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -1604,7 +1606,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.01;
+				MARKETING_VERSION = 1.02;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;

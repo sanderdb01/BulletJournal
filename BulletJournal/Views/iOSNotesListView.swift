@@ -69,6 +69,10 @@ struct iOSNotesListView: View {
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
+                               if note.isDeleted {
+                                  print("Note is already deleted")
+                                  return
+                               } //note has already been deleted
                                 deleteNote(note)
                             } label: {
                                 Label("Delete", systemImage: "trash")
@@ -86,6 +90,10 @@ struct iOSNotesListView: View {
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
+                               if note.isDeleted {
+                                  print("Note is already deleted")
+                                  return
+                               } //note has already been deleted
                                 deleteNote(note)
                             } label: {
                                 Label("Delete", systemImage: "trash")
@@ -131,8 +139,13 @@ struct iOSNotesListView: View {
     
     private func deleteNote(_ note: GeneralNote) {
         withAnimation {
-            modelContext.delete(note)
-            try? modelContext.save()
+           let success = GeneralNoteManager.deleteNote(note, from: modelContext)
+              if success {
+                 print("Deletion of Notebook page successful in iPadSplitView")
+              } else {
+                 // Handle failure
+                 print("Deletion failed")
+              }
         }
     }
 }

@@ -1,6 +1,7 @@
 #if os(macOS)
 import SwiftUI
 import SwiftData
+import AppKit
 
 struct GeneralNoteEditorView: View {
    let note: GeneralNote
@@ -9,11 +10,16 @@ struct GeneralNoteEditorView: View {
    @Environment(\.modelContext) private var modelContext
    
    @FocusState private var isTitleFocused: Bool
+   @FocusState private var isContentFocused: Bool
    
    @State private var title: String
    @State private var content: String
    @State private var isEditingTitle = false
    @State private var viewMode: NoteViewMode = .edit
+   @State private var showMarkdownTips = true
+   
+   // For smart text selection
+   @State private var textSelection: NSRange = NSRange(location: 0, length: 0)
    
    enum NoteViewMode: String, CaseIterable {
       case edit = "Edit"
@@ -80,71 +86,95 @@ struct GeneralNoteEditorView: View {
          Divider()
          
          // Content area
-         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-               // Title section
-               if isEditingTitle {
-                  TextField("Note Title", text: $title, onCommit: {
-                     isEditingTitle = false
-                     saveTitle()
-                  })
-                  .textFieldStyle(.plain)
-                  .focused($isTitleFocused)
-                  .clearButton(text: $title, focus: $isTitleFocused)
+         //         ScrollView {
+         VStack(alignment: .leading, spacing: 16) {
+            // Title section
+            if isEditingTitle {
+               TextField("Note Title", text: $title, onCommit: {
+                  isEditingTitle = false
+                  saveTitle()
+               })
+               .textFieldStyle(.plain)
+               .focused($isTitleFocused)
+               .clearButton(text: $title, focus: $isTitleFocused)
+               .font(.title)
+            } else {
+               Text(title.isEmpty ? "Untitled Note" : title)
                   .font(.title)
-               } else {
-                  Text(title.isEmpty ? "Untitled Note" : title)
-                     .font(.title)
-                     .foregroundColor(title.isEmpty ? .secondary : .primary)
-                     .onTapGesture {
-                        isEditingTitle = true
-                     }
-               }
-               
-               // Metadata bar
-               HStack(spacing: 16) {
-                  Label("\(wordCount) words", systemImage: "doc.text")
-                  Label("\(characterCount) characters", systemImage: "textformat.abc")
-                  if let modifiedAt = note.modifiedAt {
-                     Label("Modified \(modifiedAt, style: .relative)", systemImage: "clock")
+                  .foregroundColor(title.isEmpty ? .secondary : .primary)
+                  .onTapGesture {
+                     isEditingTitle = true
                   }
+            }
+            
+            // Metadata bar
+            HStack(spacing: 16) {
+               Label("\(wordCount) words", systemImage: "doc.text")
+               Label("\(characterCount) characters", systemImage: "textformat.abc")
+               if let modifiedAt = note.modifiedAt {
+                  Label("Modified \(modifiedAt, style: .relative)", systemImage: "clock")
                }
-               .font(.caption)
-               .foregroundColor(.secondary)
-               
-               Divider()
-               
-               // Content - Edit or Preview based on viewMode
-               switch viewMode {
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
+            
+            //               Divider()
+            
+            // Content - Edit or Preview based on viewMode
+            switch viewMode {
                case .edit:
                   editView
                case .preview:
+                  Divider()
                   previewView
-               }
             }
-            .padding()
          }
+         .padding()
       }
    }
+   //   }
    
    // MARK: - Edit View
    
    private var editView: some View {
-      VStack(alignment: .leading, spacing: 12) {
-         TextEditor(text: $content)
+      //      ScrollView {
+      VStack(alignment: .leading, spacing: 1) {
+         MarkdownFormattingToolbar { format in
+            applyMarkdownFormat(format)
+         }
+         VStack(alignment: .leading, spacing: 12) {
+            SmartTextEditor(
+               text: Binding(
+                  get: { note.content ?? "" },
+                  set: { note.updateContent($0) }
+               ),
+               selectedRange: $textSelection
+            )
             .font(.body)
-            .frame(minHeight: 400)
-            .onChange(of: content) { oldValue, newValue in
-               saveContent()
+            .frame(maxHeight: .infinity)
+            .focused($isContentFocused)
+            .onAppear {
+               isContentFocused = true
             }
-         
-         // Markdown helper text for new/empty notes
-         if content.isEmpty {
+            
+            // Markdown helper text for new/empty notes
+//                        .overlay(alignment: .bottomLeading){
+            //               if (note.content ?? "").isEmpty {
             VStack(alignment: .leading, spacing: 12) {
-               Text("Markdown Tips:")
-                  .font(.headline)
-                  .foregroundColor(.secondary)
-               
+               HStack{
+                  Text("Markdown Tips:")
+                     .font(.headline)
+                     .foregroundColor(.secondary)
+                  Spacer()
+                  Button {
+                     print("toggle tips")
+                     showMarkdownTips.toggle()
+                  } label: {
+                     Image(systemName: "arrow.up.arrow.down.circle.fill")
+                  }
+               }
+               .frame(maxWidth: 250)
+               if showMarkdownTips {
                VStack(alignment: .leading, spacing: 8) {
                   markdownTip(syntax: "**Bold text**", description: "Surround with **")
                   markdownTip(syntax: "*Italic text*", description: "Surround with *")
@@ -159,9 +189,11 @@ struct GeneralNoteEditorView: View {
                .font(.caption)
                .foregroundColor(.secondary)
             }
-            .padding()
-            .background(Color.secondary.opacity(0.1))
-            .cornerRadius(8)
+               }
+               .padding()
+               .background(Color.secondary.opacity(0.1))
+               .cornerRadius(8)
+//            }
          }
       }
    }
@@ -171,7 +203,7 @@ struct GeneralNoteEditorView: View {
    private var previewView: some View {
       ScrollView {
          VStack(alignment: .leading, spacing: 12) {
-            if content.isEmpty {
+            if (note.content ?? "").isEmpty {
                Text("No content to preview")
                   .font(.body)
                   .foregroundColor(.secondary)
@@ -179,240 +211,67 @@ struct GeneralNoteEditorView: View {
                   .frame(maxWidth: .infinity, alignment: .center)
                   .padding(.top, 100)
             } else {
-               // Parse and render markdown line by line for better formatting
-               ForEach(parseMarkdownLines(content), id: \.id) { line in
-                  renderMarkdownLine(line)
+               ForEach(MarkdownHelper.parseMarkdown(note.content ?? "")) { line in
+                  MarkdownHelper.renderLine(line)
                }
             }
          }
+         .textSelection(.enabled)
          .padding()
          .frame(maxWidth: .infinity, alignment: .leading)
+         .onAppear {
+            isContentFocused = false
+         }
       }
    }
    
-//   // MARK: - Markdown Parsing
-//   
-//   struct MarkdownLine: Identifiable {
-//      let id = UUID()
-//      let content: String
-//      let type: LineType
-//      
-//      enum LineType {
-//         case h1, h2, h3
-//         case bullet
-//         case numbered(Int)
-//         case checkbox(Bool)
-//         case code
-//         case normal
-//      }
-//   }
+   // MARK: - Smart Markdown Formatting Logic
    
-   private func parseMarkdownLines(_ text: String) -> [MarkdownLine] {
-      let lines = text.components(separatedBy: .newlines)
-      var result: [MarkdownLine] = []
-      var inCodeBlock = false
+   private func applyMarkdownFormat(_ format: MarkdownFormat) {
+      let content = note.content ?? ""
+      let selection = textSelection
       
-      for line in lines {
-          if line.hasPrefix("```") {
-              inCodeBlock.toggle()
-              continue
-          }
-          
-          if inCodeBlock {
-              result.append(MarkdownLine(type: .code, content: line))
-              continue
-          }
-          
-         if line.hasPrefix("> ") {
-                         result.append(MarkdownLine(type: .quote, content: String(line.dropFirst(2))))
-                     } else if line.hasPrefix("# ") {
-              result.append(MarkdownLine(type: .header1, content: String(line.dropFirst(2))))
-          } else if line.hasPrefix("## ") {
-              result.append(MarkdownLine(type: .header2, content: String(line.dropFirst(3))))
-          } else if line.hasPrefix("### ") {
-              result.append(MarkdownLine(type: .header3, content: String(line.dropFirst(4))))
-          } else if line.hasPrefix("- [ ]") {
-              result.append(MarkdownLine(type: .checkbox(false), content: String(line.dropFirst(5).trimmingCharacters(in: .whitespaces))))
-          } else if line.hasPrefix("- [x]") || line.hasPrefix("- [X]") {
-              result.append(MarkdownLine(type: .checkbox(true), content: String(line.dropFirst(5).trimmingCharacters(in: .whitespaces))))
-          } else if line.hasPrefix("- ") || line.hasPrefix("* ") {
-              result.append(MarkdownLine(type: .bullet, content: String(line.dropFirst(2))))
-          } else if let match = line.range(of: #"^\d+\.\s"#, options: .regularExpression) {
-              let number = Int(line[match].dropLast(2).trimmingCharacters(in: .whitespaces)) ?? 1
-              result.append(MarkdownLine(type: .numbered(number), content: String(line[match.upperBound...])))
-          } else {
-              result.append(MarkdownLine(type: .normal, content: line))
-          }
+      // Check if this is a list format
+      if let listType = ListType.from(format) {
+         // Use smart list formatting
+         let (newText, newCursor) = MarkdownHelper.addListToCurrentLine(
+            text: content,
+            cursorPosition: selection.location,
+            listType: listType
+         )
+         note.updateContent(newText)
+         textSelection = NSRange(location: newCursor, length: 0)
+         isContentFocused = true
+         return
       }
       
-      return result
-   }
-   
-   @ViewBuilder
-   private func renderMarkdownLine(_ line: MarkdownLine) -> some View {
-      switch line.type {
-      case .header1:
-          Text(parseInlineMarkdown(line.content))
-              .font(.system(size: 28, weight: .bold))
-          
-      case .header2:
-          Text(parseInlineMarkdown(line.content))
-              .font(.system(size: 22, weight: .semibold))
-          
-      case .header3:
-          Text(parseInlineMarkdown(line.content))
-              .font(.system(size: 18, weight: .semibold))
-            
-         case .quote:
-                     HStack(alignment: .top, spacing: 12) {
-                         Rectangle()
-                             .fill(Color.blue)
-                             .frame(width: 4)
-                         Text(parseInlineMarkdown(line.content))
-                             .font(.body.italic())
-                             .foregroundColor(.secondary)
-                     }
-                     .padding(.leading, 16)
-                     .padding(.vertical, 4)
-                     
-          
-      case .bullet:
-          HStack(alignment: .top, spacing: 8) {
-              Text("•")
-                  .font(.body)
-              Text(parseInlineMarkdown(line.content))
-                  .font(.body)
-          }
-          .padding(.leading, 20)
-          
-      case .numbered(let number):
-          HStack(alignment: .top, spacing: 8) {
-              Text("\(number).")
-                  .font(.body)
-              Text(parseInlineMarkdown(line.content))
-                  .font(.body)
-          }
-          .padding(.leading, 20)
-          
-      case .checkbox(let checked):
-          HStack(alignment: .top, spacing: 8) {
-              Image(systemName: checked ? "checkmark.square.fill" : "square")
-                  .foregroundColor(checked ? .blue : .secondary)
-              Text(parseInlineMarkdown(line.content))
-                  .font(.body)
-                  .strikethrough(checked)
-                  .foregroundColor(checked ? .secondary : .primary)
-          }
-          .padding(.leading, 20)
-          
-      case .code:
-          Text(line.content)
-              .font(.system(.body, design: .monospaced))
-              .padding(8)
-              .frame(maxWidth: .infinity, alignment: .leading)
-              .background(Color.secondary.opacity(0.1))
-              .cornerRadius(4)
-          
-      case .normal:
-          if line.content.isEmpty {
-              Text(" ")
-                  .font(.body)
-          } else {
-              Text(parseInlineMarkdown(line.content))
-                  .font(.body)
-          }
-      }
-   }
-   
-   private func parseInlineMarkdown(_ text: String) -> AttributedString {
-      var result = AttributedString(text)
+      // Non-list formatting - use existing logic
+      let selectedText = (content as NSString).substring(with: selection)
+      let (prefix, suffix, placeholder) = format.markdownComponents
       
-      // Links: [text](url) - PROCESS FIRST so other formatting can apply to link text
-              let linkPattern = #"\[(.+?)\]\((.+?)\)"#
-              if let regex = try? NSRegularExpression(pattern: linkPattern) {
-                  let matches = regex.matches(in: result.description, range: NSRange(result.description.startIndex..., in: result.description))
-                  for match in matches.reversed() {
-                      if let textRange = Range(match.range(at: 1), in: result.description),
-                         let urlRange = Range(match.range(at: 2), in: result.description) {
-                          let linkText = String(result.description[textRange])
-                          let urlString = String(result.description[urlRange])
-                          
-                          // Find the full markdown link pattern
-                          if let resultRange = result.range(of: "[\(linkText)](\(urlString))") {
-                              var linkAttr = AttributedString(linkText)
-                              
-                              // Try to create URL
-                              if let url = URL(string: urlString) {
-                                  linkAttr.link = url
-                              }
-                              
-                              // Style the link
-                              linkAttr.foregroundColor = .blue
-                              linkAttr.underlineStyle = .single
-                              
-                              result.replaceSubrange(resultRange, with: linkAttr)
-                          }
-                      }
-                  }
-              }
-      
-      // Bold: **text**
-      let boldPattern = #"\*\*(.+?)\*\*"#
-      if let regex = try? NSRegularExpression(pattern: boldPattern) {
-         let matches = regex.matches(in: text, range: NSRange(text.startIndex..., in: text))
-         for match in matches.reversed() {
-            if let range = Range(match.range(at: 1), in: text) {
-               let content = String(text[range])
-               if let attrRange = Range(match.range, in: text) {
-                  if let resultRange = Range(attrRange, in: result) {
-                     result.replaceSubrange(resultRange, with: AttributedString(content))
-                     if let boldRange = result.range(of: content) {
-                        result[boldRange].font = .body.bold()
-                     }
-                  }
-               }
-            }
-         }
+      if selectedText.isEmpty {
+         // No selection - insert with placeholder and auto-select it
+         let insertion = prefix + placeholder + suffix
+         let newContent = (content as NSString).replacingCharacters(in: selection, with: insertion)
+         note.updateContent(newContent)
+         
+         // Calculate where to select the placeholder
+         let placeholderStart = selection.location + prefix.count
+         let placeholderLength = placeholder.count
+         textSelection = NSRange(location: placeholderStart, length: placeholderLength)
+         
+      } else {
+         // Has selection - wrap it with markdown
+         let wrappedText = prefix + selectedText + suffix
+         let newContent = (content as NSString).replacingCharacters(in: selection, with: wrappedText)
+         note.updateContent(newContent)
+         
+         // Move cursor to end of wrapped text
+         let newPosition = selection.location + wrappedText.count
+         textSelection = NSRange(location: newPosition, length: 0)
       }
       
-      // Italic: *text*
-      let italicPattern = #"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)"#
-      if let regex = try? NSRegularExpression(pattern: italicPattern) {
-         let matches = regex.matches(in: result.description, range: NSRange(result.description.startIndex..., in: result.description))
-         for match in matches.reversed() {
-            if let range = Range(match.range(at: 1), in: result.description) {
-               let content = String(result.description[range])
-               if let attrRange = Range(match.range, in: result.description) {
-                  if let resultRange = result.range(of: "*\(content)*") {
-                     result.replaceSubrange(resultRange, with: AttributedString(content))
-                     if let italicRange = result.range(of: content) {
-                        result[italicRange].font = .body.italic()
-                     }
-                  }
-               }
-            }
-         }
-      }
-      
-      // Inline code: `code`
-      let codePattern = #"`(.+?)`"#
-      if let regex = try? NSRegularExpression(pattern: codePattern) {
-         let matches = regex.matches(in: result.description, range: NSRange(result.description.startIndex..., in: result.description))
-         for match in matches.reversed() {
-            if let range = Range(match.range(at: 1), in: result.description) {
-               let content = String(result.description[range])
-               if let resultRange = result.range(of: "`\(content)`") {
-                  result.replaceSubrange(resultRange, with: AttributedString(content))
-                  if let codeRange = result.range(of: content) {
-                     result[codeRange].font = .body.monospaced()
-                     result[codeRange].backgroundColor = .secondary.opacity(0.1)
-                  }
-               }
-            }
-         }
-      }
-      
-      return result
+      isContentFocused = true
    }
    
    // MARK: - Helper Views
@@ -469,9 +328,117 @@ struct GeneralNoteEditorView: View {
    }
    
    private func deleteNote() {
-      modelContext.delete(note)
-      try? modelContext.save()
+      //      modelContext.delete(note)
+      //      try? modelContext.save()
+      let success = GeneralNoteManager.deleteNote(note, from: modelContext)
+      if success {
+         print("Deletion of Notebook page successful in iPadSplitView")
+      } else {
+         // Handle failure
+         print("Deletion failed")
+      }
       onBack?()
+   }
+}
+
+// MARK: - Smart Text Editor with Selection Tracking
+
+struct SmartTextEditor: NSViewRepresentable {
+   @Binding var text: String
+   @Binding var selectedRange: NSRange
+   
+   func makeNSView(context: Context) -> NSScrollView {
+      let scrollView = NSTextView.scrollableTextView()
+      guard let textView = scrollView.documentView as? NSTextView else {
+         return scrollView
+      }
+      
+      textView.delegate = context.coordinator
+      textView.backgroundColor = .clear
+      textView.font = NSFont.preferredFont(forTextStyle: .body)
+      textView.isRichText = false
+      textView.isAutomaticQuoteSubstitutionEnabled = false
+      textView.isAutomaticDashSubstitutionEnabled = false
+      textView.isAutomaticTextReplacementEnabled = false
+      textView.isAutomaticSpellingCorrectionEnabled = true
+      textView.textContainerInset = NSSize(width: 8, height: 8)
+      
+      return scrollView
+   }
+   
+   func updateNSView(_ scrollView: NSScrollView, context: Context) {
+      guard let textView = scrollView.documentView as? NSTextView else { return }
+      
+      // Update text if different
+      if textView.string != text {
+         let oldSelectedRange = textView.selectedRange()
+         textView.string = text
+         
+         // Restore selection if valid
+         if oldSelectedRange.location + oldSelectedRange.length <= text.count {
+            textView.setSelectedRange(oldSelectedRange)
+         }
+      }
+      
+      // Update selection if different and valid
+      if textView.selectedRange() != selectedRange &&
+            selectedRange.location + selectedRange.length <= text.count {
+         textView.setSelectedRange(selectedRange)
+      }
+   }
+   
+   func makeCoordinator() -> Coordinator {
+      Coordinator(self)
+   }
+   
+   class Coordinator: NSObject, NSTextViewDelegate {
+      var parent: SmartTextEditor
+      
+      init(_ parent: SmartTextEditor) {
+         self.parent = parent
+      }
+      
+      // NSTextViewDelegate method for text changes
+      func textDidChange(_ notification: Notification) {
+         guard let textView = notification.object as? NSTextView else { return }
+         parent.text = textView.string
+         parent.selectedRange = textView.selectedRange()
+      }
+      
+      // NSTextViewDelegate method for selection changes
+      func textViewDidChangeSelection(_ notification: Notification) {
+         guard let textView = notification.object as? NSTextView else { return }
+         parent.selectedRange = textView.selectedRange()
+      }
+      
+      // Intercept text changes to handle Return key for smart lists
+      func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+         // Check if user pressed Return
+         if replacementString == "\n" {
+            // Try to handle smart list continuation
+            if let (newText, newCursor) = MarkdownHelper.handleReturnKey(
+               text: textView.string,
+               cursorPosition: affectedCharRange.location
+            ) {
+               // Update the text and cursor position
+               textView.string = newText
+               textView.setSelectedRange(NSRange(location: newCursor, length: 0))
+               
+               // Scroll to cursor
+               textView.scrollRangeToVisible(NSRange(location: newCursor, length: 0))
+               
+               // Notify parent of changes
+               parent.text = newText
+               parent.selectedRange = NSRange(location: newCursor, length: 0)
+               
+               // Return false to prevent default newline behavior
+               return false
+            }
+         }
+         
+         // Allow default behavior for non-list lines or other keys
+         return true
+      }
    }
 }
 

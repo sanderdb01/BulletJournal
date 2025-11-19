@@ -164,6 +164,10 @@ struct iOSNoteEditorView: View {
         .alert("Delete Note", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
+               if note.isDeleted {
+                  print("Note is already deleted")
+                  return
+               } //note has already been deleted
                 deleteNote()
             }
         } message: {
@@ -267,9 +271,18 @@ struct iOSNoteEditorView: View {
     // MARK: - Actions
     
     private func deleteNote() {
-        modelContext.delete(note)
-        try? modelContext.save()
-        dismiss()
+//        modelContext.delete(note)
+//        try? modelContext.save()
+//        dismiss()
+       
+       let success = GeneralNoteManager.deleteNote(note, from: modelContext)
+          if success {
+             print("Deletion of Notebook page successful in iOSNoteEditorView")
+          } else {
+             // Handle failure
+             print("Deletion failed")
+          }
+       dismiss()
     }
 }
 
