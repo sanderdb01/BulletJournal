@@ -143,7 +143,7 @@ struct GeneralNoteEditorView: View {
             applyMarkdownFormat(format)
          }
          VStack(alignment: .leading, spacing: 12) {
-            SmartTextEditor(
+            SmartTextEditorMacOS(
                text: Binding(
                   get: { note.content ?? "" },
                   set: { note.updateContent($0) }
@@ -158,8 +158,6 @@ struct GeneralNoteEditorView: View {
             }
             
             // Markdown helper text for new/empty notes
-//                        .overlay(alignment: .bottomLeading){
-            //               if (note.content ?? "").isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                HStack{
                   Text("Markdown Tips:")
@@ -193,7 +191,6 @@ struct GeneralNoteEditorView: View {
                .padding()
                .background(Color.secondary.opacity(0.1))
                .cornerRadius(8)
-//            }
          }
       }
    }
@@ -343,104 +340,121 @@ struct GeneralNoteEditorView: View {
 
 // MARK: - Smart Text Editor with Selection Tracking
 
-struct SmartTextEditor: NSViewRepresentable {
-   @Binding var text: String
-   @Binding var selectedRange: NSRange
-   
-   func makeNSView(context: Context) -> NSScrollView {
-      let scrollView = NSTextView.scrollableTextView()
-      guard let textView = scrollView.documentView as? NSTextView else {
-         return scrollView
-      }
-      
-      textView.delegate = context.coordinator
-      textView.backgroundColor = .clear
-      textView.font = NSFont.preferredFont(forTextStyle: .body)
-      textView.isRichText = false
-      textView.isAutomaticQuoteSubstitutionEnabled = false
-      textView.isAutomaticDashSubstitutionEnabled = false
-      textView.isAutomaticTextReplacementEnabled = false
-      textView.isAutomaticSpellingCorrectionEnabled = true
-      textView.textContainerInset = NSSize(width: 8, height: 8)
-      
-      return scrollView
-   }
-   
-   func updateNSView(_ scrollView: NSScrollView, context: Context) {
-      guard let textView = scrollView.documentView as? NSTextView else { return }
-      
-      // Update text if different
-      if textView.string != text {
-         let oldSelectedRange = textView.selectedRange()
-         textView.string = text
-         
-         // Restore selection if valid
-         if oldSelectedRange.location + oldSelectedRange.length <= text.count {
-            textView.setSelectedRange(oldSelectedRange)
-         }
-      }
-      
-      // Update selection if different and valid
-      if textView.selectedRange() != selectedRange &&
-            selectedRange.location + selectedRange.length <= text.count {
-         textView.setSelectedRange(selectedRange)
-      }
-   }
-   
-   func makeCoordinator() -> Coordinator {
-      Coordinator(self)
-   }
-   
-   class Coordinator: NSObject, NSTextViewDelegate {
-      var parent: SmartTextEditor
-      
-      init(_ parent: SmartTextEditor) {
-         self.parent = parent
-      }
-      
-      // NSTextViewDelegate method for text changes
-      func textDidChange(_ notification: Notification) {
-         guard let textView = notification.object as? NSTextView else { return }
-         parent.text = textView.string
-         parent.selectedRange = textView.selectedRange()
-      }
-      
-      // NSTextViewDelegate method for selection changes
-      func textViewDidChangeSelection(_ notification: Notification) {
-         guard let textView = notification.object as? NSTextView else { return }
-         parent.selectedRange = textView.selectedRange()
-      }
-      
-      // Intercept text changes to handle Return key for smart lists
-      func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
-         // Check if user pressed Return
-         if replacementString == "\n" {
-            // Try to handle smart list continuation
-            if let (newText, newCursor) = MarkdownHelper.handleReturnKey(
-               text: textView.string,
-               cursorPosition: affectedCharRange.location
-            ) {
-               // Update the text and cursor position
-               textView.string = newText
-               textView.setSelectedRange(NSRange(location: newCursor, length: 0))
-               
-               // Scroll to cursor
-               textView.scrollRangeToVisible(NSRange(location: newCursor, length: 0))
-               
-               // Notify parent of changes
-               parent.text = newText
-               parent.selectedRange = NSRange(location: newCursor, length: 0)
-               
-               // Return false to prevent default newline behavior
-               return false
-            }
-         }
-         
-         // Allow default behavior for non-list lines or other keys
-         return true
-      }
-   }
-}
+//struct SmartTextEditor: NSViewRepresentable {
+//   @Binding var text: String
+//   @Binding var selectedRange: NSRange
+//   
+//   func makeNSView(context: Context) -> NSScrollView {
+//      let scrollView = NSTextView.scrollableTextView()
+//      guard let textView = scrollView.documentView as? NSTextView else {
+//         return scrollView
+//      }
+//      
+//      textView.delegate = context.coordinator
+//      textView.backgroundColor = .clear
+//      textView.font = NSFont.preferredFont(forTextStyle: .body)
+//      textView.isRichText = false
+//      textView.isAutomaticQuoteSubstitutionEnabled = false
+//      textView.isAutomaticDashSubstitutionEnabled = false
+//      textView.isAutomaticTextReplacementEnabled = false
+//      textView.isAutomaticSpellingCorrectionEnabled = true
+//      textView.textContainerInset = NSSize(width: 8, height: 8)
+//      
+//      return scrollView
+//   }
+//   
+//   func updateNSView(_ scrollView: NSScrollView, context: Context) {
+//      guard let textView = scrollView.documentView as? NSTextView else { return }
+//      
+//      // ⚠️ KEY FIX: Don't update if the change came from the text view itself
+//      guard !context.coordinator.isUpdatingFromTextView else { return }
+//      
+//      // Update text if different
+//      if textView.string != text {
+//         let oldSelectedRange = textView.selectedRange()
+//         textView.string = text
+//         
+//         // Restore selection if valid
+//         if oldSelectedRange.location + oldSelectedRange.length <= text.count {
+//            textView.setSelectedRange(oldSelectedRange)
+//         }
+//      }
+//      
+//      // Update selection if different and valid
+//      if textView.selectedRange() != selectedRange &&
+//            selectedRange.location + selectedRange.length <= text.count {
+//         textView.setSelectedRange(selectedRange)
+//      }
+//   }
+//   
+//   func makeCoordinator() -> Coordinator {
+//      Coordinator(self)
+//   }
+//   
+//   class Coordinator: NSObject, NSTextViewDelegate {
+//      var parent: SmartTextEditor
+//      var isUpdatingFromTextView = false  // ← NEW FLAG
+//      
+//      init(_ parent: SmartTextEditor) {
+//         self.parent = parent
+//      }
+//      
+//      // NSTextViewDelegate method for text changes
+//      func textDidChange(_ notification: Notification) {
+//         guard let textView = notification.object as? NSTextView else { return }
+//         
+//         // ⚠️ KEY FIX: Set flag to prevent feedback loop
+//         isUpdatingFromTextView = true
+//         parent.text = textView.string
+//         parent.selectedRange = textView.selectedRange()
+//         isUpdatingFromTextView = false
+//      }
+//      
+//      // NSTextViewDelegate method for selection changes
+//      func textViewDidChangeSelection(_ notification: Notification) {
+//         guard let textView = notification.object as? NSTextView else { return }
+//         
+//         // ⚠️ KEY FIX: Set flag to prevent feedback loop
+//         isUpdatingFromTextView = true
+//         parent.selectedRange = textView.selectedRange()
+//         isUpdatingFromTextView = false
+//      }
+//      
+//      // Intercept text changes to handle Return key for smart lists
+//      func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+//         // Check if user pressed Return
+//         if replacementString == "\n" {
+//            // Try to handle smart list continuation
+//            if let (newText, newCursor) = MarkdownHelper.handleReturnKey(
+//               text: textView.string,
+//               cursorPosition: affectedCharRange.location
+//            ) {
+//               // ⚠️ Set flag before manual update
+//               isUpdatingFromTextView = true
+//               
+//               // Update the text and cursor position
+//               textView.string = newText
+//               textView.setSelectedRange(NSRange(location: newCursor, length: 0))
+//               
+//               // Scroll to cursor
+//               textView.scrollRangeToVisible(NSRange(location: newCursor, length: 0))
+//               
+//               // Notify parent of changes
+//               parent.text = newText
+//               parent.selectedRange = NSRange(location: newCursor, length: 0)
+//               
+//               isUpdatingFromTextView = false
+//               
+//               // Return false to prevent default newline behavior
+//               return false
+//            }
+//         }
+//         
+//         // Allow default behavior for non-list lines or other keys
+//         return true
+//      }
+//   }
+//}
 
 #Preview {
    let config = ModelConfiguration(isStoredInMemoryOnly: true)

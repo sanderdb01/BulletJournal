@@ -301,8 +301,10 @@ struct SmartTextEditor: UIViewRepresentable {
     }
     
     func updateUIView(_ textView: UITextView, context: Context) {
+       print("🔍 updateNSView called - textView.string: '\(textView.text ?? "")', binding text: '\(text)'")
         // Update text if different
         if textView.text != text {
+           print("⚠️ Text different! Replacing...")
             let oldSelectedRange = textView.selectedRange
             textView.text = text
             

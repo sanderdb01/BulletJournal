@@ -170,6 +170,7 @@
 				"Views/Mac Files/NewNoteSheet.swift",
 				"Views/Mac Files/NoteRowView.swift",
 				"Views/Mac Files/NotesListView.swift",
+				"Views/Mac Files/SmartTextEditor.swift",
 				Views/MarkdownFormattingToolbar.swift,
 				Views/NotesEditorView.swift,
 				Views/SearchView.swift,
@@ -189,6 +190,7 @@
 				"Views/Mac Files/NewNoteSheet.swift",
 				"Views/Mac Files/NoteRowView.swift",
 				"Views/Mac Files/NotesListView.swift",
+				"Views/Mac Files/SmartTextEditor.swift",
 			);
 			target = E17783612E8DB0FA00E047F4 /* HarborDot */;
 		};
@@ -1084,7 +1086,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.00;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDotMacOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -1119,7 +1121,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.00;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDotMacOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
