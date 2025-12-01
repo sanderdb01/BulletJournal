@@ -93,94 +93,97 @@ struct DayView: View {
                // Search Bar
                searchBar
                
-               if !showingSearch{
+               if !showingSearch {
                   // Tasks List
-                  List {
-                     if let dayLog = currentDayLog, let tasks = dayLog.tasks, !tasks.isEmpty {
-                        // Task rows
-                        ForEach(dayLog.tasks ?? []) { task in
-                           TaskRowView(task: task, dayLog: dayLog)
-                              .listRowInsets(EdgeInsets())
-                              .listRowSeparator(.hidden)
-                              .listRowBackground(Color.clear)
-                              .padding(.horizontal)
-                              .padding(.vertical, 4)
+                  ZStack {
+                     List {
+                        if let dayLog = currentDayLog, let tasks = dayLog.tasks, !tasks.isEmpty {
+                           // Task rows
+                           ForEach(dayLog.tasks ?? []) { task in
+                              TaskRowView(task: task, dayLog: dayLog)
+                                 .listRowInsets(EdgeInsets())
+                                 .listRowSeparator(.hidden)
+                                 .listRowBackground(Color.clear)
+                                 .padding(.horizontal)
+                                 .padding(.vertical, 4)
+                           }
+                        } else {
+                           // Empty state
+                           VStack(spacing: 16) {
+                              Image(systemName: "checkmark.circle")
+                                 .font(.system(size: 60))
+                                 .foregroundColor(.secondary.opacity(0.5))
+                              Text("No tasks for today")
+                                 .font(.headline)
+                                 .foregroundColor(.secondary)
+                              Text("Tap below to add your first task")
+                                 .font(.subheadline)
+                                 .foregroundColor(.secondary)
+                           }
+                           .frame(maxWidth: .infinity)
+                           .padding(.vertical, 60)
+                           .listRowInsets(EdgeInsets())
+                           .listRowSeparator(.hidden)
+                           .listRowBackground(Color.clear)
                         }
-                     } else {
-                        // Empty state
-                        VStack(spacing: 16) {
-                           Image(systemName: "checkmark.circle")
-                              .font(.system(size: 60))
-                              .foregroundColor(.secondary.opacity(0.5))
-                           Text("No tasks for today")
-                              .font(.headline)
-                              .foregroundColor(.secondary)
-                           Text("Tap below to add your first task")
-                              .font(.subheadline)
-                              .foregroundColor(.secondary)
+                        
+                        // Add Task Button and voice button
+                        Button(action: {
+                           showingAddTask = true
+                           print("add task button pressed")
+   #if os(iOS)
+                              HapticManager.shared.impact(style: .heavy)
+   #endif
+                        }) {
+                           HStack(spacing: 12) {
+                              // Plus icon
+                              Image(systemName: "plus.circle.fill")
+                                 .foregroundColor(.blue)
+                                 .font(.title3)
+                              
+                              Text("Add New Task")
+                                 .foregroundColor(.blue)
+                                 .font(.headline)
+                              
+                              Spacer()
+   #if os(iOS)
+                              // Voice button (tap stops propagation to main button)
+                              Button(action: {
+                                 showingVoiceRecording = true
+                              }) {
+                                 Image(systemName: "waveform.circle.fill")
+                                    .foregroundColor(.purple)
+                                    .font(.title3)
+                                    .padding(8)
+                              }
+                              .buttonStyle(.plain)  // Prevents triggering parent button
+   #endif
+                           }
+                           .padding()
+                           .background(AppTheme.tertiaryBackground)
+                           .cornerRadius(12)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 60)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        
+                        
+                        // Notes Section
+                        Section {
+                           notesSection
+                        }
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
                      }
-                     
-                     // Add Task Button and voice button
-                     Button(action: {
-                        showingAddTask = true
-                        print("add task button pressed")
-                     }) {
-                        HStack(spacing: 12) {
-                           // Plus icon
-                           Image(systemName: "plus.circle.fill")
-                              .foregroundColor(.blue)
-                              .font(.title3)
-                           
-                           Text("Add New Task")
-                              .foregroundColor(.blue)
-                              .font(.headline)
-                           
-                           Spacer()
-#if os(iOS)
-                           // Voice button (tap stops propagation to main button)
-                           Button(action: {
-                              showingVoiceRecording = true
-                           }) {
-                              Image(systemName: "waveform.circle.fill")
-                                 .foregroundColor(.purple)
-                                 .font(.title3)
-                                 .padding(8)
-                           }
-                           .buttonStyle(.plain)  // Prevents triggering parent button
-#endif
-                        }
-                        .padding()
-                        .background(AppTheme.tertiaryBackground)
-                        .cornerRadius(12)
+                     .listStyle(.plain)
+                     .scrollContentBackground(.hidden)
+                     .opacity(showingSearch ? 0.0 : 1.0)
+                     if isSearchFocused {
+                        clearView
                      }
-                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                     .listRowSeparator(.hidden)
-                     .listRowBackground(Color.clear)
-                     
-                     
-                     // Notes Section
-                     Section {
-                        notesSection
-                     }
-                     .listRowInsets(EdgeInsets())
-                     .listRowSeparator(.hidden)
-                     .listRowBackground(Color.clear)
                   }
-                  .listStyle(.plain)
-                  .scrollContentBackground(.hidden)
-                  .opacity(showingSearch ? 0.0 : 1.0)
-//                  .simultaneousGesture(
-//                     TapGesture()
-//                        .onEnded { _ in
-//                           isSearchFocused = false
-//                        }
-//                  )
+
                } else {
                   // Results List
                   resultsList
@@ -422,6 +425,18 @@ struct DayView: View {
          }
          .listStyle(.plain)
       }
+   }
+   
+   // MARK: - Tappable Clear View
+   
+   private var clearView: some View {
+      Color.clear
+         .frame(maxWidth: .infinity, maxHeight: .infinity)
+         .contentShape(Rectangle())
+         .onTapGesture {
+            isSearchFocused = false
+            print("clear view tapped.")
+         }
    }
    
    // MARK: - Navigation

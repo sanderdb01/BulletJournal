@@ -249,24 +249,8 @@ struct AddEditTaskView: View {
             }
          }
 #endif
-         //         .onAppear {
-         //            // Set default Blue tag for new tasks
-         //            if taskToEdit == nil && selectedPrimaryTag == nil {
-         //               if let blueTag = TagManager.findTag(byName: "Blue", in: modelContext) {
-         ////                  selectedPrimaryTag = blueTag
-         //                  // Find blue tag and select it
-         //                                 let descriptor = FetchDescriptor<Tag>(
-         //                                    predicate: #Predicate { tag in
-         //                                       tag.isPrimary == true && tag.name == "blue"
-         //                                    }
-         //                                 )
-         //                                 if let blueTag = try? modelContext.fetch(descriptor).first {
-         //                                    selectedPrimaryTag = blueTag
-         //                                 }
-         //               }
-         //            }
-         //         }
          .onAppear {
+            isTitleFocused = true
              // Set default Blue tag for new tasks OR match voice tag
              if taskToEdit == nil && selectedPrimaryTag == nil {
                  if let parsed = parsedTaskFromVoice, let aiTagName = parsed.colorTag {
@@ -284,16 +268,12 @@ struct AddEditTaskView: View {
                          print("🎨 Matched AI tag '\(aiTagName)' to '\(matchedTag.name ?? "")'")
                      } else {
                          print("⚠️ Could not match AI tag '\(aiTagName)'")
-                         // Fall through to default Blue
-                         if let blueTag = TagManager.findTag(byName: "Blue", in: modelContext) {
-                             selectedPrimaryTag = blueTag
-                         }
+                         // Fall through to default Blue (default tag)
+                        selectedPrimaryTag = TagManager.returnDefaultTag(from: modelContext)
                      }
                  } else {
-                     // Regular new task - default to Blue
-                     if let blueTag = TagManager.findTag(byName: "Blue", in: modelContext) {
-                         selectedPrimaryTag = blueTag
-                     }
+                     // Regular new task - default to Blue (default tag)
+                    selectedPrimaryTag = TagManager.returnDefaultTag(from: modelContext)
                  }
              }
          }

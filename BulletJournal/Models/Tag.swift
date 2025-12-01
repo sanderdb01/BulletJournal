@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import SwiftData
 
 @Model
@@ -222,6 +223,14 @@ struct TagManager {
          print("❌ Error fetching all tags: \(error)")
          return []
       }
+   }
+   
+   // Return a default color tag of color blue (no matter what the name is)
+   static func returnDefaultTag(from context: ModelContext) -> Tag {
+      let allTags = getAllTags(from: context)
+      let defaultTag = allTags.first(where: {$0.returnColorString() == "blue"}) ?? Tag(name: "default")
+      print(defaultTag.name)
+      return defaultTag
    }
    
    // Create a custom tag

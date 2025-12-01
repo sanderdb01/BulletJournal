@@ -19,29 +19,13 @@
 3. Add iPhone markdown toolbar to top of iPad editor screen (that way user can use it even if a keyboard is not connects\
 \
 \
-Version 1.03\
-- refactored iOS markdown code\
-- Mac updated to latest markdown code, and refactor\
+Version 1.032 (from now on, all noted changes will be on iOS unless otherwise noted)\
+- auto-focuses new task title on new task screen appear\
+- new task now selects a color tag by default\
+- added new function to TagManager to return a default color tag.\
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
-\cf0 - MacOS:change color of markdown toolbar background\
-- MacOS: The notebook editor view is a scroll view because if the window is resized, you can scroll everything including the Title view, toolbar, etc. This should not be the case. We need to make the window have a minimum size, and the toolbar, title view, and metadata stay static at the top\
-- MacOS:when editing a notebook page , make the editing screen grow to the bottom of the window\
-- MacOS: Markdown tips now persist, but can be minimized\
-- iOS: shortened the calendar days to maximize space\
-- iOS: got rid of the Calendar title on the calendar view to maximize space\
-- iOS: added search functionality to dayview.\
-- iOS: fixed persistent AI add task bug\
-- iOS: Removed the search tab from the main view now that search is on the day view\
-- iOS: Settings button is now on the DayView\
+\cf0 - added haptic feedback to creating a new task\
+- added accelerating haptics when holding down a task on day view\
+- when search bar is selected but no text it inputted, tapping the screen dismisses the keyboard and focus\
 \
-\
-Notes for GitHub commit:\
-\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
-\cf0 - iOS: shortened the calendar days to maximize space\
-- iOS: got rid of the Calendar title on the calendar view to maximize space\
-- iOS: added search functionality to dayview.\
-\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
-\cf0 - iOS: fixed persistent AI add task bug\
-- iOS: Removed the search tab from the main view now that search is on the day view\
-- iOS: Settings button is now on the DayView\
-- iOS: Search text field only loses focus of dismiss the keyboard. Need to update for better UX.}
+Notes for GitHub commit:}
