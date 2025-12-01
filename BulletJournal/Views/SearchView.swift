@@ -65,7 +65,8 @@ struct SearchView: View {
                      Image(systemName: "gearshape")
                   }
                }
-            }            .sheet(isPresented: $showingSettings) {
+            }
+            .sheet(isPresented: $showingSettings) {
                SettingsView()
             }
          }
@@ -90,16 +91,16 @@ struct SearchView: View {
                isSearchFocused = false
             }
          
-         if !searchText.isEmpty {
-            Button(action: {
-               searchText = ""
-               isSearchFocused = true
-            }) {
-               Image(systemName: "xmark.circle.fill")
-                  .foregroundColor(.secondary)
-            }
-            .transition(.scale.combined(with: .opacity))
-         }
+//         if !searchText.isEmpty {
+//            Button(action: {
+//               searchText = ""
+//               isSearchFocused = true
+//            }) {
+//               Image(systemName: "xmark.circle.fill")
+//                  .foregroundColor(.secondary)
+//            }
+//            .transition(.scale.combined(with: .opacity))
+//         }
       }
       .padding()
 #if os(iOS)
@@ -178,94 +179,94 @@ struct SearchView: View {
 
 // MARK: - Search Result Row
 
-struct SearchResultRow: View {
-   let task: TaskItem
-   let date: Date
-   let searchText: String
-   
-   var body: some View {
-      HStack(spacing: 12) {
-         // Color dot
-         Circle()
-            .fill(Color.fromString(task.color!))
-            .frame(width: 12, height: 12)
-         
-         // Task info
-         VStack(alignment: .leading, spacing: 4) {
-            // Task name with highlighted search text
-            Text(highlightedText(task.name!))
-               .lineLimit(2)
-               .font(.body)
-            
-            // Task notes preview if they contain the search term
-            if !task.notes!.isEmpty && task.notes!.localizedCaseInsensitiveContains(searchText) {
-               Text(highlightedText(task.notes!))
-                  .font(.caption)
-                  .foregroundColor(.secondary)
-                  .lineLimit(2)
-            }
-            
-            // Date
-            HStack(spacing: 4) {
-               Image(systemName: "calendar")
-                  .font(.caption2)
-               Text(date, style: .date)
-                  .font(.caption)
-            }
-            .foregroundColor(.secondary)
-         }
-         
-         Spacer()
-         
-         // Status indicator
-         statusBadge
-         
-         // Navigation chevron
-         Image(systemName: "chevron.right")
-            .font(.caption)
-            .foregroundColor(.secondary)
-      }
-      .padding(.vertical, 8)
-   }
-   
-   @ViewBuilder
-   private var statusBadge: some View {
-      switch task.status {
-         case .normal:
-            EmptyView()
-         case .inProgress:
-            Image(systemName: "clock.fill")
-               .font(.caption)
-               .foregroundColor(.green)
-         case .complete:
-            Image(systemName: "checkmark.circle.fill")
-               .font(.caption)
-               .foregroundColor(.green)
-         case .notCompleted:
-            Image(systemName: "xmark.circle.fill")
-               .font(.caption)
-               .foregroundColor(.red)
-         case .none:
-            EmptyView()
-      }
-   }
-   
-   // Highlight matching search text (basic implementation)
-   private func highlightedText(_ text: String) -> AttributedString {
-      var attributedString = AttributedString(text)
-      
-      // Find the range of the search text (case insensitive)
-      if let range = text.range(of: searchText, options: .caseInsensitive) {
-         let nsRange = NSRange(range, in: text)
-         if let attributedRange = Range<AttributedString.Index>(nsRange, in: attributedString) {
-            attributedString[attributedRange].backgroundColor = .yellow.opacity(0.3)
-            attributedString[attributedRange].foregroundColor = .primary
-         }
-      }
-      
-      return attributedString
-   }
-}
+//struct SearchResultRow: View {
+//   let task: TaskItem
+//   let date: Date
+//   let searchText: String
+//   
+//   var body: some View {
+//      HStack(spacing: 12) {
+//         // Color dot
+//         Circle()
+//            .fill(Color.fromString(task.color!))
+//            .frame(width: 12, height: 12)
+//         
+//         // Task info
+//         VStack(alignment: .leading, spacing: 4) {
+//            // Task name with highlighted search text
+//            Text(highlightedText(task.name!))
+//               .lineLimit(2)
+//               .font(.body)
+//            
+//            // Task notes preview if they contain the search term
+//            if !task.notes!.isEmpty && task.notes!.localizedCaseInsensitiveContains(searchText) {
+//               Text(highlightedText(task.notes!))
+//                  .font(.caption)
+//                  .foregroundColor(.secondary)
+//                  .lineLimit(2)
+//            }
+//            
+//            // Date
+//            HStack(spacing: 4) {
+//               Image(systemName: "calendar")
+//                  .font(.caption2)
+//               Text(date, style: .date)
+//                  .font(.caption)
+//            }
+//            .foregroundColor(.secondary)
+//         }
+//         
+//         Spacer()
+//         
+//         // Status indicator
+//         statusBadge
+//         
+//         // Navigation chevron
+//         Image(systemName: "chevron.right")
+//            .font(.caption)
+//            .foregroundColor(.secondary)
+//      }
+//      .padding(.vertical, 8)
+//   }
+//   
+//   @ViewBuilder
+//   private var statusBadge: some View {
+//      switch task.status {
+//         case .normal:
+//            EmptyView()
+//         case .inProgress:
+//            Image(systemName: "clock.fill")
+//               .font(.caption)
+//               .foregroundColor(.green)
+//         case .complete:
+//            Image(systemName: "checkmark.circle.fill")
+//               .font(.caption)
+//               .foregroundColor(.green)
+//         case .notCompleted:
+//            Image(systemName: "xmark.circle.fill")
+//               .font(.caption)
+//               .foregroundColor(.red)
+//         case .none:
+//            EmptyView()
+//      }
+//   }
+//   
+//   // Highlight matching search text (basic implementation)
+//   private func highlightedText(_ text: String) -> AttributedString {
+//      var attributedString = AttributedString(text)
+//      
+//      // Find the range of the search text (case insensitive)
+//      if let range = text.range(of: searchText, options: .caseInsensitive) {
+//         let nsRange = NSRange(range, in: text)
+//         if let attributedRange = Range<AttributedString.Index>(nsRange, in: attributedString) {
+//            attributedString[attributedRange].backgroundColor = .yellow.opacity(0.3)
+//            attributedString[attributedRange].foregroundColor = .primary
+//         }
+//      }
+//      
+//      return attributedString
+//   }
+//}
 
 #Preview {
    #if os(iOS)

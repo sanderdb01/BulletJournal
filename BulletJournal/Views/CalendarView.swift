@@ -22,7 +22,7 @@ struct CalendarView: View {
        } else if horizontalSizeClass == .regular {
            return 80  // iPad portrait
        } else {
-           return 60  // iPhone
+           return 40  // iPhone (was 60)
        }
    }
    
@@ -45,12 +45,12 @@ struct CalendarView: View {
                calendarGrid
                
                Divider()
-                  .padding(.vertical, 8)
+//                  .padding(.vertical, 8)
                
                // Task Details Section
                taskDetailsSection
             }
-            .navigationTitle("Calendar")
+//            .navigationTitle("Calendar")  //we dont need this. takes up too much room
 #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -316,11 +316,14 @@ struct DayCell: View {
    
    private var cellHeight: CGFloat {
        if horizontalSizeClass == .regular && isLandscape {
+//          print("ipad landscape")
            return 50  // iPad landscape
        } else if horizontalSizeClass == .regular {
+//          print("ipad portrait")
            return 80  // iPad portrait
        } else {
-           return 60  // iPhone
+//          print("iphone")
+           return 40  // iPhone old = 60
        }
    }
    

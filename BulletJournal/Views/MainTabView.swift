@@ -60,11 +60,11 @@ struct MainTabView: View {
                }
                .tag(2)
            
-           SearchView(currentDate: $currentDate, selectedTab: $selectedTab)
-               .tabItem {
-                   Label("Search", systemImage: "magnifyingglass")
-               }
-               .tag(3)
+//           SearchView(currentDate: $currentDate, selectedTab: $selectedTab)
+//               .tabItem {
+//                   Label("Search", systemImage: "magnifyingglass")
+//               }
+//               .tag(3)
         }
         .background(AppTheme.primaryBackground.ignoresSafeArea())
     }

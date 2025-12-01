@@ -243,7 +243,6 @@
 				Views/iPad/iPadMainView.swift,
 				Views/iPad/iPadNotesSplitView_backup.swift,
 				Views/iPad/iPadNotesSplitView.swift,
-				"Views/MainTabView 2.swift",
 				Views/MainTabView.swift,
 				Views/MarkdownFormattingToolbar.swift,
 				Views/NotesEditorView.swift,
@@ -1363,7 +1362,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.02;
+				MARKETING_VERSION = 1.031;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1397,7 +1396,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.02;
+				MARKETING_VERSION = 1.031;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1574,7 +1573,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.02;
+				MARKETING_VERSION = 1.031;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -1608,7 +1607,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.02;
+				MARKETING_VERSION = 1.031;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
