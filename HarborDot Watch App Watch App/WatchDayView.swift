@@ -110,6 +110,9 @@ struct WatchTaskRow: View {
             Button {
                 task.cycleStatus()
                 try? modelContext.save()
+               
+               // Cancel reminder if all tasks complete
+               checkDailyReminderStatus()
             } label: {
                 statusIcon
                     .font(.title3)
@@ -158,6 +161,24 @@ struct WatchTaskRow: View {
                   .frame(width: 20, height: 20)
         }
     }
+   
+   // MARK: Task Status Notification Helper function
+   private func checkDailyReminderStatus() {
+       // Only check for today's tasks
+       guard Calendar.current.isDateInToday(dayLog.date ?? Date()) else {
+           return
+       }
+       
+       // Check if any tasks are still incomplete
+       let hasIncompleteTasks = dayLog.tasks?.contains { $0.status == .normal } ?? false
+       
+       if !hasIncompleteTasks {
+           // All done! Cancel today's reminder
+           Task {
+               await NotificationManager.shared.cancelDailyReminder()
+           }
+       }
+   }
 }
 
 #Preview {

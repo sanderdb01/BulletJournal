@@ -151,9 +151,17 @@
 				Helpers/KeyboardShortcuts.swift,
 				Helpers/MarkdownHelper.swift,
 				Helpers/SharedModelContainer.swift,
+				Managers/AnchorManager.swift,
+				Managers/NotificationManager_old.swift,
 				Managers/NotificationManager.swift,
 				Managers/ParsedTask.swift,
 				Managers/RecurrenceManager.swift,
+				Managers/Sharing/CloudKitHelper.swift,
+				Managers/Sharing/CloudKitSharingManager_old.swift,
+				Managers/Sharing/CloudKitSharingManager.swift,
+				Managers/Sharing/SharedTaskMonitor.swift,
+				Managers/Sharing/SharePropertyUpdater.swift,
+				Managers/Sharing/SimpleShareSheet.swift,
 				Models/AppSettings.swift,
 				Models/DayLog.swift,
 				Models/GeneralNote.swift,
@@ -161,9 +169,6 @@
 				Models/RecurrenceRule.swift,
 				Models/Tag.swift,
 				Models/TaskItem.swift,
-				Views/AddEditTaskView.swift,
-				Views/CalendarView.swift,
-				Views/DayView.swift,
 				"Views/Mac Files/GeneralNoteEditorView_old.swift",
 				"Views/Mac Files/GeneralNoteEditorView.swift",
 				"Views/Mac Files/MacMainView.swift",
@@ -171,13 +176,20 @@
 				"Views/Mac Files/NoteRowView.swift",
 				"Views/Mac Files/NotesListView.swift",
 				"Views/Mac Files/SmartTextEditor.swift",
-				Views/MarkdownFormattingToolbar.swift,
-				Views/NotesEditorView.swift,
-				Views/SearchView.swift,
-				Views/SettingsView.swift,
-				Views/TagPicker.swift,
-				Views/TagSettings.swift,
-				Views/TaskRowView.swift,
+				"Views/Main Tab Views/CalendarView.swift",
+				"Views/Main Tab Views/DayView.swift",
+				"Views/Main Tab Views/NotesEditorView.swift",
+				"Views/Main Tab Views/SettingsView.swift",
+				"Views/Main Tab Views/Subviews/AddEditTaskView.swift",
+				"Views/Main Tab Views/Subviews/DailyReminderSettingsSection.swift",
+				"Views/Main Tab Views/Subviews/MailView.swift",
+				"Views/Main Tab Views/Subviews/MarkdownFormattingToolbar.swift",
+				"Views/Main Tab Views/Subviews/SearchView.swift",
+				"Views/Main Tab Views/Subviews/TagPicker.swift",
+				"Views/Main Tab Views/Subviews/TagSettings.swift",
+				"Views/Main Tab Views/Subviews/TaskRowView_old.swift",
+				"Views/Main Tab Views/Subviews/TaskRowView.swift",
+				"Views/Main Tab Views/Subviews/ToastView.swift",
 			);
 			target = E14AE71C2E98AAE70099EED7 /* HarborDotMacOS */;
 		};
@@ -212,20 +224,12 @@
 		E17783E32E900E7C00E047F4 /* Exceptions for "BulletJournal" folder in "HarborDotWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				ContentView.swift,
-				Helpers/AppTheme.swift,
-				Helpers/ClearButton.swift,
 				Helpers/ColorExtensions.swift,
-				Helpers/DateExtensions.swift,
-				Helpers/DeepLinkHandler.swift,
-				Helpers/KeyboardShortcuts.swift,
-				Helpers/MarkdownHelper.swift,
 				Helpers/SharedModelContainer.swift,
-				Managers/HapticManager.swift,
+				Managers/AnchorManager.swift,
+				Managers/NotificationManager_old.swift,
 				Managers/NotificationManager.swift,
-				Managers/ParsedTask.swift,
 				Managers/RecurrenceManager.swift,
-				Managers/VoiceToTaskManager.swift,
 				Models/AppSettings.swift,
 				Models/DayLog.swift,
 				Models/GeneralNote.swift,
@@ -233,25 +237,6 @@
 				Models/RecurrenceRule.swift,
 				Models/Tag.swift,
 				Models/TaskItem.swift,
-				Views/AddEditTaskView.swift,
-				Views/CalendarView.swift,
-				Views/DayView.swift,
-				Views/iOSNewNoteSheet.swift,
-				Views/iOSNoteEditorView_old.swift,
-				Views/iOSNoteEditorView.swift,
-				Views/iOSNotesListView.swift,
-				Views/iPad/iPadMainView.swift,
-				Views/iPad/iPadNotesSplitView_backup.swift,
-				Views/iPad/iPadNotesSplitView.swift,
-				Views/MainTabView.swift,
-				Views/MarkdownFormattingToolbar.swift,
-				Views/NotesEditorView.swift,
-				Views/SearchView.swift,
-				Views/SettingsView.swift,
-				Views/TagPicker.swift,
-				Views/TagSettings.swift,
-				Views/TaskRowView.swift,
-				Views/VoiceRecordingView.swift,
 			);
 			target = E17783BF2E900B1800E047F4 /* HarborDotWidgetExtension */;
 		};
@@ -265,12 +250,10 @@
 		E19773482E946DF800293A38 /* Exceptions for "BulletJournal" folder in "HarborDot Watch App Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Helpers/AppTheme.swift,
-				Helpers/ClearButton.swift,
 				Helpers/ColorExtensions.swift,
-				Helpers/DateExtensions.swift,
-				Helpers/DeepLinkHandler.swift,
 				Helpers/SharedModelContainer.swift,
+				Managers/AnchorManager.swift,
+				Managers/NotificationManager_old.swift,
 				Managers/NotificationManager.swift,
 				Managers/RecurrenceManager.swift,
 				Models/AppSettings.swift,
@@ -280,20 +263,16 @@
 				Models/RecurrenceRule.swift,
 				Models/Tag.swift,
 				Models/TaskItem.swift,
-				Views/TagPicker.swift,
-				Views/TagSettings.swift,
 			);
 			target = E19772F92E946D8B00293A38 /* HarborDot Watch App Watch App */;
 		};
 		E19773492E946DF800293A38 /* Exceptions for "BulletJournal" folder in "HarborDot Watch WidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Helpers/AppTheme.swift,
-				Helpers/ClearButton.swift,
 				Helpers/ColorExtensions.swift,
-				Helpers/DateExtensions.swift,
-				Helpers/DeepLinkHandler.swift,
 				Helpers/SharedModelContainer.swift,
+				Managers/AnchorManager.swift,
+				Managers/NotificationManager_old.swift,
 				Managers/NotificationManager.swift,
 				Managers/RecurrenceManager.swift,
 				Models/AppSettings.swift,
@@ -303,8 +282,6 @@
 				Models/RecurrenceRule.swift,
 				Models/Tag.swift,
 				Models/TaskItem.swift,
-				Views/TagPicker.swift,
-				Views/TagSettings.swift,
 			);
 			target = E19773282E946DD100293A38 /* HarborDot Watch WidgetExtension */;
 		};
@@ -1362,7 +1339,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.032;
+				MARKETING_VERSION = 1.033;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1396,7 +1373,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.032;
+				MARKETING_VERSION = 1.033;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1573,7 +1550,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.032;
+				MARKETING_VERSION = 1.033;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -1607,7 +1584,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.032;
+				MARKETING_VERSION = 1.033;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;

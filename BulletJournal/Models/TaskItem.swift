@@ -10,6 +10,7 @@ class TaskItem {
     var status: TaskStatus?
     var createdAt: Date?
     var modifiedAt: Date?
+   var position: Int?   // Used for ordering and reordering tasks in DayLog
     
     // Reminder
     var reminderTime: Date?
@@ -50,6 +51,17 @@ class TaskItem {
     var isRecurringInstance: Bool {
         return sourceTemplateId != nil
     }
+   
+   // CloudKit Sharing
+   var isShared: Bool?
+   var shareOwnerName: String?  // Name of person who shared this
+   var shareParticipantNames: [String]?  // Names of people it's shared with
+   var ckRecordName: String?  // Store CKRecord ID
+   
+   // Anchor Properties
+       var isAnchor: Bool?
+       var anchorSourceId: UUID?
+       var anchorDayCount: Int?
     
     // MARK: - Initializer
     
@@ -72,6 +84,13 @@ class TaskItem {
         self.isPinned = false
         self.category = TaskCategory.none
         self.tags = []
+       self.isShared = false
+       self.shareOwnerName = nil
+       self.shareParticipantNames = []
+       self.ckRecordName = self.id?.uuidString
+       self.isAnchor = false
+       self.anchorSourceId = nil
+       self.anchorDayCount = nil
     }
     
     // MARK: - Task Status Methods

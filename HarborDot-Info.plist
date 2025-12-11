@@ -6,6 +6,8 @@
 	<string>HarborDot needs microphone access to record your voice for creating tasks</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>HarborDot uses speech recognition to create tasks from your voice</string>
+   <key>CKSharingSupported</key>
+   <true/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

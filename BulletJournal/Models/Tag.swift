@@ -229,7 +229,6 @@ struct TagManager {
    static func returnDefaultTag(from context: ModelContext) -> Tag {
       let allTags = getAllTags(from: context)
       let defaultTag = allTags.first(where: {$0.returnColorString() == "blue"}) ?? Tag(name: "default")
-      print(defaultTag.name)
       return defaultTag
    }
    
