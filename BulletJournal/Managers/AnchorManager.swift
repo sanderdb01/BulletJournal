@@ -93,6 +93,7 @@ class AnchorManager {
                     copiedTask.anchorSourceId = anchorTask.id
                     copiedTask.anchorDayCount = 2  // Day 2 (original was day 1)
                 }
+               copiedTask.isAnchor = true
                 
                 // Add to today
                 todayLog.addTask(copiedTask)

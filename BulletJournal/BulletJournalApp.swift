@@ -231,10 +231,13 @@ struct HarborDotApp: App {
       // Check if we've crossed midnight since last launch
       let lastLaunch = UserDefaults.standard.object(forKey: "lastLaunchDate") as? Date ?? Date()
       let now = Date()
-      
+      let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? Date()
       // If same day, don't process
       if Calendar.current.isDate(lastLaunch, inSameDayAs: now) {
+//      if Calendar.current.isDate(now, inSameDayAs: yesterday) {
          print("📍 Same day - no anchor processing needed")
+         print("Last Launch: \(formatDate(lastLaunch))")
+         print("Today: \(formatDate(now))")
          return
       }
       
