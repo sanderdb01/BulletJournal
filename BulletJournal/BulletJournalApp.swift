@@ -12,6 +12,8 @@ struct HarborDotApp: App {
    @AppStorage("lastSeenVersion") private var lastSeenVersion: String = ""
    @State private var showWhatsNew = false
    
+//   @AppStorage("lastLaunchDate") private var lastLaunchTimestamp: Double = 0
+   
    
    init() {
       // Request notification permission on launch
@@ -66,9 +68,9 @@ struct HarborDotApp: App {
                }
                
                // Process anchors
-               Task {
-                  await processAnchors(context: context)
-               }
+//               Task {
+//                  await processAnchors(context: context)
+//               }
                
                Task { @MainActor in
                   SharedTasksMonitor.shared.start(with: context)
@@ -220,45 +222,52 @@ struct HarborDotApp: App {
       return "\(version) (\(build))"
    }
    
-   // Process anchors on app launch
-   /// Processes anchor tasks when crossing into a new day
-   ///
-   /// Checks if the app launch is the first since midnight and processes
-   /// any incomplete anchor tasks from yesterday.
-   ///
-   /// Only runs once per day to avoid duplicate processing.
-   private func processAnchors(context: ModelContext) async {
-      // Check if we've crossed midnight since last launch
-      let lastLaunch = UserDefaults.standard.object(forKey: "lastLaunchDate") as? Date ?? Date()
-      let now = Date()
-      let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? Date()
-      // If same day, don't process
-      if Calendar.current.isDate(lastLaunch, inSameDayAs: now) {
-//      if Calendar.current.isDate(now, inSameDayAs: yesterday) {
-         print("📍 Same day - no anchor processing needed")
-         print("Last Launch: \(formatDate(lastLaunch))")
-         print("Today: \(formatDate(now))")
-         return
-      }
-      
-      print("📍 New day detected - processing anchors")
-      print("   Last launch: \(formatDate(lastLaunch))")
-      print("   Current: \(formatDate(now))")
-      
-      // Save new launch date
-      UserDefaults.standard.set(now, forKey: "lastLaunchDate")
-      
-      // Process anchors
-      await AnchorManager.shared.processAnchors(context: context)
-   }
-   
-   /// Formats a date for logging
-   private func formatDate(_ date: Date) -> String {
-      let formatter = DateFormatter()
-      formatter.dateStyle = .medium
-      formatter.timeStyle = .short
-      return formatter.string(from: date)
-   }
+//   // Process anchors on app launch
+//   /// Processes anchor tasks when crossing into a new day
+//   ///
+//   /// Checks if the app launch is the first since midnight and processes
+//   /// any incomplete anchor tasks from yesterday.
+//   ///
+//   /// Only runs once per day to avoid duplicate processing.
+//   ///
+//   
+//   private func processAnchors(context: ModelContext) async {
+//           let now = Date()
+//           let lastLaunch = Date(timeIntervalSince1970: lastLaunchTimestamp)
+//           
+//           print("\n📍 Anchor Check:")
+//           print("   Last: \(formatDate(lastLaunch))")
+//           print("   Now:  \(formatDate(now))")
+//           
+//           // First launch check
+//           if lastLaunchTimestamp == 0 {
+//               print("   First launch - setting baseline")
+//               lastLaunchTimestamp = now.timeIntervalSince1970
+//               return
+//           }
+//           
+//           // Check if same day
+//           if Calendar.current.isDate(lastLaunch, inSameDayAs: now) {
+//               print("   Same day - skip\n")
+//               return
+//           }
+//           
+//           print("   NEW DAY - processing anchors!\n")
+//           
+//           // Update timestamp
+//           lastLaunchTimestamp = now.timeIntervalSince1970
+//           
+//           // Process anchors
+//           await AnchorManager.shared.processAnchors(context: context)
+//       }
+//   
+//   /// Formats a date for logging
+//   private func formatDate(_ date: Date) -> String {
+//      let formatter = DateFormatter()
+//      formatter.dateStyle = .medium
+//      formatter.timeStyle = .short
+//      return formatter.string(from: date)
+//   }
 }
 
 // MARK: - Mac Menu Commands

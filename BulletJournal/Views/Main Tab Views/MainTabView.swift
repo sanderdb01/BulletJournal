@@ -7,11 +7,14 @@ struct MainTabView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.scenePhase) var scenePhase
+   @Environment(\.modelContext) private var modelContext
     
     @State private var selectedTab = 0
     @State private var currentDate = Date()
     @State private var displayedMonth = Date()
     @State private var backgroundTimestamp: Date?
+   
+   @AppStorage("lastAnchorCheckTimestamp") private var lastAnchorCheckTimestamp: Double = 0
     
     var body: some View {
         Group {
@@ -79,6 +82,10 @@ struct MainTabView: View {
             print("📱 App went to background at \(backgroundTimestamp!)")
             
         case .active:
+              // Process anchors when becoming active
+                      Task {
+                          await processAnchorsIfNeeded()
+                      }
             // App came back to foreground - check if we should reset date
             if let backgroundTime = backgroundTimestamp {
                 let timeInBackground = Date().timeIntervalSince(backgroundTime)
@@ -133,6 +140,61 @@ struct MainTabView: View {
             deepLinkManager.activeLink = nil
         }
     }
+   
+   // MARK: - Anchor Processing
+
+   /// Processes anchor tasks when crossing into a new day
+   ///
+   /// Called every time the app becomes active. Checks if we've crossed
+   /// midnight since the last check and processes incomplete anchors.
+   private func processAnchorsIfNeeded() async {
+       let now = Date()
+       let lastCheck = Date(timeIntervalSince1970: lastAnchorCheckTimestamp)
+       
+       print("\n" + String(repeating: "=", count: 60))
+       print("🚢 ANCHOR CHECK")
+       print(String(repeating: "=", count: 60))
+       print("📅 Last check: \(formatDate(lastCheck)) (\(lastAnchorCheckTimestamp == 0 ? "never" : "stored"))")
+       print("📅 Current:    \(formatDate(now))")
+       
+       // First launch check
+       if lastAnchorCheckTimestamp == 0 {
+           print("🚢 First launch - setting baseline")
+           lastAnchorCheckTimestamp = now.timeIntervalSince1970
+           print(String(repeating: "=", count: 60) + "\n")
+           return
+       }
+       
+       // Check if same day
+       let isSameDay = Calendar.current.isDate(lastCheck, inSameDayAs: now)
+       print("📅 Same day? \(isSameDay ? "YES" : "NO")")
+       
+       if isSameDay {
+           print("🚢 Same day - skipping anchor processing")
+           print(String(repeating: "=", count: 60) + "\n")
+           return
+       }
+       
+       print("🚢 NEW DAY DETECTED - Processing anchors!")
+       print(String(repeating: "-", count: 60))
+       
+       // Update timestamp
+       lastAnchorCheckTimestamp = now.timeIntervalSince1970
+       print("💾 Updated timestamp: \(now.timeIntervalSince1970)")
+       
+       // Process anchors
+       await AnchorManager.shared.processAnchors(context: modelContext)
+       
+       print(String(repeating: "=", count: 60) + "\n")
+   }
+
+   /// Formats a date for logging
+   private func formatDate(_ date: Date) -> String {
+       let formatter = DateFormatter()
+       formatter.dateStyle = .medium
+       formatter.timeStyle = .short
+       return formatter.string(from: date)
+   }
 }
 
 #Preview {
