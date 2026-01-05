@@ -180,14 +180,21 @@ struct TaskRowView: View {
          .tint(.orange)
       }
       .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-         Button(role: .destructive) {
-            if task.isRecurring == true || task.isRecurringInstance {
-               showingDeleteOptions = true
-            } else {
-               deleteThisInstance()
+         if task.isRecurring == true || task.isRecurringInstance {
+            Button(action: {
+                  print("showing delete options is true")
+                  showingDeleteOptions = true
+            }) {
+               Label("Delete", systemImage: "trash")
             }
-         } label: {
-            Label("Delete", systemImage: "trash")
+            .tint(.red)
+         } else {
+            Button(role: .destructive) {
+                  print("single delete")
+                  deleteThisInstance()
+            } label: {
+               Label("Delete", systemImage: "trash")
+            }
          }
          
          Button(action: {
@@ -203,21 +210,21 @@ struct TaskRowView: View {
          }
          .tint(.orange)
       }
-      .confirmationDialog("", isPresented: $showingMenu, titleVisibility: .hidden) {
-         Button("Edit") {
-            showingEditTask = true
-         }
-         Button("Copy") {
-            copyTargetDate = Date()
-            showingCopyDatePicker = true
-         }
-         if task.isRecurring == true || task.isRecurringInstance {
-            Button("Delete", role: .destructive) {
-               showingDeleteOptions = true
-            }
-         }
-         Button("Cancel", role: .cancel) { }
-      }
+//      .confirmationDialog("", isPresented: $showingMenu, titleVisibility: .hidden) {
+//         Button("Edit") {
+//            showingEditTask = true
+//         }
+//         Button("Copy") {
+//            copyTargetDate = Date()
+//            showingCopyDatePicker = true
+//         }
+//         if task.isRecurring == true || task.isRecurringInstance {
+//            Button("Delete", role: .destructive) {
+//               showingDeleteOptions = true
+//            }
+//         }
+//         Button("Cancel", role: .cancel) { }
+//      }
       //      .onChange(of: showingMenu, { oldValue, newValue in
       //         print("showingMenu changed: \(oldValue) -> \(newValue)")
       //      })
@@ -439,15 +446,15 @@ struct TaskRowView: View {
    
    // MARK: - Delete Handling
    
-   private func handleDelete() {
-      // Check if this is a recurring task or instance
-      if task.isRecurring == true || task.isRecurringInstance {
-         showingDeleteOptions = true
-      } else {
-         // Regular task - delete immediately
-         deleteThisInstance()
-      }
-   }
+//   private func handleDelete() {
+//      // Check if this is a recurring task or instance
+//      if task.isRecurring == true || task.isRecurringInstance {
+//         showingDeleteOptions = true
+//      } else {
+//         // Regular task - delete immediately
+//         deleteThisInstance()
+//      }
+//   }
    
    private func deleteThisInstance() {
       withAnimation {
@@ -455,7 +462,6 @@ struct TaskRowView: View {
          if let notificationId = task.notificationId {
             NotificationManager.shared.cancelTaskNotification(notificationId: notificationId)
          }
-         
          dayLog.deleteTask(task)
          
          do {
@@ -502,7 +508,6 @@ struct TaskRowView: View {
             let tasksToDelete = (dayLog.tasks ?? []).filter { task in
                task.sourceTemplateId == templateId || task.id == templateId
             }
-            
             for task in tasksToDelete {
                // Cancel notifications
                if let notificationId = task.notificationId {

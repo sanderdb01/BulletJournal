@@ -140,7 +140,7 @@ struct WhatsNewView: View {
             Change(
                 icon: "ladybug.slash.fill",
                 title: "Various Bug Fixes and Features",
-                description: "- auto-focuses new task title on new task screen appear\n- new task now selects a color tag by default\n- added new function to TagManager to return a default color tag./n- added haptic feedback to creating a new task\n- when search bar is selected but no text it inputted, tapping the screen dismisses the keyboard and focus\n- dismissing the keyboard when editing a task name now works",
+                description: "- Anchor Tasks now work correctly. Anchors will now be moved to the next day if incomplete after midnight.",
                 color: .purple
             ),
         ]
