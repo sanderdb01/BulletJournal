@@ -14,8 +14,10 @@ struct iOSNotesListView: View {
             ZStack {
                 if filteredNotes.isEmpty {
                     emptyStateView
-                } else {
+                } else if searchText.isEmpty {
                     notesList
+                } else {
+                   searchedNotesList
                 }
             }
             .navigationTitle("Notebook")
@@ -72,11 +74,30 @@ struct iOSNotesListView: View {
                                if note.isDeleted {
                                   print("Note is already deleted")
                                   return
-                               } //note has already been deleted
+                               }
                                 deleteNote(note)
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
+                           Button(action: {
+                               copyNote(note)
+                           }) {
+                              Label("Copy", systemImage: "document.on.document")
+                           }
+                           Button {
+                               note.toggleFavorite()
+                           } label: {
+                               Label("Favorites",
+                                     systemImage: note.isFavorite ?? false ? "star.slash" : "star")
+                               .tint(.yellow)
+                           }
+                           Button {
+                               note.togglePin()
+                           } label: {
+                               Label(note.isPinned ?? false ? "Unpin" : "Pin",
+                                     systemImage: note.isPinned ?? false ? "pin.slash" : "pin")
+                               .tint(.blue)
+                           }
                         }
                     }
                 }
@@ -98,6 +119,25 @@ struct iOSNotesListView: View {
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
+                           Button(action: {
+                               copyNote(note)
+                           }) {
+                              Label("Copy", systemImage: "document.on.document")
+                           }
+                           Button {
+                               note.toggleFavorite()
+                           } label: {
+                               Label("Favorites",
+                                     systemImage: note.isFavorite ?? false ? "star.slash" : "star")
+                               .tint(.yellow)
+                           }
+                           Button {
+                               note.togglePin()
+                           } label: {
+                               Label(note.isPinned ?? false ? "Unpin" : "Pin",
+                                     systemImage: note.isPinned ?? false ? "pin.slash" : "pin")
+                               .tint(.blue)
+                           }
                         }
                     }
                 }
@@ -107,6 +147,35 @@ struct iOSNotesListView: View {
             iOSNoteEditorView(note: note)
         }
     }
+   
+   // MARK: - Searched Notes List
+   
+   private var searchedNotesList: some View {
+       List {
+           if !pinnedNotes.isEmpty {
+               Section("Pinned") {
+                   ForEach(pinnedNotes) { note in
+                       NavigationLink(value: note) {
+                          SearchedNoteRowView(note: note, searchText: searchText)
+                       }
+                   }
+               }
+           }
+           
+           if !unpinnedNotes.isEmpty {
+               Section(pinnedNotes.isEmpty ? "All Pages" : "Pages") {
+                   ForEach(unpinnedNotes) { note in
+                       NavigationLink(value: note) {
+                          SearchedNoteRowView(note: note, searchText: searchText)
+                       }
+                   }
+               }
+           }
+       }
+       .navigationDestination(for: GeneralNote.self) { note in
+           iOSNoteEditorView(note: note)
+       }
+   }
     
     // MARK: - Empty State
     
@@ -141,13 +210,25 @@ struct iOSNotesListView: View {
         withAnimation {
            let success = GeneralNoteManager.deleteNote(note, from: modelContext)
               if success {
-                 print("Deletion of Notebook page successful in iPadSplitView")
+                 print("Deletion of Notebook page successful in iOSNotesListView")
               } else {
                  // Handle failure
                  print("Deletion failed")
               }
         }
     }
+   
+   private func copyNote(_ note: GeneralNote) {
+       withAnimation {
+          let success = GeneralNoteManager.copyNote(note, in: modelContext)
+             if success {
+                print("Copy of Notebook page successful in iOSNotesListView")
+             } else {
+                // Handle failure
+                print("Copy failed")
+             }
+       }
+   }
 }
 
 // MARK: - Note Row View
@@ -203,6 +284,78 @@ struct NoteRowView: View {
         }
         .padding(.vertical, 4)
     }
+}
+
+// MARK: - Searched Note Row View
+
+struct SearchedNoteRowView: View {
+    let note: GeneralNote
+   let searchText: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(highlightedText(note.displayTitle))
+                    .font(.headline)
+                    .lineLimit(1)
+                
+                Spacer()
+                
+                if (note.isFavorite ?? false) {
+                    Image(systemName: "star.fill")
+                        .foregroundStyle(.yellow)
+                        .font(.caption)
+                }
+            }
+            
+            Text(highlightedText((note.returnSearchSnippet(searchTerm: searchText) ?? "")))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+            
+            HStack {
+                if let modifiedAt = note.modifiedAt {
+                    Text(modifiedAt, style: .relative)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                
+                Spacer()
+                
+                if let primaryTag = note.primaryTag {
+                    TagBadge(tag: primaryTag, size: .small)
+                }
+                
+                let customTags = note.customTags ?? []
+                if !customTags.isEmpty {
+                    Text("+\(customTags.count)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.secondary.opacity(0.15))
+                        .clipShape(Capsule())
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+   
+   // Highlight matching search text (basic implementation)
+   private func highlightedText(_ text: String) -> AttributedString {
+      var attributedString = AttributedString(text)
+      
+      // Find the range of the search text (case insensitive)
+      if let range = text.range(of: searchText, options: .caseInsensitive) {
+         let nsRange = NSRange(range, in: text)
+         if let attributedRange = Range<AttributedString.Index>(nsRange, in: attributedString) {
+            attributedString[attributedRange].backgroundColor = .yellow.opacity(0.3)
+            attributedString[attributedRange].foregroundColor = .primary
+         }
+      }
+      
+      return attributedString
+   }
 }
 
 // MARK: - Tag Badge

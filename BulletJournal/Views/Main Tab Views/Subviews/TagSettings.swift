@@ -123,11 +123,37 @@ struct TagSettingsView: View {
                      Text("Reset All Tags")
                   }
                }
+               #if DEBUG
+               Button(action: {
+                  TagManager.duplicateColorTags(from: modelContext)
+               }) {
+                  Label("Duplicate Tags ", systemImage: "document.on.document")
+               }
+               .tint(.yellow)
+               Button(action: {
+                  TagManager.validateColorTags(from: modelContext)
+               }) {
+                  Label("Validate Tags ", systemImage: "checkmark.seal")
+               }
+               .tint(.green)
+               #endif
+               if DeviceInfo.isRunningOnMac {
+                  Button(action: {
+                     print("test")
+                  }) {
+                     Label("Only on Mac", systemImage: "desktopcomputer.and.macbook")
+                  }
+                  .tint(.green)
+               }
+
             } header: {
                Text("Advanced")
             } footer: {
                Text("This will delete ALL tags (including custom tags) and recreate the 8 default color tags. Use this if you have duplicate color tags from CloudKit sync. This action cannot be undone.")
             }
+         }
+         .onAppear() {
+            TagManager.validateColorTags(from: modelContext)
          }
          .navigationTitle("Manage Tags")
 #if os(iOS)

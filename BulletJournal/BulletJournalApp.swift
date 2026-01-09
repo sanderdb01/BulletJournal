@@ -221,53 +221,36 @@ struct HarborDotApp: App {
       let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
       return "\(version) (\(build))"
    }
+}
+
+// MARK: - Check to see if running on iOS device or MacOS
+struct DeviceInfo {
+    static var isRunningOnMac: Bool {
+        #if targetEnvironment(macCatalyst)
+        return true
+        #else
+        if #available(iOS 14.0, *) {
+            return ProcessInfo.processInfo.isiOSAppOnMac
+        }
+        return false
+        #endif
+    }
    
-//   // Process anchors on app launch
-//   /// Processes anchor tasks when crossing into a new day
-//   ///
-//   /// Checks if the app launch is the first since midnight and processes
-//   /// any incomplete anchor tasks from yesterday.
-//   ///
-//   /// Only runs once per day to avoid duplicate processing.
-//   ///
-//   
-//   private func processAnchors(context: ModelContext) async {
-//           let now = Date()
-//           let lastLaunch = Date(timeIntervalSince1970: lastLaunchTimestamp)
-//           
-//           print("\n📍 Anchor Check:")
-//           print("   Last: \(formatDate(lastLaunch))")
-//           print("   Now:  \(formatDate(now))")
-//           
-//           // First launch check
-//           if lastLaunchTimestamp == 0 {
-//               print("   First launch - setting baseline")
-//               lastLaunchTimestamp = now.timeIntervalSince1970
-//               return
-//           }
-//           
-//           // Check if same day
-//           if Calendar.current.isDate(lastLaunch, inSameDayAs: now) {
-//               print("   Same day - skip\n")
-//               return
-//           }
-//           
-//           print("   NEW DAY - processing anchors!\n")
-//           
-//           // Update timestamp
-//           lastLaunchTimestamp = now.timeIntervalSince1970
-//           
-//           // Process anchors
-//           await AnchorManager.shared.processAnchors(context: context)
-//       }
-//   
-//   /// Formats a date for logging
-//   private func formatDate(_ date: Date) -> String {
-//      let formatter = DateFormatter()
-//      formatter.dateStyle = .medium
-//      formatter.timeStyle = .short
-//      return formatter.string(from: date)
-//   }
+   static var isMacCatalyst: Bool {
+              #if targetEnvironment(macCatalyst)
+              return true
+              #else
+              return false
+              #endif
+          }
+    
+    static var isiPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+    
+    static var isiPhone: Bool {
+        UIDevice.current.userInterfaceIdiom == .phone
+    }
 }
 
 // MARK: - Mac Menu Commands

@@ -127,7 +127,7 @@ struct TagManager {
       store.synchronize()
       
       // Wait 2 seconds for iCloud KV to sync (much faster than CloudKit's 30-60 seconds)
-      DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
          defer { isCreatingTags = false }
          
          // STEP 1: Check the fast-syncing iCloud flag
@@ -222,6 +222,64 @@ struct TagManager {
       } catch {
          print("❌ Error fetching all tags: \(error)")
          return []
+      }
+   }
+   
+   // Verify and correct color tag if sync fails
+   static func validateColorTags(from context: ModelContext) {
+      print("Validating Color Tags...")
+      let descriptor = FetchDescriptor<Tag>(
+         predicate: #Predicate { $0.isPrimary == true },
+         sortBy: [SortDescriptor(\.createdAt, order:.forward)]
+      )
+      
+      let allColorTags = try? context.fetch(descriptor)
+      
+      print("Number of color tags: \(allColorTags?.count ?? 0)")
+      if (allColorTags?.count ?? 0) > 8 {
+         print("There are too many color tags. Deleting some...")
+         var seenUUIDs: Set<UUID> = []
+         var toDelete: [Tag] = []
+         
+         for tag in (allColorTags ?? []) {
+            if let uuid = tag.id {
+               if seenUUIDs.contains(uuid) {
+                  toDelete.append(tag)
+               } else {
+                  seenUUIDs.insert(uuid)
+               }
+            }
+         }
+         
+         for tag in toDelete {
+            print("Deleting Tag: \(tag.name ?? "")")
+            context.delete(tag)
+         }
+         
+         do {
+            try context.save()
+         } catch {
+            print("❌ Error deleting duplicate tags: \(error)")
+         }
+      }
+   }
+   
+   // Duplicate color tags to test correction (TEST)
+   static func duplicateColorTags(from context: ModelContext) {
+//      let allColorTags = getColorTags(from: context)
+      do {
+         print("✅ Duplicating 8 color tags...")
+         for colorTag in ColorTag.allCases {
+            let tag = Tag(name: colorTag.rawValue, isPrimary: true, order: 0)
+            tag.id = colorTag.predefinedUUID // Use hardcoded UUID
+            context.insert(tag)
+         }
+         
+         try context.save()
+         print("✅ Successfully duplicated \(ColorTag.allCases.count) color tags")
+         
+      } catch {
+         print("❌ Error dupicating default tags: \(error)")
       }
    }
    

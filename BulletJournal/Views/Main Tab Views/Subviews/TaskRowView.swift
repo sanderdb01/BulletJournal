@@ -108,6 +108,19 @@ struct TaskRowView: View {
                }
             }
          }
+         
+         // Mac-only info button
+         if DeviceInfo.isRunningOnMac {
+            Button(action: {
+               showingMenu = true
+            }) {
+               Image(systemName: "info.circle")
+                  .foregroundColor(.secondary)
+                  .font(.title3)
+            }
+            .buttonStyle(.plain)
+            .help("Show options")  // Tooltip on hover
+         }
       }
       .padding(.vertical, 16)
       .padding(.horizontal, 16)
@@ -142,28 +155,6 @@ struct TaskRowView: View {
             checkDailyReminderStatus()
          }
       }
-      //      .onLongPressGesture(
-      //         minimumDuration: 0.5,
-      //         perform: {
-      //#if os(iOS)
-      //            // Stop haptics and show menu
-      //            stopHaptics()
-      //            HapticManager.shared.impact(style: .heavy)
-      //#endif
-      //            showingMenu = true
-      //         },
-      //         onPressingChanged: { isPressing in
-      //#if os(iOS)
-      //            if isPressing {
-      //               // Start continuous haptics
-      //               startAcceleratingHaptics()
-      //            } else {
-      //               // User released before menu appeared
-      //               stopHaptics()
-      //            }
-      //#endif
-      //         }
-      //      )
       .swipeActions(edge: .leading, allowsFullSwipe: false) {
          // Only show "Move to Tomorrow" for non-recurring tasks
          if task.isRecurring != true && !task.isRecurringInstance {
@@ -210,24 +201,6 @@ struct TaskRowView: View {
          }
          .tint(.orange)
       }
-//      .confirmationDialog("", isPresented: $showingMenu, titleVisibility: .hidden) {
-//         Button("Edit") {
-//            showingEditTask = true
-//         }
-//         Button("Copy") {
-//            copyTargetDate = Date()
-//            showingCopyDatePicker = true
-//         }
-//         if task.isRecurring == true || task.isRecurringInstance {
-//            Button("Delete", role: .destructive) {
-//               showingDeleteOptions = true
-//            }
-//         }
-//         Button("Cancel", role: .cancel) { }
-//      }
-      //      .onChange(of: showingMenu, { oldValue, newValue in
-      //         print("showingMenu changed: \(oldValue) -> \(newValue)")
-      //      })
       .sheet(isPresented: $showingEditTask) {
          AddEditTaskView(dayLog: dayLog, taskToEdit: task, isPresented: $showingEditTask)
       }
@@ -287,10 +260,65 @@ struct TaskRowView: View {
       } message: {
          Text("This is a recurring task. What would you like to delete?")
       }
+      // Mac-only action sheet
+      .if(DeviceInfo.isRunningOnMac) { view in
+         view.confirmationDialog(
+            "",
+            isPresented: $showingMenu,
+            titleVisibility: .hidden
+         ) {
+            menuItems
+         }
+      }
+   }
+   
+   // MARK: - Menu Items (for Mac info button)
+   
+   @ViewBuilder
+   var menuItems: some View {
+       Button(action: {
+           showingEditTask = true
+       }) {
+           Label("Edit", systemImage: "pencil")
+       }
+       
+       Button(action: {
+           copyTargetDate = Date()
+           showingCopyDatePicker = true
+       }) {
+           Label("Copy to Another Day", systemImage: "doc.on.doc")
+       }
+       
+       if task.isRecurring != true && !task.isRecurringInstance {
+           Button(action: {
+               moveTaskToTomorrow()
+           }) {
+               Label("Move to Tomorrow", systemImage: "arrow.right")
+           }
+       }
+       
+       if task.isRecurring == true || task.isRecurringInstance {
+           Divider()
+           
+           Button(role: .destructive, action: {
+               showingDeleteOptions = true
+           }) {
+               Label("Delete", systemImage: "trash")
+           }
+       } else {
+           Divider()
+           
+           Button(role: .destructive, action: {
+               deleteThisInstance()
+           }) {
+               Label("Delete", systemImage: "trash")
+           }
+       }
+       
+       Button("Cancel", role: .cancel) { }
    }
    
    // MARK: - Interactive Color Dot View
-   
    @ViewBuilder
    private var interactiveColorDot: some View {
       ZStack {
@@ -445,17 +473,6 @@ struct TaskRowView: View {
    }
    
    // MARK: - Delete Handling
-   
-//   private func handleDelete() {
-//      // Check if this is a recurring task or instance
-//      if task.isRecurring == true || task.isRecurringInstance {
-//         showingDeleteOptions = true
-//      } else {
-//         // Regular task - delete immediately
-//         deleteThisInstance()
-//      }
-//   }
-   
    private func deleteThisInstance() {
       withAnimation {
          // Cancel notification if it exists
@@ -690,6 +707,19 @@ struct TaskRowView: View {
       hapticTimer?.invalidate()
       hapticTimer = nil
    }
+}
+
+// MARK: - View Extension for .if
+
+extension View {
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
 }
 
 #Preview {

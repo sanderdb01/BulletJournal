@@ -171,7 +171,8 @@ struct MediumWidgetView: View {
                 }
                 .frame(width: 100)
                 .padding()
-                .background(Color(uiColor: .systemGroupedBackground))
+                .background(Color.secondary.opacity(0.1))
+//                .background(Color(uiColor: .systemGroupedBackground))
             }
         }
     }

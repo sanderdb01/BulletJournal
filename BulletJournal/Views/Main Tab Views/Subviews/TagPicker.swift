@@ -9,6 +9,7 @@ struct TagPicker: View {
     @Binding var selectedCustomTags: [Tag]
     
     @State private var showingAddTag = false
+   @State private var showingEditColorTags = false
     @State private var newTagName = ""
     
     var colorTags: [Tag] {
@@ -23,9 +24,22 @@ struct TagPicker: View {
         VStack(alignment: .leading, spacing: 16) {
             // Primary Color Tag Section
             VStack(alignment: .leading, spacing: 8) {
-                Text("Color Tag")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+               HStack(alignment: .center, spacing: 8){
+                   Text("Color Tag")
+                       .font(.subheadline)
+                       .foregroundColor(.secondary)
+                  Spacer()
+                  Button(action: {
+                          print("Show edit tags screen")
+                     showingEditColorTags = true
+                      }) {
+                          Image(systemName: "pencil")
+                              .foregroundColor(.blue)
+                              .frame(width: 24, height: 24)
+                              .contentShape(Rectangle())
+                      }
+                      .buttonStyle(.borderless)
+                }
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                    Spacer()
@@ -58,7 +72,10 @@ struct TagPicker: View {
                     Button(action: { showingAddTag = true }) {
                         Image(systemName: "plus.circle.fill")
                             .foregroundColor(.blue)
+                            .frame(width: 24, height: 24)
+                            .contentShape(Rectangle())
                     }
+                    .buttonStyle(.borderless)
                 }
                 
                 if customTags.isEmpty {
@@ -94,6 +111,12 @@ struct TagPicker: View {
                 }
             )
         }
+        .sheet(isPresented: $showingEditColorTags) {
+           TagSettingsView()
+        }
+        .onAppear {
+           TagManager.validateColorTags(from: modelContext)
+        }
     }
     
     private func toggleCustomTag(_ tag: Tag) {
@@ -107,35 +130,35 @@ struct TagPicker: View {
 
 // MARK: - Color Tag Button
 struct ColorTagButton: View {
-    let tag: Tag
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 6) {
-                Circle()
-//                    .fill(Color.fromString(tag.name?.lowercased() ?? "gray"))
-                  .fill(Color.fromString(tag.returnColorString()))
-                    .frame(width: 44, height: 44)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.primary, lineWidth: isSelected ? 3 : 0)
-                    )
-                    .overlay(
-                        Image(systemName: "checkmark")
-                            .foregroundColor(.white)
-                            .font(.system(size: 16, weight: .bold))
-                            .opacity(isSelected ? 1 : 0)
-                    )
-                
-                Text(tag.name ?? "")
-                    .font(.caption2)
-                    .foregroundColor(isSelected ? .primary : .secondary)
-            }
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
+   let tag: Tag
+   let isSelected: Bool
+   let action: () -> Void
+   
+   var body: some View {
+      Button(action: action) {
+         VStack(spacing: 6) {
+            Circle()
+            //                    .fill(Color.fromString(tag.name?.lowercased() ?? "gray"))
+               .fill(Color.fromString(tag.returnColorString()))
+               .frame(width: 44, height: 44)
+               .overlay(
+                  Circle()
+                     .stroke(Color.primary, lineWidth: isSelected ? 3 : 0)
+               )
+               .overlay(
+                  Image(systemName: "checkmark")
+                     .foregroundColor(.white)
+                     .font(.system(size: 16, weight: .bold))
+                     .opacity(isSelected ? 1 : 0)
+               )
+            
+            Text(tag.name ?? "")
+               .font(.caption2)
+               .foregroundColor(isSelected ? .primary : .secondary)
+         }
+      }
+      .buttonStyle(PlainButtonStyle())
+   }
 }
 
 // MARK: - Custom Tag Chip

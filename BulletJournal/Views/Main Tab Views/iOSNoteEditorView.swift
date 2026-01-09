@@ -94,7 +94,13 @@ struct iOSNoteEditorView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Done") {
-                    dismiss()
+                   if isContentFocused || isTitleFocused{
+                      isContentFocused = false
+                      isEditingTitle = false
+                      isTitleFocused = false
+                   } else {
+                      dismiss()
+                   }
                 }
             }
             
@@ -154,6 +160,8 @@ struct iOSNoteEditorView: View {
                    Spacer()
               Button {
                  isContentFocused = false  // or isContentFocused
+                 isEditingTitle = false
+                 isTitleFocused = false
                   } label: {
                       HStack {
                           Image(systemName: "keyboard.chevron.compact.down")
@@ -198,7 +206,11 @@ struct iOSNoteEditorView: View {
         .focused($isContentFocused)
         .padding(.horizontal, 8)
         .onAppear {
-            isContentFocused = true
+           if note.content == nil || note.content!.isEmpty {
+              isContentFocused = true
+           } else {
+              isContentFocused = false
+           }
         }
     }
     
@@ -314,15 +326,21 @@ struct SmartTextEditor: UIViewRepresentable {
     @Binding var text: String
     @Binding var selectedRange: NSRange
     
-    func makeUIView(context: Context) -> UITextView {
-        let textView = UITextView()
-        textView.delegate = context.coordinator
-        textView.backgroundColor = .clear
-        textView.font = UIFont.preferredFont(forTextStyle: .body)
-        return textView
-    }
-    
-    func updateUIView(_ textView: UITextView, context: Context) {
+   func makeUIView(context: Context) -> UITextView {
+      let textView = UITextView()
+      textView.delegate = context.coordinator
+      textView.backgroundColor = .clear
+      textView.font = UIFont.preferredFont(forTextStyle: .body)
+      
+      // Add line spacing for better readability
+      let paragraphStyle = NSMutableParagraphStyle()
+      paragraphStyle.lineSpacing = 6.0  // Adjust this value to increase/decrease spacing
+      textView.typingAttributes[.paragraphStyle] = paragraphStyle
+      
+      return textView
+   }
+   
+   func updateUIView(_ textView: UITextView, context: Context) {
 //       print("🔍 updateNSView called - textView.string: '\(textView.text ?? "")', binding text: '\(text)'")
         // Update text if different
         if textView.text != text {
@@ -375,6 +393,11 @@ struct SmartTextEditor: UIViewRepresentable {
                    // Update the text and cursor position
                    textView.text = newText
                    textView.selectedRange = NSRange(location: newCursor, length: 0)
+                   
+                   // Re-apply paragraph style with line spacing after smart list update
+                   let paragraphStyle = NSMutableParagraphStyle()
+                   paragraphStyle.lineSpacing = 6.0
+                   textView.typingAttributes[.paragraphStyle] = paragraphStyle
                    
                    // Scroll to cursor instead of auto-scrolling to bottom
                    textView.scrollRangeToVisible(NSRange(location: newCursor, length: 0))
