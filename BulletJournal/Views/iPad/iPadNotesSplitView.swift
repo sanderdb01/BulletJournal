@@ -10,6 +10,8 @@ struct iPadNotesSplitView: View {
    @State private var searchText = ""
    @State private var showingNewNoteSheet = false
    @State private var isFullScreen = false
+   @State private var showingMenu = false
+   @State private var menuNote: GeneralNote? = nil
    var body: some View {
       Group {
          if isFullScreen, let selectedNote = selectedNote {
@@ -36,21 +38,47 @@ struct iPadNotesSplitView: View {
    
    private var splitView: some View {
       NavigationSplitView {
-         // Sidebar - Notes List
-         notesList
-            .navigationTitle("Notebook")
-            .toolbar {
-               ToolbarItem(placement: .primaryAction) {
-                  Button {
-                     showingNewNoteSheet = true
-                  } label: {
-                     Image(systemName: "plus")
-                  }
+         
+         ZStack {
+            if searchText.isEmpty || filteredNotes.isEmpty {
+               // Sidebar - Notes List
+               notesList
+               //                  .navigationTitle("Notebook")
+               //                  .toolbar {
+               //                     ToolbarItem(placement: .primaryAction) {
+               //                        Button {
+               //                           showingNewNoteSheet = true
+               //                        } label: {
+               //                           Image(systemName: "plus")
+               //                        }
+               //                     }
+               //                  }
+               //                  .searchable(text: $searchText, prompt: "Search notebook")
+               //               // Hide the native sidebar toggle button
+               //                  .toolbar(removing: .sidebarToggle)
+            } else {
+               // Sidebar - Notes List
+               searchedNotesList
+               //                  .navigationTitle("Notebook")
+               //                  .searchable(text: $searchText, prompt: "Search notebook")
+               //               // Hide the native sidebar toggle button
+               //                  .toolbar(removing: .sidebarToggle)
+            }
+         }
+         .navigationTitle("Notebook")
+         .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+               Button {
+                  showingNewNoteSheet = true
+               } label: {
+                  Image(systemName: "plus")
                }
             }
-            .searchable(text: $searchText, prompt: "Search notebook")
+         }
+         .searchable(text: $searchText, prompt: "Search notebook")
          // Hide the native sidebar toggle button
-            .toolbar(removing: .sidebarToggle)
+         .toolbar(removing: .sidebarToggle)
+         
       } detail: {
          // Detail - Note Editor or Empty State
          if let selectedNote = selectedNote {
@@ -63,6 +91,7 @@ struct iPadNotesSplitView: View {
          }
       }
       .navigationSplitViewStyle(.balanced)
+      
    }
    
    // MARK: - Filtered Notes
@@ -113,56 +142,116 @@ struct iPadNotesSplitView: View {
       }
    }
    
+   // MARK: - Searched Notes List
+   
+   private var searchedNotesList: some View {
+      List(selection: $selectedNote) {
+         if !pinnedNotes.isEmpty {
+            Section("Pinned") {
+               ForEach(pinnedNotes) { note in
+                  SearchedNoteRowView(note: note, searchText: searchText)
+               }
+            }
+         }
+         
+         if !unpinnedNotes.isEmpty {
+            Section(pinnedNotes.isEmpty ? "All Pages" : "Pages") {
+               ForEach(unpinnedNotes) { note in
+                  Button {
+                     selectedNote = note
+                  } label: {
+                     SearchedNoteRowView(note: note, searchText: searchText)
+                  }
+               }
+            }
+         }
+         
+         //         if filteredNotes.isEmpty {
+         //            emptyStateRow
+         //         }
+      }
+   }
+   
    private func noteRow(_ note: GeneralNote) -> some View {
       Button {
          selectedNote = note
       } label: {
-         VStack(alignment: .leading, spacing: 6) {
-            HStack {
-               Text(note.displayTitle)
-                  .font(.headline)
-                  .lineLimit(1)
+         HStack {
+            VStack(alignment: .leading, spacing: 6) {
+               HStack {
+                  Text(note.displayTitle)
+                     .font(.headline)
+                     .lineLimit(1)
+                  
+                  Spacer()
+                  
+                  if (note.isFavorite ?? false) {
+                     Image(systemName: "star.fill")
+                        .foregroundStyle(.yellow)
+                        .font(.caption)
+                  }
+               }
                
-               Spacer()
+               Text(note.previewText)
+                  .font(.subheadline)
+                  .foregroundStyle(.secondary)
+                  .lineLimit(2)
                
-               if (note.isFavorite ?? false) {
-                  Image(systemName: "star.fill")
-                     .foregroundStyle(.yellow)
-                     .font(.caption)
+               HStack {
+                  if let modifiedAt = note.modifiedAt {
+                     Text(modifiedAt, style: .relative)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                  }
+                  
+                  Spacer()
+                  
+                  if let primaryTag = note.primaryTag {
+                     TagBadge(tag: primaryTag, size: .small)
+                  }
+                  
+                  let customTags = note.customTags ?? []
+                  if !customTags.isEmpty {
+                     Text("+\(customTags.count)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.secondary.opacity(0.15))
+                        .clipShape(Capsule())
+                  }
                }
             }
+            .padding(.vertical, 4)
             
-            Text(note.previewText)
-               .font(.subheadline)
-               .foregroundStyle(.secondary)
-               .lineLimit(2)
-            
-            HStack {
-               if let modifiedAt = note.modifiedAt {
-                  Text(modifiedAt, style: .relative)
-                     .font(.caption)
-                     .foregroundStyle(.tertiary)
+            // Mac-only info button
+            if DeviceInfo.isRunningOnMac {
+               Menu {
+                  menuItems(for: note)  // Pass the note directly
+               } label: {
+                  Image(systemName: "info.circle")
+                     .foregroundColor(.secondary)
+                     .font(.title3)
                }
-               
-               Spacer()
-               
-               if let primaryTag = note.primaryTag {
-                  TagBadge(tag: primaryTag, size: .small)
-               }
-               
-               let customTags = note.customTags ?? []
-               if !customTags.isEmpty {
-                  Text("+\(customTags.count)")
-                     .font(.caption2)
-                     .foregroundStyle(.secondary)
-                     .padding(.horizontal, 6)
-                     .padding(.vertical, 2)
-                     .background(Color.secondary.opacity(0.15))
-                     .clipShape(Capsule())
-               }
+               .menuStyle(.button)
+               .buttonStyle(.plain)
+               .help("Show options")
+               .padding(.leading, 10)
             }
+            //            if DeviceInfo.isRunningOnMac {
+            //               Button(action: {
+            //                  menuNote = note
+            //                  print("Info Button Pressed for Note \(menuNote!.title ?? "No Title")")
+            //               }) {
+            //                  Image(systemName: "info.circle")
+            //                     .foregroundColor(.secondary)
+            //                     .font(.title3)
+            //               }
+            //               .buttonStyle(.plain)
+            //               .help("Show options")  // Tooltip on hover
+            //               .padding(.leading, 10)
+            //            }
          }
-         .padding(.vertical, 4)
       }
       .swipeActions(edge: .trailing, allowsFullSwipe: false) {
          Button(role: .destructive) {
@@ -173,6 +262,113 @@ struct iPadNotesSplitView: View {
             deleteNote(note)
          } label: {
             Label("Delete", systemImage: "trash")
+         }
+         Button(action: {
+            copyNote(note)
+         }) {
+            Label("Copy", systemImage: "document.on.document")
+         }
+         Button {
+            note.toggleFavorite()
+         } label: {
+            Label("Favorites",
+                  systemImage: note.isFavorite ?? false ? "star.slash" : "star")
+            .tint(.yellow)
+         }
+         Button {
+            note.togglePin()
+         } label: {
+            Label(note.isPinned ?? false ? "Unpin" : "Pin",
+                  systemImage: note.isPinned ?? false ? "pin.slash" : "pin")
+            .tint(.blue)
+         }
+      }
+      // Mac-only action sheet
+      //      .if(DeviceInfo.isRunningOnMac) { view in
+      //         view.confirmationDialog(
+      //            "",
+      //            isPresented: Binding(
+      //                        get: { menuNote?.id == note.id },  // ← Check if THIS note's menu is open
+      //                        set: { if !$0 { menuNote = nil } }  // ← Clear when dismissed
+      //                     ),
+      //            titleVisibility: .hidden
+      //         ) {
+      //            menuItems
+      //         }
+      //      }
+   }
+   
+   // This version works with Menu
+   private func menuItems(for note: GeneralNote) -> some View {
+      Group {
+         Button(role: .destructive, action: {
+            deleteNote(note)
+         }) {
+            Label("Delete", systemImage: "trash")
+         }
+         
+         Button(action: {
+            copyNote(note)
+         }) {
+            Label("Copy", systemImage: "document.on.document")
+         }
+         
+         Button {
+            note.toggleFavorite()
+         } label: {
+            Label(note.isFavorite ?? false ? "Remove from Favorites" : "Add to Favorites",
+                  systemImage: note.isFavorite ?? false ? "star.slash" : "star")
+         }
+         
+         Button {
+            note.togglePin()
+         } label: {
+            Label(note.isPinned ?? false ? "Unpin" : "Pin",
+                  systemImage: note.isPinned ?? false ? "pin.slash" : "pin")
+         }
+      }
+   }
+   
+   // MARK: - Menu Items (for Mac info button)
+   @ViewBuilder
+   private var menuItems_old: some View {
+      if let note = menuNote {
+         Button(action: {
+            deleteNote(note)
+            print("Delete Note: \(note.title ?? "No Title")")
+            menuNote = nil
+         }) {
+            Label("Delete", systemImage: "trash")
+         }
+         .tint(.red)
+         Button(action: {
+            copyNote(note)
+            print("Copy Note: \(note.title ?? "No Title")")
+            menuNote = nil
+         }) {
+            Label("Copy", systemImage: "document.on.document")
+         }
+         Button {
+            note.toggleFavorite()
+            print("Toggle Favorite Note: \(note.title ?? "No Title")")
+            menuNote = nil
+         } label: {
+            Label(note.isFavorite ?? false ? "Remove from Favorites" : "Add to Favorites",
+                  systemImage: note.isFavorite ?? false ? "star.slash" : "star")
+            .tint(.yellow)
+         }
+         Button {
+            note.togglePin()
+            print("Toggle Pin Note: \(note.title ?? "No Title")")
+            menuNote = nil
+         } label: {
+            Label(note.isPinned ?? false ? "Unpin" : "Pin",
+                  systemImage: note.isPinned ?? false ? "pin.slash" : "pin")
+            .tint(.blue)
+         }
+         
+         Button("Cancel", role: .cancel) {
+            menuNote = nil
          }
       }
    }
@@ -223,13 +419,25 @@ struct iPadNotesSplitView: View {
       
       withAnimation {
          let success = GeneralNoteManager.deleteNote(note, from: modelContext)
-            if success {
-               print("Deletion of Notebook page successful in iPadSplitView")
-            } else {
-               // Handle failure
-               print("Deletion failed")
-            }
+         if success {
+            print("Deletion of Notebook page successful in iPadSplitView")
+         } else {
+            // Handle failure
+            print("Deletion failed")
+         }
          
+      }
+   }
+   
+   private func copyNote(_ note: GeneralNote) {
+      withAnimation {
+         let success = GeneralNoteManager.copyNote(note, in: modelContext)
+         if success {
+            print("Copy of Notebook page successful in iOSNotesListView")
+         } else {
+            // Handle failure
+            print("Copy failed")
+         }
       }
    }
 }
@@ -248,6 +456,8 @@ struct iPadNoteEditorDetailView: View {
    @State private var showingMarkdownPreview = false
    @State private var showingTagPicker = false
    @FocusState private var isContentFocused: Bool
+   
+   @State private var showingShareSheet = false
    
    @Query(sort: \Tag.name) private var allTags: [Tag]
    
@@ -344,6 +554,12 @@ struct iPadNoteEditorDetailView: View {
                   Image(systemName: (note.isFavorite ?? false) ? "star.fill" : "star")
                      .foregroundStyle((note.isFavorite ?? false) ? .yellow : .secondary)
                }
+               
+               Button {
+                  showingShareSheet = true
+               } label: {
+                  Label("Share", systemImage: "square.and.arrow.up")
+               }
             }
          }
          
@@ -383,6 +599,9 @@ struct iPadNoteEditorDetailView: View {
             TagPickerSheet(note: note)
          }
       }
+      .sheet(isPresented: $showingShareSheet) {
+         ShareSheet(items: createShareItems())
+      }
    }
    
    // MARK: - Editor View (with smart text selection tracking)
@@ -397,6 +616,7 @@ struct iPadNoteEditorDetailView: View {
       .font(.body)
       .focused($isContentFocused)
       .padding(.horizontal, 8)
+      .id(note.id)
       .onAppear {
          isContentFocused = true
       }
@@ -423,7 +643,20 @@ struct iPadNoteEditorDetailView: View {
          .textSelection(.enabled)
          .padding()
          .frame(maxWidth: .infinity, alignment: .leading)
+         .id(note.id)
       }
+   }
+   
+   // MARK: - Share Helpers
+   
+   private func createShareItems() -> [Any] {
+      let noteTitle = note.title ?? "Untitled Note"
+      let noteContent = note.content ?? ""
+      
+      // Simple plain text sharing - just combine title and content
+      let fullText = "\(noteTitle)\n\n\(noteContent)"
+      
+      return [fullText]
    }
    
    // MARK: - Smart Markdown Formatting Logic

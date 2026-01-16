@@ -7,6 +7,7 @@ enum ViewMode: Int {
     case dayOnly = 2
     case notes = 3
     case search = 4
+   case settings = 5
 }
 
 struct iPadMainView: View {
@@ -20,6 +21,7 @@ struct iPadMainView: View {
     @State private var displayedMonth = Date()
     @State private var showSidebar = true
     @State private var backgroundTimestamp: Date?
+    @State private var previousViewMode: ViewMode = .split
     
     var body: some View {
         GeometryReader { geometry in
@@ -79,43 +81,52 @@ struct iPadMainView: View {
     
     // MARK: - Main Content
     
-    @ViewBuilder
-    private func mainContent(isLandscape: Bool) -> some View {
-        switch viewMode {
-        case .split:
+   @ViewBuilder
+   private func mainContent(isLandscape: Bool) -> some View {
+      switch viewMode {
+         case .split:
             HStack(spacing: 0) {
-                CalendarView(
-                    currentDate: $currentDate,
-                    selectedTab: $selectedTab,
-                    displayedMonth: $displayedMonth,
-                    isLandscape: isLandscape
-                )
-                .frame(maxWidth: .infinity)
-                
-                Divider()
-                
-                DayView(currentDate: $currentDate)
-                    .frame(maxWidth: .infinity)
+               CalendarView(
+                  currentDate: $currentDate,
+                  selectedTab: $selectedTab,
+                  displayedMonth: $displayedMonth,
+                  isLandscape: isLandscape
+               )
+               .frame(maxWidth: .infinity)
+               
+               Divider()
+               
+               DayView(currentDate: $currentDate)
+                  .frame(maxWidth: .infinity)
             }
             
-        case .calendarOnly:
+         case .calendarOnly:
             CalendarView(
-                currentDate: $currentDate,
-                selectedTab: $selectedTab,
-                displayedMonth: $displayedMonth,
-                isLandscape: isLandscape
+               currentDate: $currentDate,
+               selectedTab: $selectedTab,
+               displayedMonth: $displayedMonth,
+               isLandscape: isLandscape,
+               onGoToDay: { date in
+                  // Only switch to day view when "Go to day" button is pressed
+                  viewMode = .dayOnly
+               }
             )
             
-        case .dayOnly:
+         case .dayOnly:
             DayView(currentDate: $currentDate)
             
-        case .notes:
+         case .notes:
             iPadNotesSplitView()
             
-        case .search:
+         case .search:
             SearchView(currentDate: $currentDate, selectedTab: $selectedTab)
-        }
-    }
+            
+         case .settings:
+            SettingsView(onDismissView: {
+               viewMode = self.previousViewMode
+            })
+      }
+   }
     
     // MARK: - Sidebar Content
     
@@ -134,6 +145,7 @@ struct iPadMainView: View {
                     Button(action: {
                         withAnimation {
                             viewMode = .split
+                           previousViewMode = .split
                         }
                     }) {
                         HStack {
@@ -152,6 +164,7 @@ struct iPadMainView: View {
                     Button(action: {
                         withAnimation {
                             viewMode = .calendarOnly
+                           previousViewMode = .calendarOnly
                         }
                     }) {
                         HStack {
@@ -170,6 +183,7 @@ struct iPadMainView: View {
                     Button(action: {
                         withAnimation {
                             viewMode = .dayOnly
+                           previousViewMode = .dayOnly
                         }
                     }) {
                         HStack {
@@ -188,6 +202,7 @@ struct iPadMainView: View {
                     Button(action: {
                         withAnimation {
                             viewMode = .notes
+                           previousViewMode = .notes
                         }
                     }) {
                         HStack {
@@ -202,40 +217,58 @@ struct iPadMainView: View {
                         }
                     }
                     .listRowBackground(viewMode == .notes ? Color.blue.opacity(0.1) : Color.clear)
+                   
+                   Button(action: {
+                       withAnimation {
+                           viewMode = .settings
+                       }
+                   }) {
+                       HStack {
+                           Image(systemName: "gearshape")
+                               .frame(width: 20)
+                           Text("Settings")
+                           Spacer()
+                           if viewMode == .settings {
+                               Image(systemName: "checkmark")
+                                   .foregroundColor(.blue)
+                           }
+                       }
+                   }
+                   .listRowBackground(viewMode == .notes ? Color.blue.opacity(0.1) : Color.clear)
                 }
                 
-                Section("Actions") {
-                    Button(action: {
-                        withAnimation {
-                            currentDate = Date()
-                            displayedMonth = Date()
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: "arrow.uturn.backward")
-                                .frame(width: 20)
-                            Text("Today")
-                        }
-                    }
-                    
-                    Button(action: {
-                        withAnimation {
-                            viewMode = .search
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: "magnifyingglass")
-                                .frame(width: 20)
-                            Text("Search")
-                            Spacer()
-                            if viewMode == .search {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.blue)
-                            }
-                        }
-                    }
-                    .listRowBackground(viewMode == .search ? Color.blue.opacity(0.1) : Color.clear)
-                }
+//                Section("Actions") {
+//                    Button(action: {
+//                        withAnimation {
+//                            currentDate = Date()
+//                            displayedMonth = Date()
+//                        }
+//                    }) {
+//                        HStack {
+//                            Image(systemName: "arrow.uturn.backward")
+//                                .frame(width: 20)
+//                            Text("Today")
+//                        }
+//                    }
+//                    
+//                    Button(action: {
+//                        withAnimation {
+//                            viewMode = .search
+//                        }
+//                    }) {
+//                        HStack {
+//                            Image(systemName: "magnifyingglass")
+//                                .frame(width: 20)
+//                            Text("Search")
+//                            Spacer()
+//                            if viewMode == .search {
+//                                Image(systemName: "checkmark")
+//                                    .foregroundColor(.blue)
+//                            }
+//                        }
+//                    }
+//                    .listRowBackground(viewMode == .search ? Color.blue.opacity(0.1) : Color.clear)
+//                }
             }
             .listStyle(.sidebar)
             .scrollContentBackground(.hidden)

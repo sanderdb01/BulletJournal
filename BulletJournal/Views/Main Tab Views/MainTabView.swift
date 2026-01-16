@@ -18,14 +18,22 @@ struct MainTabView: View {
     
     var body: some View {
         Group {
-            if horizontalSizeClass == .regular {
-                // iPad layout
-                iPadMainView()
-                    .environmentObject(deepLinkManager)
-            } else {
-                // iPhone layout
-                iPhoneTabView
-            }
+//            if horizontalSizeClass == .regular {
+//                // iPad layout
+//                iPadMainView()
+//                    .environmentObject(deepLinkManager)
+//            } else {
+//                // iPhone layout
+//                iPhoneTabView
+//            }
+           if DeviceInfo.isiPhone {
+               // iPad layout
+               iPhoneTabView
+           } else {
+               // iPhone layout
+              iPadMainView()
+                  .environmentObject(deepLinkManager)
+           }
         }
         .onChange(of: deepLinkManager.activeLink) { oldValue, newValue in
             if horizontalSizeClass != .regular {

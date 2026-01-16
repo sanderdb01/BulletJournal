@@ -314,6 +314,11 @@ struct TaskRowView: View {
                Label("Delete", systemImage: "trash")
            }
        }
+      
+//      Button(action: { showShareSheet = true }) {
+//         Label("Share", systemImage: "square.and.arrow.up")
+//      }
+//      .tint(.orange)
        
        Button("Cancel", role: .cancel) { }
    }
@@ -330,6 +335,13 @@ struct TaskRowView: View {
          // Checkmark overlay when complete
          if task.status == .complete {
             Image(systemName: "checkmark")
+               .font(.system(size: 14, weight: .bold))
+               .foregroundColor(.white)
+         }
+         
+         // Checkmark overlay when complete
+         if task.status == .notCompleted {
+            Image(systemName: "xmark")
                .font(.system(size: 14, weight: .bold))
                .foregroundColor(.white)
          }

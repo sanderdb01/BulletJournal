@@ -297,7 +297,8 @@ struct CalendarView: View {
       #else
       guard let selectedDate = selectedDate else { return }
       currentDate = selectedDate
-      selectedTab = 0 // Switch to Day View tab
+      selectedTab = 0 // Switch to iPhone Day View tab
+      onGoToDay?(currentDate) //Switch to correct sidebar item on iPad
       #endif
    }
 }

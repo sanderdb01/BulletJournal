@@ -24,6 +24,8 @@ struct SettingsView: View {
    @State private var showingFeedbackMail = false
    @State private var showMailSuccessToast = false
    
+   var onDismissView: (() -> Void)? = nil
+   
    private var currentSettings: AppSettings {
       if let existing = settings.first {
          return existing
@@ -173,6 +175,7 @@ struct SettingsView: View {
          .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                Button("Done") {
+                  onDismissView?()
                   dismiss()
                }
             }

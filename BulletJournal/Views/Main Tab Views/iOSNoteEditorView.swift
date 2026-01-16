@@ -11,6 +11,7 @@ import SwiftUI
 import SwiftData
 import UIKit
 
+
 struct iOSNoteEditorView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -205,6 +206,7 @@ struct iOSNoteEditorView: View {
         .font(.body)
         .focused($isContentFocused)
         .padding(.horizontal, 8)
+        .id(note.id)
         .onAppear {
            if note.content == nil || note.content!.isEmpty {
               isContentFocused = true
@@ -235,6 +237,7 @@ struct iOSNoteEditorView: View {
             .textSelection(.enabled)
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
+            .id(note.id)
             .onAppear {
                 isContentFocused = false
             }
@@ -419,7 +422,22 @@ struct SmartTextEditor: UIViewRepresentable {
 
 // MARK: - Share Sheet
 
-struct ShareSheet: UIViewControllerRepresentable {
+struct ShareSheet: View {
+    let items: [Any]
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        if DeviceInfo.isRunningOnMac {
+            // Mac (Designed for iPad) - use custom share view
+            MacStyleShareView(items: items, dismiss: dismiss)
+        } else {
+            // iOS/iPadOS - use standard share sheet
+            IOSShareSheet(items: items)
+        }
+    }
+}
+
+struct IOSShareSheet: UIViewControllerRepresentable {
     let items: [Any]
     
     func makeUIViewController(context: Context) -> UIActivityViewController {
@@ -427,12 +445,159 @@ struct ShareSheet: UIViewControllerRepresentable {
             activityItems: items,
             applicationActivities: nil
         )
+       
+       // For iPad and Mac - present as popover
+       if let popover = controller.popoverPresentationController {
+          popover.sourceView = context.coordinator.sourceView
+          popover.sourceRect = CGRect(x: UIScreen.main.bounds.midX,
+                                      y: UIScreen.main.bounds.midY,
+                                      width: 0,
+                                      height: 0)
+          popover.permittedArrowDirections = []
+       }
         return controller
     }
     
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
         // No update needed
     }
+   
+   func makeCoordinator() -> Coordinator {
+           Coordinator()
+       }
+   
+   class Coordinator {
+           lazy var sourceView: UIView = {
+               // Get the current window's view
+               guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                     let window = scene.windows.first else {
+                   return UIView()
+               }
+               return window.rootViewController?.view ?? UIView()
+           }()
+       }
 }
 
+// MARK: - Mac-Style Share View (for Designed for iPad on Mac)
+
+struct MacStyleShareView: View {
+    let items: [Any]
+    let dismiss: DismissAction
+    
+    @State private var showingCopyConfirmation = false
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Share Note")
+                .font(.title2)
+                .fontWeight(.semibold)
+                .padding(.top)
+            
+            Divider()
+            
+            Text("Choose how to share this note:")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            // Share options
+            VStack(spacing: 12) {
+                // Copy to clipboard
+                Button(action: copyToClipboard) {
+                    HStack {
+                        Image(systemName: "doc.on.doc")
+                            .font(.title3)
+                            .frame(width: 30)
+                        VStack(alignment: .leading) {
+                            Text("Copy to Clipboard")
+                                .fontWeight(.medium)
+                            Text("Copy note content as text")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
+                    .background(Color.secondary.opacity(0.1))
+                    .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+                
+                // Export as file
+                Button(action: exportAsFile) {
+                    HStack {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.title3)
+                            .frame(width: 30)
+                        VStack(alignment: .leading) {
+                            Text("Export as Text File")
+                                .fontWeight(.medium)
+                            Text("Save to your Mac")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
+                    .background(Color.secondary.opacity(0.1))
+                    .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding()
+            
+            Spacer()
+            
+            // Cancel button
+            Button("Cancel") {
+                dismiss()
+            }
+            .keyboardShortcut(.cancelAction)
+            .padding(.bottom)
+        }
+        .frame(width: 450, height: 350)
+        .alert("Copied!", isPresented: $showingCopyConfirmation) {
+            Button("OK", role: .cancel) {
+                dismiss()
+            }
+        } message: {
+            Text("Note content has been copied to your clipboard")
+        }
+    }
+    
+    private func copyToClipboard() {
+        let text = items.compactMap { $0 as? String }.joined(separator: "\n\n")
+        UIPasteboard.general.string = text
+        showingCopyConfirmation = true
+    }
+    
+    private func exportAsFile() {
+        let text = items.compactMap { $0 as? String }.joined(separator: "\n\n")
+        
+        // Create a temporary file
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileName = "Note-\(Date().timeIntervalSince1970).txt"
+        let fileURL = tempDir.appendingPathComponent(fileName)
+        
+        do {
+            try text.write(to: fileURL, atomically: true, encoding: .utf8)
+            
+            // Share the file using UIDocumentPickerViewController
+            let documentPicker = UIDocumentPickerViewController(forExporting: [fileURL])
+            
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first,
+               let rootVC = window.rootViewController {
+                rootVC.present(documentPicker, animated: true)
+            }
+            
+            dismiss()
+        } catch {
+            print("Error exporting file: \(error)")
+        }
+    }
+}
 #endif
