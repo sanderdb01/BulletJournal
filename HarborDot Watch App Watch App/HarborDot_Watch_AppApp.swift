@@ -7,6 +7,7 @@ struct HarborDot_Watch_App: App {
         WindowGroup {
 //            WatchMainView()
            WatchDayView()
+//           TestView()
         }
         .modelContainer(SharedModelContainer.shared)
     }

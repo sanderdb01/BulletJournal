@@ -1343,7 +1343,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.035;
+				MARKETING_VERSION = 1.036;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -1384,7 +1384,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.035;
+				MARKETING_VERSION = 1.036;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -1576,7 +1576,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.035;
+				MARKETING_VERSION = 1.036;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -1610,7 +1610,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.035;
+				MARKETING_VERSION = 1.036;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanders.HarborDot.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;

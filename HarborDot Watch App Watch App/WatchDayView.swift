@@ -32,9 +32,12 @@ struct WatchDayView: View {
                         ForEach(tasks) { task in
                             WatchTaskRow(task: task, dayLog: dayLog)
                                 .listRowBackground(Color.clear)
+//                              .listRowBackground(Color.orange)
                         }
                     }
                     .listStyle(.carousel)
+                    .listRowInsets(EdgeInsets()) // Remove default row insets
+                    .scrollContentBackground(.hidden) // Remove list background
                 } else {
                     // Empty state
                     VStack(spacing: 12) {
@@ -53,6 +56,7 @@ struct WatchDayView: View {
                     .frame(maxHeight: .infinity)
                 }
             }
+            .ignoresSafeArea()
             .sheet(isPresented: $showingVoiceRecording) {
                 WatchVoiceRecordingView(isPresented: $showingVoiceRecording)
             }
@@ -60,41 +64,84 @@ struct WatchDayView: View {
     }
     
     // MARK: - Header Section
-    
-    private var headerSection: some View {
-        VStack(spacing: 4) {
-            // Date
-            Text(currentDate, style: .date)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            // Day of week
-            Text(currentDate.formatted(.dateTime.weekday(.wide)))
-                .font(.headline)
-            
-            // Voice button
-            Button {
-                showingVoiceRecording = true
-            } label: {
-                HStack {
-                    Image(systemName: "waveform.circle.fill")
-                        .font(.body)
-                    Text("Add Task")
-                        .font(.caption)
-                }
-                .foregroundColor(.purple)
-                .padding(.vertical, 6)
-                .padding(.horizontal, 12)
-                .background(Color.purple.opacity(0.15))
-                .cornerRadius(20)
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 4)
-        }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .background(Color(.lightGray))
-    }
+   private var headerSection: some View {
+       VStack(spacing: 0) {
+          // Voice button
+          HStack {
+             Spacer()
+                .frame(width:15)
+             Button {
+                 showingVoiceRecording = true
+             } label: {
+                 HStack {
+                     Image(systemName: "waveform.circle.fill")
+                         .font(.title3)
+//                      Text("Add Task")
+//                          .font(.caption)
+                 }
+                 .foregroundColor(.purple)
+                 .padding(.vertical, 12)
+                 .padding(.horizontal, 12)
+                 .background(Color.purple.opacity(0.15))
+                 .cornerRadius(20)
+             }
+             .buttonStyle(.plain)
+             .padding(.top, 4)
+             Spacer()
+             Text(currentDate, style: .date)
+                .frame(height: 60, alignment: .bottom)
+                 .font(.caption)
+                 .foregroundColor(.secondary)
+             Spacer()
+                .frame(width: 10)
+                 
+          }
+       }
+       .padding(.vertical, 8)
+       .frame(maxWidth: .infinity)
+       .background(Color(.darkGray))
+   }
+   
+//    private var headerSection: some View {
+//        VStack(spacing: 0) {
+//           // Voice button
+//           HStack {
+//              Spacer()
+//                 .frame(width:15)
+//              Button {
+//                  showingVoiceRecording = true
+//              } label: {
+//                  HStack {
+//                      Image(systemName: "waveform.circle.fill")
+//                          .font(.title3)
+////                      Text("Add Task")
+////                          .font(.caption)
+//                  }
+//                  .foregroundColor(.purple)
+//                  .padding(.vertical, 12)
+//                  .padding(.horizontal, 12)
+//                  .background(Color.purple.opacity(0.15))
+//                  .cornerRadius(20)
+//              }
+//              .buttonStyle(.plain)
+//              .padding(.top, 4)
+//              Spacer()
+//           }
+//           
+//            // Date
+//            HStack {
+//               Spacer()
+//               Text(currentDate, style: .date)
+//                   .font(.caption)
+//                   .foregroundColor(.secondary)
+//               Spacer()
+//                  .frame(width: 10)
+//            }
+//        }
+//        .padding(.vertical, 8)
+//        .frame(maxWidth: .infinity)
+//        .background(Color(.darkGray))
+//    }
 }
 
 // MARK: - Watch Task Row
@@ -104,40 +151,93 @@ struct WatchTaskRow: View {
     let task: TaskItem
     let dayLog: DayLog
     
-    var body: some View {
-        HStack(spacing: 8) {
-            // Status indicator
-            Button {
-                task.cycleStatus()
-                try? modelContext.save()
-               
-               // Cancel reminder if all tasks complete
-               checkDailyReminderStatus()
-            } label: {
-                statusIcon
-                    .font(.title3)
-            }
-            .buttonStyle(.plain)
-            
-            // Task name
-            VStack(alignment: .leading, spacing: 2) {
-                Text(task.name ?? "")
-                    .font(.caption)
-                    .strikethrough(task.status == .complete)
-                    .foregroundColor(task.status == .complete ? .secondary : .primary)
-                
-                // Show color tag if present
-                if let tag = task.primaryTag, let tagName = tag.name {
-                    Text(tagName)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            Spacer()
-        }
-        .padding(.vertical, 4)
-    }
+   var body: some View {
+//       HStack(spacing: 8) {
+           // Status indicator
+           Button {
+               task.cycleStatus()
+               try? modelContext.save()
+              
+              // Cancel reminder if all tasks complete
+              checkDailyReminderStatus()
+           } label: {
+              HStack (spacing: 8){
+                  statusIcon
+                      .font(.title3)
+               }
+              .padding(.vertical, 4)
+              Spacer().frame(width:15)
+              // Task name
+              VStack(alignment: .leading, spacing: 2) {
+                  Text(task.name ?? "")
+                      .font(.caption)
+                      .strikethrough(task.status == .complete)
+                      .foregroundColor(task.status == .complete ? .secondary : .primary)
+                  
+                  // Show color tag if present
+                  if let tag = task.primaryTag, let tagName = tag.name {
+                      Text(tagName)
+                          .font(.caption2)
+                          .foregroundColor(.secondary)
+                  }
+              }
+           }
+           .buttonStyle(.plain)
+           
+//           // Task name
+//           VStack(alignment: .leading, spacing: 2) {
+//               Text(task.name ?? "")
+//                   .font(.caption)
+//                   .strikethrough(task.status == .complete)
+//                   .foregroundColor(task.status == .complete ? .secondary : .primary)
+//               
+//               // Show color tag if present
+//               if let tag = task.primaryTag, let tagName = tag.name {
+//                   Text(tagName)
+//                       .font(.caption2)
+//                       .foregroundColor(.secondary)
+//               }
+//           }
+           
+//           Spacer()
+//       }
+//       .padding(.vertical, 4)
+   }
+   
+//    var body: some View {
+//        HStack(spacing: 8) {
+//            // Status indicator
+//            Button {
+//                task.cycleStatus()
+//                try? modelContext.save()
+//               
+//               // Cancel reminder if all tasks complete
+//               checkDailyReminderStatus()
+//            } label: {
+//                statusIcon
+//                    .font(.title3)
+//            }
+//            .buttonStyle(.plain)
+//            
+//            // Task name
+//            VStack(alignment: .leading, spacing: 2) {
+//                Text(task.name ?? "")
+//                    .font(.caption)
+//                    .strikethrough(task.status == .complete)
+//                    .foregroundColor(task.status == .complete ? .secondary : .primary)
+//                
+//                // Show color tag if present
+//                if let tag = task.primaryTag, let tagName = tag.name {
+//                    Text(tagName)
+//                        .font(.caption2)
+//                        .foregroundColor(.secondary)
+//                }
+//            }
+//            
+//            Spacer()
+//        }
+//        .padding(.vertical, 4)
+//    }
     
     @ViewBuilder
     private var statusIcon: some View {
