@@ -24,6 +24,7 @@ class SharedModelContainer {
         let modelConfiguration = ModelConfiguration(
             url: storeURL,
             cloudKitDatabase: .automatic
+//            cloudKitDatabase: .private("iCloud.com.sanders.HarborDot") 
         )
         
         do {

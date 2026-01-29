@@ -329,6 +329,7 @@ struct SettingsView: View {
                status: status.rawValue,
                createdAt: createdAt,
                modifiedAt: modifiedAt,
+               position: task.position,
                reminderTime: task.reminderTime,
                notificationId: task.notificationId,
                isRecurring: task.isRecurring,
@@ -340,7 +341,14 @@ struct SettingsView: View {
                isPinned: task.isPinned,
                category: task.category?.rawValue,
                primaryTagId: task.primaryTag?.id,
-               customTagIds: task.customTags.compactMap { $0.id }
+               customTagIds: task.customTags.compactMap { $0.id },
+               isShared: task.isShared,
+               shareOwnerName: task.shareOwnerName,
+               shareParticipantNames: task.shareParticipantNames,
+               ckRecordName: task.ckRecordName,
+               isAnchor: task.isAnchor,
+               anchorSourceId: task.anchorSourceId,
+               anchorDayCount: task.anchorDayCount
             )
          }
          
@@ -480,6 +488,7 @@ struct SettingsView: View {
       newTask.id = exportTask.id
       newTask.createdAt = exportTask.createdAt
       newTask.modifiedAt = exportTask.modifiedAt
+      newTask.position = exportTask.position
       newTask.reminderTime = exportTask.reminderTime
       newTask.notificationId = exportTask.notificationId
       newTask.isRecurring = exportTask.isRecurring
@@ -506,6 +515,17 @@ struct SettingsView: View {
             }
          }
       }
+      
+      // CloudKit sharing properties
+      newTask.isShared = exportTask.isShared
+      newTask.shareOwnerName = exportTask.shareOwnerName
+      newTask.shareParticipantNames = exportTask.shareParticipantNames
+      newTask.ckRecordName = exportTask.ckRecordName
+
+      // Anchor properties
+      newTask.isAnchor = exportTask.isAnchor
+      newTask.anchorSourceId = exportTask.anchorSourceId
+      newTask.anchorDayCount = exportTask.anchorDayCount
       
       return newTask
    }
@@ -607,6 +627,7 @@ struct ExportTask: Codable {
    let status: String
    let createdAt: Date
    let modifiedAt: Date
+   let position: Int?
    let reminderTime: Date?
    let notificationId: String?
    let isRecurring: Bool?
@@ -617,11 +638,22 @@ struct ExportTask: Codable {
    let isFavorite: Bool?
    let isPinned: Bool?
    let category: String?
-   let primaryTagId: UUID?      // NEW
-   let customTagIds: [UUID]?    // NEW
+   let primaryTagId: UUID?
+   let customTagIds: [UUID]?
+   
+   // CloudKit sharing properties
+   let isShared: Bool?
+   let shareOwnerName: String?
+   let shareParticipantNames: [String]?
+   let ckRecordName: String?
+   
+   // Anchor properties
+   let isAnchor: Bool?
+   let anchorSourceId: UUID?
+   let anchorDayCount: Int?
 }
 
-struct ExportTag: Codable {  // NEW
+struct ExportTag: Codable {
    let id: UUID
    let name: String
    let isPrimary: Bool
