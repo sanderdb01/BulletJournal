@@ -6,6 +6,7 @@ struct CalendarView: View {
    @Environment(\.horizontalSizeClass) var horizontalSizeClass
    @Query private var dayLogs: [DayLog]
    
+   @StateObject private var tutorialManager = TutorialManager.shared
    @Binding var currentDate: Date
    @Binding var selectedTab: Int
    @Binding var displayedMonth: Date
@@ -54,6 +55,18 @@ struct CalendarView: View {
 #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
+         }
+         .onAppear {
+             tutorialManager.checkAndShowTooltip(for: .calendar)
+         }
+         .overlay(alignment: .top) {
+             if tutorialManager.showTooltip == .calendar {
+                 FeatureTooltipView(
+                     tooltip: .calendar,
+                     onDismiss: { tutorialManager.dismissTooltip() }
+                 )
+                 .padding(.top, 8)
+             }
          }
       }
    }

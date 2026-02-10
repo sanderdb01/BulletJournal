@@ -9,6 +9,7 @@ struct MainTabView: View {
     @Environment(\.scenePhase) var scenePhase
    @Environment(\.modelContext) private var modelContext
     
+   @StateObject private var tutorialManager = TutorialManager.shared
     @State private var selectedTab = 0
     @State private var currentDate = Date()
     @State private var displayedMonth = Date()
@@ -70,14 +71,11 @@ struct MainTabView: View {
                    Label("Notebook", systemImage: "note.text")
                }
                .tag(2)
-           
-//           SearchView(currentDate: $currentDate, selectedTab: $selectedTab)
-//               .tabItem {
-//                   Label("Search", systemImage: "magnifyingglass")
-//               }
-//               .tag(3)
         }
         .background(AppTheme.primaryBackground.ignoresSafeArea())
+        .fullScreenCover(isPresented: $tutorialManager.showWelcomeCarousel) {
+                    WelcomeCarouselView()
+                }
     }
     
     // MARK: - Scene Phase Handling

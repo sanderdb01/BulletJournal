@@ -18,6 +18,7 @@ struct iOSNoteEditorView: View {
     
     @Bindable var note: GeneralNote
     
+   @StateObject private var tutorialManager = TutorialManager.shared
     @State private var isEditingTitle = false
     @State private var showingMarkdownPreview = false
     @State private var showingTagPicker = false

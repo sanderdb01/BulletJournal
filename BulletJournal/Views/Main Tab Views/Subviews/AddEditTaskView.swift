@@ -13,6 +13,7 @@ struct AddEditTaskView: View {
    let taskToEdit: TaskItem?
    let parsedTaskFromVoice: ParsedTask?
    
+   @StateObject private var tutorialManager = TutorialManager.shared
    @State private var taskName: String
    @State private var selectedColor: String
    @State private var taskNotes: String
@@ -241,11 +242,15 @@ struct AddEditTaskView: View {
                Toggle("Set Reminder", isOn: $hasReminder)
                
                if hasReminder {
-                  DatePicker(
-                     "Time",
-                     selection: $reminderTime,
-                     displayedComponents: [.hourAndMinute]
-                  )
+                  if DeviceInfo.isRunningOnMac{
+                     MacTimePicker(time: $reminderTime)
+                  } else {
+                     DatePicker(
+                        "Time",
+                        selection: $reminderTime,
+                        displayedComponents: [.hourAndMinute]
+                     )
+                  }
                }
             }
             
@@ -304,7 +309,43 @@ struct AddEditTaskView: View {
             }
          }
 #endif
+         .overlay(alignment: .center) {
+             if tutorialManager.currentTutorialStep == .showTaskNameHint {
+                 VStack {
+                     Spacer().frame(height: 120)
+                     Text("👆 Type a name for your task")
+                         .font(.callout)
+                         .fontWeight(.medium)
+                         .foregroundColor(.white)
+                         .padding(.horizontal, 16)
+                         .padding(.vertical, 10)
+                         .background(Capsule().fill(Color.blue).shadow(radius: 8))
+                         .padding(.horizontal, 32)
+                     Spacer()
+                 }
+             } else if tutorialManager.currentTutorialStep == .showColorTagHint {
+                 VStack {
+                     Spacer().frame(height: 240)
+                     Text("🎨 Pick a color tag")
+                         .font(.callout)
+                         .fontWeight(.medium)
+                         .foregroundColor(.white)
+                         .padding(.horizontal, 16)
+                         .padding(.vertical, 10)
+                         .background(Capsule().fill(Color.blue).shadow(radius: 8))
+                         .padding(.horizontal, 32)
+                     Spacer()
+                 }
+             }
+         }
          .onAppear {
+            // Advance through form hints
+            if tutorialManager.currentTutorialStep == .showTaskNameHint {
+               DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                  tutorialManager.currentTutorialStep = .showColorTagHint
+               }
+            }
+            
             isTitleFocused = true
             // Set default Blue tag for new tasks OR match voice tag
             if taskToEdit == nil && selectedPrimaryTag == nil {
@@ -342,6 +383,10 @@ struct AddEditTaskView: View {
             ToolbarItem(placement: .confirmationAction) {
                Button("Save") {
                   saveTask()
+                  if !tutorialManager.hasCreatedFirstTask {
+                     tutorialManager.hasCreatedFirstTask = true
+                     tutorialManager.currentTutorialStep = .showCompleteTaskHint
+                  }
                }
                .disabled(taskName.trimmingCharacters(in: .whitespaces).isEmpty)
             }

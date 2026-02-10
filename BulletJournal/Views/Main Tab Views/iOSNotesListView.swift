@@ -6,6 +6,7 @@ struct iOSNotesListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \GeneralNote.modifiedAt, order: .reverse) private var allNotes: [GeneralNote]
     
+   @StateObject private var tutorialManager = TutorialManager.shared
     @State private var searchText = ""
     @State private var showingNewNoteSheet = false
     
@@ -33,6 +34,15 @@ struct iOSNotesListView: View {
             .searchable(text: $searchText, prompt: "Search Notebook")
             .sheet(isPresented: $showingNewNoteSheet) {
                 iOSNewNoteSheet(modelContext: modelContext)
+            }
+            .overlay(alignment: .top) {
+                if tutorialManager.showTooltip == .notebook {
+                    FeatureTooltipView(
+                        tooltip: .notebook,
+                        onDismiss: { tutorialManager.dismissTooltip() }
+                    )
+                    .padding(.top, 8)
+                }
             }
         }
     }

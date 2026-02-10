@@ -8,6 +8,7 @@ struct SettingsView: View {
    @Query private var settings: [AppSettings]
    @Query private var dayLogs: [DayLog]
    
+   @StateObject private var tutorialManager = TutorialManager.shared
    @State private var showingClearDataAlert = false
    @State private var showingExportSuccess = false
    @State private var showingExportError = false
@@ -167,6 +168,13 @@ struct SettingsView: View {
             } footer: {
                Text("This will permanently delete all tasks and logs. This action cannot be undone.")
             }
+#if DEBUG
+            Section("Developer") {
+               Button("Reset Tutorial") {
+                  TutorialManager.shared.resetTutorial()
+               }
+            }
+#endif
          }
          .navigationTitle("Settings")
 #if os(iOS)
@@ -249,6 +257,9 @@ struct SettingsView: View {
                   showingExportError = true
             }
             isExporting = false
+         }
+         .onAppear {
+             tutorialManager.checkAndShowTooltip(for: .settings)
          }
       }
    }

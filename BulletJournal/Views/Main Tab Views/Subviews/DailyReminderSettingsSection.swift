@@ -55,25 +55,49 @@ struct DailyReminderSettingsSection: View {
             
             // Time Picker (only show when enabled)
             if reminderEnabled {
-                DatePicker(
-                    "Reminder Time",
-                    selection: $reminderTime,
-                    displayedComponents: .hourAndMinute
-                )
-                .onChange(of: reminderTime) { _, newValue in
-                    // Extract hour and minute
-                    let components = Calendar.current.dateComponents([.hour, .minute], from: newValue)
-                    reminderHour = components.hour ?? 20
-                    reminderMinute = components.minute ?? 0
-                    
-                    // Reschedule notification
-                    Task {
-                        await NotificationManager.shared.scheduleDailyReminder(
-                            at: newValue,
-                            enabled: reminderEnabled
-                        )
-                    }
-                }
+               if DeviceInfo.isRunningOnMac {
+//                   DatePicker(
+//                       "Reminder Time",
+//                       selection: $reminderTime,
+//                       displayedComponents: .hourAndMinute
+//                   )
+//                   .datePickerStyle(.graphical)
+                  MacTimePicker(time: $reminderTime)
+                   .onChange(of: reminderTime) { _, newValue in
+                       // Extract hour and minute
+                       let components = Calendar.current.dateComponents([.hour, .minute], from: newValue)
+                       reminderHour = components.hour ?? 20
+                       reminderMinute = components.minute ?? 0
+                       
+                       // Reschedule notification
+                       Task {
+                           await NotificationManager.shared.scheduleDailyReminder(
+                               at: newValue,
+                               enabled: reminderEnabled
+                           )
+                       }
+                   }
+               } else {
+                  DatePicker(
+                      "Reminder Time",
+                      selection: $reminderTime,
+                      displayedComponents: .hourAndMinute
+                  )
+                  .onChange(of: reminderTime) { _, newValue in
+                      // Extract hour and minute
+                      let components = Calendar.current.dateComponents([.hour, .minute], from: newValue)
+                      reminderHour = components.hour ?? 20
+                      reminderMinute = components.minute ?? 0
+                      
+                      // Reschedule notification
+                      Task {
+                          await NotificationManager.shared.scheduleDailyReminder(
+                              at: newValue,
+                              enabled: reminderEnabled
+                          )
+                      }
+                  }
+               }
             }
             
             #if DEBUG

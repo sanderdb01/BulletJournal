@@ -7,6 +7,9 @@ struct DayView: View {
    @Query private var dayLogs: [DayLog]
    @Query private var settings: [AppSettings]
    
+   @StateObject private var tutorialManager = TutorialManager.shared
+   @State private var addTaskButtonFrame: CGRect = .zero
+   
    @Binding var currentDate: Date
    @State private var showingAddTask = false
    @State private var isNotesExpanded = false
@@ -140,8 +143,11 @@ struct DayView: View {
                         Button(action: {
                            showingAddTask = true
                            print("add task button pressed")
+                           if tutorialManager.currentTutorialStep == .highlightAddTaskButton {
+                              tutorialManager.advanceTutorialStep()
+                           }
    #if os(iOS)
-                              HapticManager.shared.impact(style: .heavy)
+                           HapticManager.shared.impact(style: .heavy)
    #endif
                         }) {
                            HStack(spacing: 12) {
@@ -175,6 +181,13 @@ struct DayView: View {
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
+                        .background(
+                           GeometryReader { geometry in
+                              Color.clear.onAppear {
+                                 addTaskButtonFrame = geometry.frame(in: .global)
+                              }
+                           }
+                        )
                         
                         
                         // Notes Section
@@ -240,6 +253,22 @@ struct DayView: View {
             }
          }
 #endif
+         .overlay {
+            // Show tutorial hint if active
+            if tutorialManager.currentTutorialStep == .highlightAddTaskButton {
+               TutorialHintView(
+                  step: .highlightAddTaskButton,
+                  targetFrame: addTaskButtonFrame,
+                  onNext: {
+                     tutorialManager.advanceTutorialStep()
+                     showingAddTask = true
+                  },
+                  onSkip: {
+                     tutorialManager.skipTutorial()
+                  }
+               )
+            }
+         }
       }
    }
    

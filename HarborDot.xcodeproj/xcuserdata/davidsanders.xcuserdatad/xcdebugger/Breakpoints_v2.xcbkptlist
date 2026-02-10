@@ -30,8 +30,8 @@
             filePath = "BulletJournal/Views/Main Tab Views/iOSNoteEditorView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "414"
-            endingLineNumber = "414"
+            startingLineNumber = "415"
+            endingLineNumber = "415"
             landmarkName = "textView(_:shouldChangeTextIn:replacementText:)"
             landmarkType = "7">
          </BreakpointContent>
