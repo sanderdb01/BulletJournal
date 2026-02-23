@@ -181,6 +181,7 @@
 				"Views/Main Tab Views/NotesEditorView.swift",
 				"Views/Main Tab Views/SettingsView.swift",
 				"Views/Main Tab Views/Subviews/AddEditTaskView.swift",
+				"Views/Main Tab Views/Subviews/ClickableLinksText.swift",
 				"Views/Main Tab Views/Subviews/DailyReminderSettingsSection.swift",
 				"Views/Main Tab Views/Subviews/MailView.swift",
 				"Views/Main Tab Views/Subviews/MarkdownFormattingToolbar.swift",

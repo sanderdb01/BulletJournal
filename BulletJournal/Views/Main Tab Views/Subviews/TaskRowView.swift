@@ -108,6 +108,15 @@ struct TaskRowView: View {
                }
             }
          }
+         // Direct to edit button
+            Button(action: {
+               showingEditTask = true
+            }) {
+               Image(systemName: "pencil")
+                  .foregroundColor(.secondary)
+                  .font(.title3)
+            }
+            .buttonStyle(.plain)
          
          // Mac-only info button
          if DeviceInfo.isRunningOnMac {

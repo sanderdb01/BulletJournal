@@ -185,6 +185,7 @@ struct AddEditTaskView: View {
                   .padding(.vertical, 4)
                }
             }
+            //MARK: Name Section
             Section("Task Name") {
                TextField("Task Name", text: $taskName)
                   .focused($isTitleFocused)
@@ -197,7 +198,7 @@ struct AddEditTaskView: View {
 #endif
             }
             
-            // Tags Section
+            //MARK: Tags Section
             Section("Tags") {
                TagPicker(
                   selectedPrimaryTag: $selectedPrimaryTag,
@@ -205,7 +206,29 @@ struct AddEditTaskView: View {
                )
             }
             
-            // Anchor Section
+            //MARK: Task Notes Section
+            Section("Task Notes (Optional)") {
+               TextEditor(text: $taskNotes)
+                  .frame(minHeight: 100)
+                  .focused($isNotesFocused)
+               
+               // Show preview with clickable links if there are any URLs
+               if !taskNotes.isEmpty && containsURL(taskNotes) {
+                  VStack(alignment: .leading, spacing: 4) {
+                     Text("Preview:")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                     
+                     ClickableLinksText(text: taskNotes)
+                        .font(.callout)
+                        .padding(8)
+                        .background(Color.secondary.opacity(0.1))
+                        .cornerRadius(8)
+                  }
+               }
+            }
+            
+            //MARK: Anchor Section
             Section {
                Toggle(isOn: $isAnchor) {
                   HStack {
@@ -237,7 +260,7 @@ struct AddEditTaskView: View {
                }
             }
             
-            // Reminder Section
+            //MARK: Reminder Section
             Section("Reminder") {
                Toggle("Set Reminder", isOn: $hasReminder)
                
@@ -254,7 +277,7 @@ struct AddEditTaskView: View {
                }
             }
             
-            // Recurrence Section
+            //MARK: Recurrence Section
             Section("Recurrence") {
                Toggle(isOn: $isRecurring) {
                   HStack {
@@ -276,14 +299,7 @@ struct AddEditTaskView: View {
                   recurrenceOptions
                }
             }
-            
-            // Task Notes Section
-            Section("Task Notes (Optional)") {
-               TextEditor(text: $taskNotes)
-                  .frame(minHeight: 100)
-                  .focused($isNotesFocused)
-            }
-            
+
             //            Section {
             //               Toggle("Save as Template", isOn: $saveAsTemplate)
             //            } footer: {
@@ -643,6 +659,14 @@ struct AddEditTaskView: View {
       dateComponents.minute = timeComponents.minute
       
       return calendar.date(from: dateComponents)
+   }
+   
+   private func containsURL(_ text: String) -> Bool {
+       guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else {
+           return false
+       }
+       let matches = detector.matches(in: text, options: [], range: NSRange(text.startIndex..., in: text))
+       return !matches.isEmpty
    }
 }
 
