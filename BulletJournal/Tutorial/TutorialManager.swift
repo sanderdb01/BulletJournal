@@ -33,7 +33,10 @@ class TutorialManager: ObservableObject {
     private init() {
         // Check if this is first launch
         if !UserDefaults.standard.bool(forKey: hasCompletedOnboardingKey) {
-            showWelcomeCarousel = true
+           //Change to false until it is finished.
+            showWelcomeCarousel = false
+           UserDefaults.standard.set(true, forKey: hasCompletedOnboardingKey) //Remove when want to enable tutorial again
+           UserDefaults.standard.set(true, forKey: hasViewedCalendarKey)
         }
     }
     
